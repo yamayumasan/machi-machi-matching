@@ -19,19 +19,25 @@
 ## 技術スタック
 
 - **Frontend**: Vue 3 + TypeScript + Pinia + Tailwind CSS
-- **Backend**: Node.js + Fastify + tRPC
+- **Backend**: Node.js + Express + REST API
 - **Database**: PostgreSQL + Prisma ORM
 - **Realtime**: Socket.io
-- **Auth**: Supabase Auth
+- **Auth**: Supabase Auth（メール + Google OAuth）
 
 ## ドキュメント
 
+### 設計ドキュメント
 - [コンセプト](./docs/CONCEPT.md)
 - [機能一覧](./docs/FEATURES.md)
 - [ユーザーフロー](./docs/USER_FLOW.md)
 - [技術スタック](./docs/TECH_STACK.md)
 - [DB設計](./docs/DB_DESIGN.md)
 - [画面一覧](./docs/SCREEN_LIST.md)
+
+### 開発ドキュメント
+- [MVP仕様書](./docs/MVP_SPEC.md)
+- [開発計画](./docs/DEV_PLAN.md)
+- [API設計](./docs/API_DESIGN.md)
 - [開発ロードマップ](./docs/ROADMAP.md)
 
 ## セットアップ

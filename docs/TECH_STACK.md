@@ -2,7 +2,7 @@
 
 ## 概要
 
-TypeScriptフルスタック構成で、Vue 3をフロントエンド、Node.js + Fastify + tRPCをバックエンドとして採用。
+TypeScriptフルスタック構成で、Vue 3をフロントエンド、Node.js + Express + REST APIをバックエンドとして採用。
 
 ---
 
@@ -13,7 +13,7 @@ TypeScriptフルスタック構成で、Vue 3をフロントエンド、Node.js 
 | 技術 | バージョン | 選定理由 |
 |------|-----------|---------|
 | **Vue 3** | 3.x | Composition API、TypeScriptとの親和性、学習目的 |
-| **TypeScript** | 5.x | 型安全性、tRPCとの連携 |
+| **TypeScript** | 5.x | 型安全性、開発効率向上 |
 | **Pinia** | 2.x | Vue 3公式推奨の状態管理、シンプルなAPI |
 | **Vue Router** | 4.x | SPA routing |
 | **Tailwind CSS** | 3.x | ユーティリティファースト、高速なUI開発 |
@@ -24,9 +24,10 @@ TypeScriptフルスタック構成で、Vue 3をフロントエンド、Node.js 
 | 技術 | バージョン | 選定理由 |
 |------|-----------|---------|
 | **Node.js** | 20.x LTS | 安定版、TypeScript対応 |
-| **Fastify** | 4.x | 高速、型安全、プラグインエコシステム |
-| **tRPC** | 11.x | End-to-end型安全、APIスキーマ自動生成 |
-| **Zod** | 3.x | ランタイムバリデーション、tRPCとの連携 |
+| **Express** | 4.x | 最も普及したNode.jsフレームワーク、豊富なミドルウェア |
+| **TypeScript** | 5.x | 型安全性、開発効率向上 |
+| **Zod** | 3.x | ランタイムバリデーション、スキーマ定義 |
+| **express-validator** | 7.x | リクエストバリデーション |
 
 ### データベース
 
@@ -67,14 +68,14 @@ TypeScriptフルスタック構成で、Vue 3をフロントエンド、Node.js 
 │  │  (Vite でビルド)                                     │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                              │                              │
-│                    tRPC Client / Socket.io                  │
+│                    REST API (axios) / Socket.io             │
 └──────────────────────────────┼──────────────────────────────┘
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                        API サーバー                          │
 │  ┌─────────────────────────────────────────────────────┐   │
-│  │  Fastify + tRPC + Socket.io                         │   │
+│  │  Express + Socket.io                                │   │
 │  │  (Node.js + TypeScript)                             │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                              │                              │
@@ -168,8 +169,8 @@ machi-machi-matching/
 
 | 技術要素 | 学習内容 |
 |---------|---------|
-| tRPC | End-to-end型安全、Procedure定義 |
-| Fastify | プラグイン、フック、バリデーション |
+| Express | ルーティング、ミドルウェア、エラーハンドリング |
+| REST API設計 | RESTful設計原則、HTTPメソッド、ステータスコード |
 | Prisma | スキーマ定義、リレーション、トランザクション |
 | Socket.io | サーバーサイドWebSocket、Room管理 |
 | 認証 | OAuth 2.0、JWT、セッション管理 |

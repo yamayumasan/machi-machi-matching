@@ -60,6 +60,18 @@
                        └──────────────┘       └──────────────┘
 
                        ┌──────────────┐
+                       │ Application  │  ← 参加申請（ユーザー→募集者）
+                       ├──────────────┤
+                       │ id           │
+                       │ recruitmentId│
+                       │ applicantId  │
+                       │ status       │
+                       │ message      │
+                       │ createdAt    │
+                       │ respondedAt  │
+                       └──────────────┘
+
+                       ┌──────────────┐
                        │ Notification │
                        ├──────────────┤
                        │ id           │
@@ -105,14 +117,15 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  categories    UserCategory[]
-  wantToDos     WantToDo[]
-  recruitments  Recruitment[]    @relation("Creator")
-  sentOffers    Offer[]          @relation("Sender")
-  receivedOffers Offer[]         @relation("Receiver")
-  groupMembers  GroupMember[]
-  messages      Message[]
-  notifications Notification[]
+  categories     UserCategory[]
+  wantToDos      WantToDo[]
+  recruitments   Recruitment[]    @relation("Creator")
+  applications   Application[]    @relation("Applicant")
+  sentOffers     Offer[]          @relation("Sender")
+  receivedOffers Offer[]          @relation("Receiver")
+  groupMembers   GroupMember[]
+  messages       Message[]
+  notifications  Notification[]
 }
 
 model UserCategory {
@@ -192,8 +205,9 @@ model Recruitment {
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   // Relations
-  offers Offer[]
-  group  Group?
+  offers       Offer[]
+  applications Application[]
+  group        Group?
 
   @@index([creatorId])
   @@index([categoryId])
@@ -201,7 +215,27 @@ model Recruitment {
 }
 
 // ============================================
-// オファー
+// 参加申請（ユーザー → 募集者）
+// ============================================
+
+model Application {
+  id            String            @id @default(cuid())
+  recruitmentId String
+  applicantId   String
+  status        ApplicationStatus @default(PENDING)
+  message       String?
+  createdAt     DateTime          @default(now())
+  respondedAt   DateTime?
+
+  recruitment Recruitment @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
+  applicant   User        @relation("Applicant", fields: [applicantId], references: [id], onDelete: Cascade)
+
+  @@unique([recruitmentId, applicantId])
+  @@index([applicantId, status])
+}
+
+// ============================================
+// オファー（募集者 → ユーザー）
 // ============================================
 
 model Offer {
@@ -317,6 +351,13 @@ enum RecruitmentStatus {
   CANCELLED
 }
 
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 enum OfferStatus {
   PENDING
   ACCEPTED
@@ -330,13 +371,16 @@ enum GroupMemberRole {
 }
 
 enum NotificationType {
-  OFFER_RECEIVED      // オファーを受信
-  OFFER_ACCEPTED      // オファーが承諾された
-  OFFER_DECLINED      // オファーが辞退された
-  RECRUITMENT_MATCH   // 表明にマッチする募集
-  GROUP_CREATED       // グループが作成された
-  NEW_MESSAGE         // 新しいメッセージ
-  MEMBER_JOINED       // メンバーが参加
+  APPLICATION_RECEIVED  // 参加申請を受信（募集者向け）
+  APPLICATION_APPROVED  // 参加申請が承認された（申請者向け）
+  APPLICATION_REJECTED  // 参加申請が却下された（申請者向け）
+  OFFER_RECEIVED        // オファーを受信
+  OFFER_ACCEPTED        // オファーが承諾された
+  OFFER_DECLINED        // オファーが辞退された
+  RECRUITMENT_MATCH     // 表明にマッチする募集
+  GROUP_CREATED         // グループが作成された
+  NEW_MESSAGE           // 新しいメッセージ
+  MEMBER_JOINED         // メンバーが参加
 }
 ```
 
@@ -418,6 +462,18 @@ enum NotificationType {
 | updatedAt | DateTime | 更新日時 |
 | closedAt | DateTime? | 締め切り日時 |
 
+### Application（参加申請）
+
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | String (CUID) | 主キー |
+| recruitmentId | String | 募集ID（FK） |
+| applicantId | String | 申請者ID（FK） |
+| status | ApplicationStatus | ステータス（PENDING/APPROVED/REJECTED/CANCELLED） |
+| message | String? | メッセージ |
+| createdAt | DateTime | 作成日時 |
+| respondedAt | DateTime? | 応答日時 |
+
 ### Offer（オファー）
 
 | カラム | 型 | 説明 |
@@ -486,6 +542,7 @@ enum NotificationType {
 | Recruitment | (creatorId) | ユーザーの募集一覧取得 |
 | Recruitment | (categoryId) | カテゴリ別募集取得 |
 | Recruitment | (area, status) | エリア別募集一覧取得 |
+| Application | (applicantId, status) | 自分の申請一覧取得 |
 | Offer | (receiverId, status) | 受信オファー一覧取得 |
 | Message | (groupId, createdAt) | グループのメッセージ取得 |
 | Notification | (userId, isRead, createdAt) | 未読通知取得 |
