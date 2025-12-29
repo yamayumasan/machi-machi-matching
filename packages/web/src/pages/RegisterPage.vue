@@ -1,31 +1,51 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
+
 const email = ref('')
 const password = ref('')
-const isLoading = ref(false)
-const error = ref('')
+const confirmPassword = ref('')
+const localError = ref('')
+
+const isLoading = computed(() => authStore.isLoading)
+const error = computed(() => localError.value || authStore.error)
 
 const handleRegister = async () => {
-  isLoading.value = true
-  error.value = ''
+  localError.value = ''
 
-  try {
-    // TODO: 実際の登録処理
-    console.log('Register:', email.value)
-    router.push('/onboarding')
-  } catch (e) {
-    error.value = '登録に失敗しました'
-  } finally {
-    isLoading.value = false
+  // Validate password confirmation
+  if (password.value !== confirmPassword.value) {
+    localError.value = 'パスワードが一致しません'
+    return
   }
+
+  if (password.value.length < 8) {
+    localError.value = 'パスワードは8文字以上で入力してください'
+    return
+  }
+
+  const success = await authStore.signUp(email.value, password.value)
+
+  if (success) {
+    // After signup, sign in automatically
+    const signInSuccess = await authStore.signIn(email.value, password.value)
+    if (signInSuccess) {
+      router.push('/onboarding')
+    }
+  }
+}
+
+const handleGoogleLogin = async () => {
+  await authStore.signInWithGoogle()
 }
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4">
+  <div class="min-h-screen flex items-center justify-center px-4 bg-gray-50">
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-primary-600 mb-2">マチマチマッチング</h1>
@@ -50,7 +70,7 @@ const handleRegister = async () => {
 
           <div>
             <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
-              パスワード（8文字以上）
+              パスワード
             </label>
             <input
               id="password"
@@ -59,11 +79,26 @@ const handleRegister = async () => {
               required
               minlength="8"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="********"
+              placeholder="8文字以上"
             />
           </div>
 
-          <div v-if="error" class="text-red-600 text-sm">
+          <div>
+            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">
+              パスワード（確認）
+            </label>
+            <input
+              id="confirmPassword"
+              v-model="confirmPassword"
+              type="password"
+              required
+              minlength="8"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              placeholder="もう一度入力"
+            />
+          </div>
+
+          <div v-if="error" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
             {{ error }}
           </div>
 
@@ -72,7 +107,14 @@ const handleRegister = async () => {
             :disabled="isLoading"
             class="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {{ isLoading ? '登録中...' : '登録する' }}
+            <span v-if="isLoading" class="flex items-center justify-center gap-2">
+              <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              登録中...
+            </span>
+            <span v-else>登録する</span>
           </button>
         </form>
 
@@ -87,7 +129,9 @@ const handleRegister = async () => {
           </div>
 
           <button
-            class="mt-4 w-full py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+            @click="handleGoogleLogin"
+            :disabled="isLoading"
+            class="mt-4 w-full py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             <svg class="w-5 h-5" viewBox="0 0 24 24">
               <path

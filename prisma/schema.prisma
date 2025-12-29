@@ -12,18 +12,19 @@ datasource db {
 // ============================================
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  nickname  String
-  avatarUrl String?
-  bio       String?
-  area      Area     @default(TOKYO)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+  nickname    String?
+  avatarUrl   String?
+  bio         String?
+  area        Area?
+  isOnboarded Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  categories     UserCategory[]
+  interests      UserCategory[]
   wantToDos      WantToDo[]
   recruitments   Recruitment[]   @relation("Creator")
   applications   Application[]   @relation("Applicant")

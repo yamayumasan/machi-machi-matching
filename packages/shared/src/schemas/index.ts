@@ -45,6 +45,13 @@ export const updateUserCategoriesSchema = z.object({
   categoryIds: z.array(z.string()).min(1, '少なくとも1つのカテゴリを選択してください'),
 })
 
+export const onboardingSchema = z.object({
+  nickname: z.string().min(1, 'ニックネームを入力してください').max(50),
+  bio: z.string().max(500).optional().nullable(),
+  area: z.enum([AREAS.TOKYO, AREAS.SENDAI]),
+  categoryIds: z.array(z.string()).min(1, '少なくとも1つのカテゴリを選択してください'),
+})
+
 // ============================================
 // やりたいこと表明スキーマ
 // ============================================
@@ -136,6 +143,7 @@ export type SignUpInput = z.infer<typeof signUpSchema>
 export type SignInInput = z.infer<typeof signInSchema>
 export type UpdateUserInput = z.infer<typeof updateUserSchema>
 export type UpdateUserCategoriesInput = z.infer<typeof updateUserCategoriesSchema>
+export type OnboardingInput = z.infer<typeof onboardingSchema>
 export type CreateWantToDoInput = z.infer<typeof createWantToDoSchema>
 export type UpdateWantToDoInput = z.infer<typeof updateWantToDoSchema>
 export type CreateRecruitmentInput = z.infer<typeof createRecruitmentSchema>

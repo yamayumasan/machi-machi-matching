@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { CATEGORIES, AREAS, AREA_LABELS } from '@machi/shared'
+import { useAuthStore } from '../stores/auth'
+import { CATEGORIES, AREA_LABELS } from '@machi/shared'
 
 const router = useRouter()
+const authStore = useAuthStore()
+
 const currentStep = ref(1)
 const totalSteps = 3
 
@@ -16,6 +19,21 @@ const selectedCategories = ref<string[]>([])
 
 // Step 3: エリア
 const selectedArea = ref<string>('')
+
+const isLoading = computed(() => authStore.isLoading)
+const error = computed(() => authStore.error)
+
+onMounted(() => {
+  // If user already has some data, prefill
+  if (authStore.user) {
+    if (authStore.user.nickname) nickname.value = authStore.user.nickname
+    if (authStore.user.bio) bio.value = authStore.user.bio
+    if (authStore.user.area) selectedArea.value = authStore.user.area
+    if (authStore.user.interests) {
+      selectedCategories.value = authStore.user.interests.map((i) => i.id)
+    }
+  }
+})
 
 const toggleCategory = (categoryId: string) => {
   const index = selectedCategories.value.indexOf(categoryId)
@@ -39,19 +57,21 @@ const prevStep = () => {
 }
 
 const handleComplete = async () => {
-  // TODO: 実際の保存処理
-  console.log('Complete:', {
+  const success = await authStore.completeOnboarding({
     nickname: nickname.value,
-    bio: bio.value,
-    categories: selectedCategories.value,
+    bio: bio.value || null,
     area: selectedArea.value,
+    categoryIds: selectedCategories.value,
   })
-  router.push('/')
+
+  if (success) {
+    router.push('/')
+  }
 }
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4 py-8">
+  <div class="min-h-screen flex items-center justify-center px-4 py-8 bg-gray-50">
     <div class="w-full max-w-lg">
       <!-- Progress -->
       <div class="mb-8">
@@ -109,6 +129,7 @@ const handleComplete = async () => {
               v-model="nickname"
               type="text"
               required
+              maxlength="50"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="ニックネームを入力"
             />
@@ -122,9 +143,11 @@ const handleComplete = async () => {
               id="bio"
               v-model="bio"
               rows="3"
+              maxlength="500"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
               placeholder="自己紹介を入力"
             ></textarea>
+            <p class="text-xs text-gray-400 text-right mt-1">{{ bio.length }}/500</p>
           </div>
         </div>
 
@@ -173,12 +196,18 @@ const handleComplete = async () => {
           </div>
         </div>
 
+        <!-- Error message -->
+        <div v-if="error" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+          {{ error }}
+        </div>
+
         <!-- Navigation -->
         <div class="flex justify-between mt-8">
           <button
             v-if="currentStep > 1"
             @click="prevStep"
-            class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            :disabled="isLoading"
+            class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
           >
             戻る
           </button>
@@ -195,10 +224,17 @@ const handleComplete = async () => {
           <button
             v-else
             @click="handleComplete"
-            :disabled="!selectedArea"
+            :disabled="!selectedArea || isLoading"
             class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            はじめる
+            <span v-if="isLoading" class="flex items-center gap-2">
+              <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              設定中...
+            </span>
+            <span v-else>はじめる</span>
           </button>
         </div>
       </div>
