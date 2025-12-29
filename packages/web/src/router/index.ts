@@ -69,6 +69,18 @@ const router = createRouter({
       component: () => import('../pages/RecruitmentApplicationsPage.vue'),
       meta: { requiresAuth: true, requiresOnboarding: true },
     },
+    {
+      path: '/groups',
+      name: 'groups',
+      component: () => import('../pages/GroupsPage.vue'),
+      meta: { requiresAuth: true, requiresOnboarding: true },
+    },
+    {
+      path: '/groups/:id',
+      name: 'group-chat',
+      component: () => import('../pages/GroupChatPage.vue'),
+      meta: { requiresAuth: true, requiresOnboarding: true },
+    },
   ],
 })
 
