@@ -33,6 +33,18 @@ const router = createRouter({
       name: 'auth-callback',
       component: () => import('../pages/AuthCallbackPage.vue'),
     },
+    {
+      path: '/want-to-dos',
+      name: 'want-to-dos',
+      component: () => import('../pages/WantToDosPage.vue'),
+      meta: { requiresAuth: true, requiresOnboarding: true },
+    },
+    {
+      path: '/want-to-dos/:id',
+      name: 'want-to-do-detail',
+      component: () => import('../pages/WantToDoDetailPage.vue'),
+      meta: { requiresAuth: true, requiresOnboarding: true },
+    },
   ],
 })
 

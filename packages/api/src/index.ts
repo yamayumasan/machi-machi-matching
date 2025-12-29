@@ -9,6 +9,7 @@ import { healthRouter } from './routes/health'
 import { authRouter } from './routes/auth'
 import { usersRouter } from './routes/users'
 import { categoriesRouter } from './routes/categories'
+import { wantToDosRouter } from './routes/wantToDos'
 import { errorHandler } from './middlewares/errorHandler'
 import { setupSocket } from './socket'
 
@@ -45,6 +46,7 @@ app.use('/api/health', healthRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/categories', categoriesRouter)
+app.use('/api/want-to-dos', wantToDosRouter)
 
 // Error handler
 app.use(errorHandler)
