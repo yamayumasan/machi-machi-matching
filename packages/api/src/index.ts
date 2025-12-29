@@ -10,6 +10,7 @@ import { authRouter } from './routes/auth'
 import { usersRouter } from './routes/users'
 import { categoriesRouter } from './routes/categories'
 import { wantToDosRouter } from './routes/wantToDos'
+import { recruitmentsRouter } from './routes/recruitments'
 import { errorHandler } from './middlewares/errorHandler'
 import { setupSocket } from './socket'
 
@@ -47,6 +48,7 @@ app.use('/api/auth', authRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/categories', categoriesRouter)
 app.use('/api/want-to-dos', wantToDosRouter)
+app.use('/api/recruitments', recruitmentsRouter)
 
 // Error handler
 app.use(errorHandler)

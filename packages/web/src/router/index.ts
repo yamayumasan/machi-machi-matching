@@ -45,6 +45,30 @@ const router = createRouter({
       component: () => import('../pages/WantToDoDetailPage.vue'),
       meta: { requiresAuth: true, requiresOnboarding: true },
     },
+    {
+      path: '/recruitments',
+      name: 'recruitments',
+      component: () => import('../pages/RecruitmentsPage.vue'),
+      meta: { requiresAuth: true, requiresOnboarding: true },
+    },
+    {
+      path: '/recruitments/new',
+      name: 'create-recruitment',
+      component: () => import('../pages/CreateRecruitmentPage.vue'),
+      meta: { requiresAuth: true, requiresOnboarding: true },
+    },
+    {
+      path: '/recruitments/:id',
+      name: 'recruitment-detail',
+      component: () => import('../pages/RecruitmentDetailPage.vue'),
+      meta: { requiresAuth: true, requiresOnboarding: true },
+    },
+    {
+      path: '/recruitments/:id/applications',
+      name: 'recruitment-applications',
+      component: () => import('../pages/RecruitmentApplicationsPage.vue'),
+      meta: { requiresAuth: true, requiresOnboarding: true },
+    },
   ],
 })
 

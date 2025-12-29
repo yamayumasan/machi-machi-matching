@@ -38,6 +38,10 @@ const goToWantToDos = () => {
 const goToWantToDoDetail = (id: string) => {
   router.push(`/want-to-dos/${id}`)
 }
+
+const goToRecruitments = () => {
+  router.push('/recruitments/new')
+}
 </script>
 
 <template>
@@ -88,12 +92,12 @@ const goToWantToDoDetail = (id: string) => {
           <p class="text-sm text-gray-500">興味があることをアピール</p>
         </button>
         <button
-          class="bg-white rounded-lg shadow-sm p-5 text-left hover:shadow-md transition-shadow opacity-50"
-          disabled
+          @click="goToRecruitments"
+          class="bg-white rounded-lg shadow-sm p-5 text-left hover:shadow-md transition-shadow"
         >
           <div class="text-2xl mb-2">📢</div>
           <h3 class="font-semibold mb-1">募集を作成</h3>
-          <p class="text-sm text-gray-500">Coming soon...</p>
+          <p class="text-sm text-gray-500">仲間を募集しよう</p>
         </button>
       </div>
 
