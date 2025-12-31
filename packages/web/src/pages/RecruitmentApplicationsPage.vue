@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useRecruitmentStore } from '../stores/recruitment'
 import { AREA_LABELS } from '@machi/shared'
+import UserAvatar from '../components/UserAvatar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -148,17 +149,12 @@ const respondedApplications = computed(() =>
               class="bg-white rounded-lg shadow-sm p-4"
             >
               <div class="flex items-start gap-4">
-                <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  <img
-                    v-if="app.applicant?.avatarUrl"
-                    :src="app.applicant.avatarUrl"
-                    :alt="app.applicant.nickname || ''"
-                    class="w-full h-full object-cover"
-                  />
-                  <span v-else class="text-primary-600 font-semibold">
-                    {{ app.applicant?.nickname?.charAt(0) || '?' }}
-                  </span>
-                </div>
+                <UserAvatar
+                  :src="app.applicant?.avatarUrl"
+                  :name="app.applicant?.nickname"
+                  size="lg"
+                  class="flex-shrink-0"
+                />
 
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-1">
@@ -214,17 +210,12 @@ const respondedApplications = computed(() =>
               class="bg-white rounded-lg shadow-sm p-4"
             >
               <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  <img
-                    v-if="app.applicant?.avatarUrl"
-                    :src="app.applicant.avatarUrl"
-                    :alt="app.applicant.nickname || ''"
-                    class="w-full h-full object-cover"
-                  />
-                  <span v-else class="text-primary-600 font-semibold text-sm">
-                    {{ app.applicant?.nickname?.charAt(0) || '?' }}
-                  </span>
-                </div>
+                <UserAvatar
+                  :src="app.applicant?.avatarUrl"
+                  :name="app.applicant?.nickname"
+                  size="md"
+                  class="flex-shrink-0"
+                />
 
                 <div class="flex-1 min-w-0">
                   <span class="font-medium">{{ app.applicant?.nickname }}</span>

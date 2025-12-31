@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useGroupStore } from '../stores/group'
+import UserAvatar from '../components/UserAvatar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -182,19 +183,12 @@ const goBack = () => {
             ]"
           >
             <!-- Avatar (for others) -->
-            <div v-if="!message.isOwn" class="flex-shrink-0">
-              <div class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden">
-                <img
-                  v-if="message.sender.avatarUrl"
-                  :src="message.sender.avatarUrl"
-                  :alt="message.sender.nickname || ''"
-                  class="w-full h-full object-cover"
-                />
-                <span v-else class="text-primary-600 font-semibold text-xs">
-                  {{ message.sender.nickname?.charAt(0) || '?' }}
-                </span>
-              </div>
-            </div>
+            <UserAvatar
+              v-if="!message.isOwn"
+              :src="message.sender.avatarUrl"
+              :name="message.sender.nickname"
+              size="sm"
+            />
 
             <!-- Message content -->
             <div :class="['max-w-[70%]', message.isOwn ? 'items-end' : 'items-start']">
@@ -316,17 +310,7 @@ const goBack = () => {
                   :key="member.id"
                   class="flex items-center gap-3"
                 >
-                  <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden">
-                    <img
-                      v-if="member.avatarUrl"
-                      :src="member.avatarUrl"
-                      :alt="member.nickname || ''"
-                      class="w-full h-full object-cover"
-                    />
-                    <span v-else class="text-primary-600 font-semibold text-sm">
-                      {{ member.nickname?.charAt(0) || '?' }}
-                    </span>
-                  </div>
+                  <UserAvatar :src="member.avatarUrl" :name="member.nickname" size="md" />
                   <div class="flex-1">
                     <p class="font-medium">
                       {{ member.nickname }}

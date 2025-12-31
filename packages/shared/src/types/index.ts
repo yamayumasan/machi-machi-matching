@@ -230,3 +230,70 @@ export interface UserSuggestion {
   wantToDo?: WantToDoWithCategory | null
   matchedCategories: string[]
 }
+
+// ============================================
+// Nearby（地図表示用）
+// ============================================
+
+export interface NearbyItemBase {
+  id: string
+  latitude: number
+  longitude: number
+  distance?: number
+  category: {
+    id: string
+    name: string
+    icon: string
+  }
+  createdAt: string
+}
+
+export interface NearbyRecruitment extends NearbyItemBase {
+  type: 'recruitment'
+  title: string
+  description?: string | null
+  datetime?: string | null
+  datetimeFlex?: string | null
+  location?: string | null
+  locationName?: string | null
+  currentPeople: number
+  maxPeople: number
+  creator: {
+    id: string
+    nickname: string | null
+    avatarUrl: string | null
+  }
+}
+
+export interface NearbyWantToDo extends NearbyItemBase {
+  type: 'wantToDo'
+  timing: string
+  comment?: string | null
+  locationName?: string | null
+  user: {
+    id: string
+    nickname: string | null
+    avatarUrl: string | null
+    area?: string | null
+  }
+}
+
+export type NearbyItem = NearbyRecruitment | NearbyWantToDo
+
+export interface NearbyResponse {
+  items: NearbyItem[]
+  center: { lat: number; lng: number }
+  radius: number
+  total: number
+}
+
+export interface NearbyBoundsResponse {
+  items: NearbyItem[]
+  bounds: {
+    north: number
+    south: number
+    east: number
+    west: number
+  }
+  total: number
+}

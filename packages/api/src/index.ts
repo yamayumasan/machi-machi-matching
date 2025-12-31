@@ -1,3 +1,14 @@
+import { config } from 'dotenv'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+// ESMで__dirnameを再現
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+// ルートディレクトリの.envを読み込む
+config({ path: resolve(__dirname, '../../../.env') })
+
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
@@ -12,6 +23,7 @@ import { categoriesRouter } from './routes/categories'
 import { wantToDosRouter } from './routes/wantToDos'
 import { recruitmentsRouter } from './routes/recruitments'
 import { groupsRouter } from './routes/groups'
+import { nearbyRouter } from './routes/nearby'
 import { errorHandler } from './middlewares/errorHandler'
 import { setupSocket } from './socket'
 
@@ -51,6 +63,7 @@ app.use('/api/categories', categoriesRouter)
 app.use('/api/want-to-dos', wantToDosRouter)
 app.use('/api/recruitments', recruitmentsRouter)
 app.use('/api/groups', groupsRouter)
+app.use('/api/nearby', nearbyRouter)
 
 // Error handler
 app.use(errorHandler)

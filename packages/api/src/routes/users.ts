@@ -40,6 +40,9 @@ router.get('/me', requireAuth, async (req, res, next) => {
         avatarUrl: user.avatarUrl,
         bio: user.bio,
         area: user.area,
+        latitude: user.latitude,
+        longitude: user.longitude,
+        locationName: user.locationName,
         isOnboarded: user.isOnboarded,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
@@ -57,7 +60,7 @@ router.get('/me', requireAuth, async (req, res, next) => {
 // PUT /api/users/me - プロフィール更新
 router.put('/me', requireAuth, validateRequest(updateUserSchema), async (req, res, next) => {
   try {
-    const { nickname, bio, area } = req.body
+    const { nickname, bio, area, latitude, longitude, locationName } = req.body
 
     const user = await prisma.user.update({
       where: { id: req.user!.id },
@@ -65,6 +68,9 @@ router.put('/me', requireAuth, validateRequest(updateUserSchema), async (req, re
         ...(nickname !== undefined && { nickname }),
         ...(bio !== undefined && { bio }),
         ...(area !== undefined && { area }),
+        ...(latitude !== undefined && { latitude }),
+        ...(longitude !== undefined && { longitude }),
+        ...(locationName !== undefined && { locationName }),
       },
     })
 
@@ -75,6 +81,9 @@ router.put('/me', requireAuth, validateRequest(updateUserSchema), async (req, re
         nickname: user.nickname,
         bio: user.bio,
         area: user.area,
+        latitude: user.latitude,
+        longitude: user.longitude,
+        locationName: user.locationName,
         updatedAt: user.updatedAt,
       },
     })
@@ -90,7 +99,7 @@ router.post(
   validateRequest(onboardingSchema),
   async (req, res, next) => {
     try {
-      const { nickname, bio, area, categoryIds } = req.body
+      const { nickname, bio, area, categoryIds, latitude, longitude, locationName } = req.body
 
       // トランザクションでユーザー更新とカテゴリ設定を行う
       const user = await prisma.$transaction(async (tx) => {
@@ -101,6 +110,9 @@ router.post(
             nickname,
             bio,
             area,
+            latitude,
+            longitude,
+            locationName,
             isOnboarded: true,
           },
         })
@@ -135,6 +147,9 @@ router.post(
           nickname: user.nickname,
           bio: user.bio,
           area: user.area,
+          latitude: user.latitude,
+          longitude: user.longitude,
+          locationName: user.locationName,
           isOnboarded: user.isOnboarded,
           interests: interests.map((i) => ({
             id: i.category.id,

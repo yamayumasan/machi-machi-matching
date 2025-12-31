@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useRecruitmentStore } from '../stores/recruitment'
 import { useAuthStore } from '../stores/auth'
-import { CATEGORIES, AREA_LABELS } from '@machi/shared'
+import { CATEGORIES, AREA_LABELS, type Area } from '@machi/shared'
+import MdiIcon from '../components/MdiIcon.vue'
+import LocationPicker from '../components/LocationPicker.vue'
+import RecruitmentCreatedModal from '../components/RecruitmentCreatedModal.vue'
+import { getIconPath, mdiClose } from '../lib/icons'
 
 const router = useRouter()
 const recruitmentStore = useRecruitmentStore()
@@ -18,10 +22,33 @@ const description = ref('')
 const useDatetime = ref(true) // true = 具体的な日時, false = 柔軟な日時
 const datetime = ref('')
 const datetimeFlex = ref('')
-const area = ref(authStore.user?.area || 'TOKYO')
-const location = ref('')
+const area = ref<string>(authStore.user?.area || 'TOKYO')
+const locationText = ref('')
+const locationData = ref<{
+  latitude: number | null
+  longitude: number | null
+  locationName: string | null
+}>({
+  latitude: authStore.user?.latitude ?? null,
+  longitude: authStore.user?.longitude ?? null,
+  locationName: authStore.user?.locationName ?? null,
+})
 const minPeople = ref(2)
 const maxPeople = ref(5)
+
+// 完了モーダル関連
+const showCreatedModal = ref(false)
+const createdRecruitmentId = ref('')
+const createdRecruitmentTitle = ref('')
+
+// エリア変更時に位置情報をリセット
+watch(area, () => {
+  locationData.value = {
+    latitude: null,
+    longitude: null,
+    locationName: null,
+  }
+})
 
 // Validation
 const errors = ref<Record<string, string>>({})
@@ -62,14 +89,52 @@ const handleSubmit = async () => {
     datetime: useDatetime.value && datetime.value ? new Date(datetime.value).toISOString() : null,
     datetimeFlex: !useDatetime.value ? datetimeFlex.value.trim() : null,
     area: area.value,
-    location: location.value.trim() || null,
+    location: locationText.value.trim() || locationData.value.locationName || null,
+    latitude: locationData.value.latitude,
+    longitude: locationData.value.longitude,
+    locationName: locationData.value.locationName,
     minPeople: minPeople.value,
     maxPeople: maxPeople.value,
   })
 
   if (result) {
-    router.push(`/recruitments/${result.id}`)
+    createdRecruitmentId.value = result.id
+    createdRecruitmentTitle.value = title.value.trim()
+    showCreatedModal.value = true
   }
+}
+
+// フォームをリセット
+const resetForm = () => {
+  title.value = ''
+  categoryId.value = ''
+  description.value = ''
+  useDatetime.value = true
+  datetime.value = ''
+  datetimeFlex.value = ''
+  area.value = authStore.user?.area || 'TOKYO'
+  locationText.value = ''
+  locationData.value = {
+    latitude: authStore.user?.latitude ?? null,
+    longitude: authStore.user?.longitude ?? null,
+    locationName: authStore.user?.locationName ?? null,
+  }
+  minPeople.value = 2
+  maxPeople.value = 5
+  errors.value = {}
+}
+
+// モーダルアクション
+const handleViewRecruitment = () => {
+  router.push(`/recruitments/${createdRecruitmentId.value}`)
+}
+
+const handleGoHome = () => {
+  router.push('/')
+}
+
+const handleCreateAnother = () => {
+  resetForm()
 }
 
 const goBack = () => {
@@ -83,9 +148,7 @@ const goBack = () => {
     <header class="bg-white shadow-sm sticky top-0 z-10">
       <div class="container mx-auto px-4 py-4 flex items-center gap-4">
         <button @click="goBack" class="text-gray-500 hover:text-gray-700">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <MdiIcon :path="mdiClose" :size="24" />
         </button>
         <h1 class="text-lg font-bold">募集を作成</h1>
       </div>
@@ -126,7 +189,7 @@ const goBack = () => {
                   : 'border-gray-200 hover:border-gray-300',
               ]"
             >
-              <div class="text-2xl mb-1">{{ cat.icon }}</div>
+              <MdiIcon :path="getIconPath(cat.icon)" :size="28" class="text-primary-600 mb-1" />
               <div class="text-xs font-medium">{{ cat.name }}</div>
             </button>
           </div>
@@ -219,15 +282,21 @@ const goBack = () => {
 
         <!-- Location -->
         <div class="bg-white rounded-lg shadow-sm p-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            場所
-          </label>
-          <input
-            v-model="location"
-            type="text"
-            placeholder="例：仙台駅周辺、渋谷のカフェなど"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          <LocationPicker
+            v-model="locationData"
+            :area="area as Area"
+            :show-map-option="true"
+            label="場所"
           />
+          <div v-if="!locationData.locationName" class="mt-3">
+            <p class="text-sm text-gray-500 mb-2">または直接入力</p>
+            <input
+              v-model="locationText"
+              type="text"
+              placeholder="例：仙台駅周辺、渋谷のカフェなど"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
         </div>
 
         <!-- People -->
@@ -277,5 +346,15 @@ const goBack = () => {
         </button>
       </form>
     </main>
+
+    <!-- 作成完了モーダル -->
+    <RecruitmentCreatedModal
+      v-model="showCreatedModal"
+      :recruitment-id="createdRecruitmentId"
+      :recruitment-title="createdRecruitmentTitle"
+      @view-recruitment="handleViewRecruitment"
+      @go-home="handleGoHome"
+      @create-another="handleCreateAnother"
+    />
   </div>
 </template>

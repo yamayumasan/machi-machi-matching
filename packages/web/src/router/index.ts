@@ -3,6 +3,12 @@ import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior(_to, _from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    }
+    return { left: 0, top: 0 }
+  },
   routes: [
     {
       path: '/',
@@ -34,33 +40,9 @@ const router = createRouter({
       component: () => import('../pages/AuthCallbackPage.vue'),
     },
     {
-      path: '/want-to-dos',
-      name: 'want-to-dos',
-      component: () => import('../pages/WantToDosPage.vue'),
-      meta: { requiresAuth: true, requiresOnboarding: true },
-    },
-    {
-      path: '/want-to-dos/:id',
-      name: 'want-to-do-detail',
-      component: () => import('../pages/WantToDoDetailPage.vue'),
-      meta: { requiresAuth: true, requiresOnboarding: true },
-    },
-    {
-      path: '/recruitments',
-      name: 'recruitments',
-      component: () => import('../pages/RecruitmentsPage.vue'),
-      meta: { requiresAuth: true, requiresOnboarding: true },
-    },
-    {
       path: '/recruitments/new',
       name: 'create-recruitment',
       component: () => import('../pages/CreateRecruitmentPage.vue'),
-      meta: { requiresAuth: true, requiresOnboarding: true },
-    },
-    {
-      path: '/recruitments/:id',
-      name: 'recruitment-detail',
-      component: () => import('../pages/RecruitmentDetailPage.vue'),
       meta: { requiresAuth: true, requiresOnboarding: true },
     },
     {
@@ -120,6 +102,12 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   next()
+})
+
+// ナビゲーション完了後のクリーンアップ
+router.afterEach(() => {
+  // モーダルが残っている場合にbody.style.overflowをリセット
+  document.body.style.overflow = ''
 })
 
 export default router

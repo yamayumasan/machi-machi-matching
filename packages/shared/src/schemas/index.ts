@@ -39,6 +39,9 @@ export const updateUserSchema = z.object({
   nickname: z.string().min(1, 'ニックネームを入力してください').max(50).optional(),
   bio: z.string().max(500).optional().nullable(),
   area: z.enum([AREAS.TOKYO, AREAS.SENDAI]).optional(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  locationName: z.string().max(100).optional().nullable(),
 })
 
 export const updateUserCategoriesSchema = z.object({
@@ -50,6 +53,9 @@ export const onboardingSchema = z.object({
   bio: z.string().max(500).optional().nullable(),
   area: z.enum([AREAS.TOKYO, AREAS.SENDAI]),
   categoryIds: z.array(z.string()).min(1, '少なくとも1つのカテゴリを選択してください'),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  locationName: z.string().max(100).optional().nullable(),
 })
 
 // ============================================
@@ -81,6 +87,9 @@ export const createRecruitmentSchema = z.object({
   datetimeFlex: z.string().max(100).optional().nullable(),
   area: z.enum([AREAS.TOKYO, AREAS.SENDAI]),
   location: z.string().max(100).optional().nullable(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  locationName: z.string().max(100).optional().nullable(),
   minPeople: z.number().int().positive().default(1),
   maxPeople: z.number().int().positive().max(100).default(10),
 })

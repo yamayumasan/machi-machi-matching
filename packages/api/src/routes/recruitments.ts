@@ -74,6 +74,9 @@ router.get('/', optionalAuth, async (req, res, next) => {
           datetimeFlex: r.datetimeFlex,
           area: r.area,
           location: r.location,
+          latitude: r.latitude,
+          longitude: r.longitude,
+          locationName: r.locationName,
           minPeople: r.minPeople,
           maxPeople: r.maxPeople,
           currentPeople: r._count.applications + 1, // +1 for creator
@@ -129,6 +132,9 @@ router.get('/me', requireAuth, requireOnboarding, async (req, res, next) => {
         datetimeFlex: r.datetimeFlex,
         area: r.area,
         location: r.location,
+        latitude: r.latitude,
+        longitude: r.longitude,
+        locationName: r.locationName,
         minPeople: r.minPeople,
         maxPeople: r.maxPeople,
         currentPeople: r._count.applications + 1,
@@ -225,6 +231,9 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
         datetimeFlex: recruitment.datetimeFlex,
         area: recruitment.area,
         location: recruitment.location,
+        latitude: recruitment.latitude,
+        longitude: recruitment.longitude,
+        locationName: recruitment.locationName,
         minPeople: recruitment.minPeople,
         maxPeople: recruitment.maxPeople,
         currentPeople: recruitment.applications.length + 1,
@@ -266,7 +275,7 @@ router.post(
   validateRequest(createRecruitmentSchema),
   async (req, res, next) => {
     try {
-      const { title, categoryId, description, datetime, datetimeFlex, area, location, minPeople, maxPeople } =
+      const { title, categoryId, description, datetime, datetimeFlex, area, location, latitude, longitude, locationName, minPeople, maxPeople } =
         req.body
 
       // カテゴリの存在確認
@@ -294,6 +303,9 @@ router.post(
           datetimeFlex,
           area: area as Area,
           location,
+          latitude,
+          longitude,
+          locationName,
           minPeople,
           maxPeople,
         },
@@ -318,6 +330,9 @@ router.post(
           datetimeFlex: recruitment.datetimeFlex,
           area: recruitment.area,
           location: recruitment.location,
+          latitude: recruitment.latitude,
+          longitude: recruitment.longitude,
+          locationName: recruitment.locationName,
           minPeople: recruitment.minPeople,
           maxPeople: recruitment.maxPeople,
           currentPeople: 1,

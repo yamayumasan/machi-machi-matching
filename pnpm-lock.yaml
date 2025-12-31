@@ -39,6 +39,9 @@ importers:
       cors:
         specifier: ^2.8.0
         version: 2.8.5
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
       express:
         specifier: ^4.18.0
         version: 4.22.1
@@ -92,12 +95,27 @@ importers:
       '@machi/shared':
         specifier: workspace:*
         version: link:../shared
+      '@mdi/js':
+        specifier: ^7.4.47
+        version: 7.4.47
       '@supabase/supabase-js':
         specifier: ^2.39.0
         version: 2.89.0
+      '@types/leaflet.markercluster':
+        specifier: ^1.5.6
+        version: 1.5.6
+      '@vue-leaflet/vue-leaflet':
+        specifier: ^0.10.1
+        version: 0.10.1(@types/leaflet@1.9.21)(leaflet@1.9.4)(typescript@5.9.3)
       axios:
         specifier: ^1.6.0
         version: 1.13.2
+      leaflet:
+        specifier: ^1.9.4
+        version: 1.9.4
+      leaflet.markercluster:
+        specifier: ^1.5.3
+        version: 1.5.3(leaflet@1.9.4)
       pinia:
         specifier: ^2.1.0
         version: 2.3.1(typescript@5.9.3)(vue@3.5.26)
@@ -111,6 +129,9 @@ importers:
         specifier: ^4.2.0
         version: 4.6.4(vue@3.5.26)
     devDependencies:
+      '@types/leaflet':
+        specifier: ^1.9.21
+        version: 1.9.21
       '@vitejs/plugin-vue':
         specifier: ^4.5.0
         version: 4.6.2(vite@5.4.21)(vue@3.5.26)
@@ -625,6 +646,10 @@ packages:
       '@jridgewell/sourcemap-codec': 1.5.5
     dev: true
 
+  /@mdi/js@7.4.47:
+    resolution: {integrity: sha512-KPnNOtm5i2pMabqZxpUz7iQf+mfrYZyKCZ8QNz85czgEt7cuHcGorWfdzUMWYA0SD+a6Hn4FmJ+YhzzzjkTZrQ==}
+    dev: false
+
   /@nodelib/fs.scandir@2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
@@ -971,9 +996,23 @@ packages:
       '@types/serve-static': 1.15.10
     dev: true
 
+  /@types/geojson@7946.0.16:
+    resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
+
   /@types/http-errors@2.0.5:
     resolution: {integrity: sha512-r8Tayk8HJnX0FztbZN7oVqGccWgw98T/0neJphO91KkmOzug1KkofZURD4UaD5uH8AqcFLfdPErnBod0u71/qg==}
     dev: true
+
+  /@types/leaflet.markercluster@1.5.6:
+    resolution: {integrity: sha512-I7hZjO2+isVXGYWzKxBp8PsCzAYCJBc29qBdFpquOCkS7zFDqUsUvkEOyQHedsk/Cy5tocQzf+Ndorm5W9YKTQ==}
+    dependencies:
+      '@types/leaflet': 1.9.21
+    dev: false
+
+  /@types/leaflet@1.9.21:
+    resolution: {integrity: sha512-TbAd9DaPGSnzp6QvtYngntMZgcRk+igFELwR2N99XZn7RXUdKgsXMR+28bUO0rPsWp8MIu/f47luLIQuSLYv/w==}
+    dependencies:
+      '@types/geojson': 7946.0.16
 
   /@types/mime@1.3.5:
     resolution: {integrity: sha512-/pyBZWSLD2n0dcHE3hq8s8ZvcETHtEuF+3E7XVt0Ig2nvsVQXdghHVcEkIWjy9A0wKfTn97a/PSDYohKIlnP/w==}
@@ -1051,6 +1090,22 @@ packages:
       path-browserify: 1.0.1
       vscode-uri: 3.1.0
     dev: true
+
+  /@vue-leaflet/vue-leaflet@0.10.1(@types/leaflet@1.9.21)(leaflet@1.9.4)(typescript@5.9.3):
+    resolution: {integrity: sha512-RNEDk8TbnwrJl8ujdbKgZRFygLCxd0aBcWLQ05q/pGv4+d0jamE3KXQgQBqGAteE1mbQsk3xoNcqqUgaIGfWVg==}
+    peerDependencies:
+      '@types/leaflet': ^1.5.7
+      leaflet: ^1.6.0
+    peerDependenciesMeta:
+      '@types/leaflet':
+        optional: true
+    dependencies:
+      '@types/leaflet': 1.9.21
+      leaflet: 1.9.4
+      vue: 3.5.26(typescript@5.9.3)
+    transitivePeerDependencies:
+      - typescript
+    dev: false
 
   /@vue/compiler-core@3.5.26:
     resolution: {integrity: sha512-vXyI5GMfuoBCnv5ucIT7jhHKl55Y477yxP6fc4eUswjP8FG3FFVFd41eNDArR+Uk3QKn2Z85NavjaxLxOC19/w==}
@@ -1388,6 +1443,11 @@ packages:
   /dlv@1.1.3:
     resolution: {integrity: sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA==}
     dev: true
+
+  /dotenv@17.2.3:
+    resolution: {integrity: sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==}
+    engines: {node: '>=12'}
+    dev: false
 
   /dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -1845,6 +1905,18 @@ packages:
     resolution: {integrity: sha512-/imKNG4EbWNrVjoNC/1H5/9GFy+tqjGBHCaSsN+P2RnPqjsLmv6UD3Ej+Kj8nBWaRAwyk7kK5ZUc+OEatnTR3A==}
     hasBin: true
     dev: true
+
+  /leaflet.markercluster@1.5.3(leaflet@1.9.4):
+    resolution: {integrity: sha512-vPTw/Bndq7eQHjLBVlWpnGeLa3t+3zGiuM7fJwCkiMFq+nmRuG3RI3f7f4N4TDX7T4NpbAXpR2+NTRSEGfCSeA==}
+    peerDependencies:
+      leaflet: ^1.3.1
+    dependencies:
+      leaflet: 1.9.4
+    dev: false
+
+  /leaflet@1.9.4:
+    resolution: {integrity: sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==}
+    dev: false
 
   /lilconfig@3.1.3:
     resolution: {integrity: sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw==}

@@ -2,13 +2,16 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { CATEGORIES, AREA_LABELS } from '@machi/shared'
+import { CATEGORIES, AREA_LABELS, type Area } from '@machi/shared'
+import MdiIcon from '../components/MdiIcon.vue'
+import LocationPicker from '../components/LocationPicker.vue'
+import { getIconPath, mdiCamera, mdiCity, mdiCastle } from '../lib/icons'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const currentStep = ref(1)
-const totalSteps = 3
+const totalSteps = 4
 
 // Step 1: プロフィール
 const nickname = ref('')
@@ -19,6 +22,17 @@ const selectedCategories = ref<string[]>([])
 
 // Step 3: エリア
 const selectedArea = ref<string>('')
+
+// Step 4: 位置情報
+const locationData = ref<{
+  latitude: number | null
+  longitude: number | null
+  locationName: string | null
+}>({
+  latitude: null,
+  longitude: null,
+  locationName: null,
+})
 
 const isLoading = computed(() => authStore.isLoading)
 const error = computed(() => authStore.error)
@@ -31,6 +45,13 @@ onMounted(() => {
     if (authStore.user.area) selectedArea.value = authStore.user.area
     if (authStore.user.interests) {
       selectedCategories.value = authStore.user.interests.map((i) => i.id)
+    }
+    if (authStore.user.latitude || authStore.user.locationName) {
+      locationData.value = {
+        latitude: authStore.user.latitude ?? null,
+        longitude: authStore.user.longitude ?? null,
+        locationName: authStore.user.locationName ?? null,
+      }
     }
   }
 })
@@ -62,6 +83,9 @@ const handleComplete = async () => {
     bio: bio.value || null,
     area: selectedArea.value,
     categoryIds: selectedCategories.value,
+    latitude: locationData.value.latitude,
+    longitude: locationData.value.longitude,
+    locationName: locationData.value.locationName,
   })
 
   if (success) {
@@ -83,7 +107,9 @@ const handleComplete = async () => {
                 ? 'プロフィール設定'
                 : currentStep === 2
                   ? '興味のあるカテゴリ'
-                  : '活動エリア'
+                  : currentStep === 3
+                    ? '活動エリア'
+                    : '活動場所'
             }}
           </span>
         </div>
@@ -102,20 +128,7 @@ const handleComplete = async () => {
             <div
               class="w-24 h-24 mx-auto bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors"
             >
-              <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
+              <MdiIcon :path="mdiCamera" :size="32" class="text-gray-400" />
             </div>
             <p class="text-sm text-gray-500 mt-2">アイコンを設定（任意）</p>
           </div>
@@ -166,7 +179,7 @@ const handleComplete = async () => {
                   : 'border-gray-200 hover:border-gray-300',
               ]"
             >
-              <span class="text-2xl mb-1">{{ category.icon }}</span>
+              <MdiIcon :path="getIconPath(category.icon)" :size="28" class="text-primary-600 mb-1" />
               <span class="text-xs text-gray-700">{{ category.name }}</span>
             </button>
           </div>
@@ -190,10 +203,25 @@ const handleComplete = async () => {
                   : 'border-gray-200 hover:border-gray-300',
               ]"
             >
-              <span class="text-2xl mr-3">{{ key === 'TOKYO' ? '🗼' : '🏯' }}</span>
+              <MdiIcon :path="key === 'TOKYO' ? mdiCity : mdiCastle" :size="28" class="text-primary-600 mr-3" />
               <span class="font-medium">{{ label }}</span>
             </button>
           </div>
+        </div>
+
+        <!-- Step 4: 位置情報 -->
+        <div v-if="currentStep === 4">
+          <p class="text-gray-600 mb-4">よく活動する場所を設定しましょう（任意）</p>
+          <p class="text-sm text-gray-500 mb-6">近くの募集を見つけやすくなります</p>
+          <LocationPicker
+            v-model="locationData"
+            :area="selectedArea as Area"
+            :show-map-option="true"
+            label=""
+          />
+          <p class="text-xs text-gray-400 mt-4 text-center">
+            スキップして後から設定することもできます
+          </p>
         </div>
 
         <!-- Error message -->
@@ -216,7 +244,7 @@ const handleComplete = async () => {
           <button
             v-if="currentStep < totalSteps"
             @click="nextStep"
-            :disabled="(currentStep === 1 && !nickname) || (currentStep === 2 && selectedCategories.length === 0)"
+            :disabled="(currentStep === 1 && !nickname) || (currentStep === 2 && selectedCategories.length === 0) || (currentStep === 3 && !selectedArea)"
             class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             次へ
@@ -224,7 +252,7 @@ const handleComplete = async () => {
           <button
             v-else
             @click="handleComplete"
-            :disabled="!selectedArea || isLoading"
+            :disabled="isLoading"
             class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span v-if="isLoading" class="flex items-center gap-2">

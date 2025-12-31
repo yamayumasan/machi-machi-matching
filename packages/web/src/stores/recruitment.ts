@@ -31,6 +31,9 @@ interface Recruitment {
   datetimeFlex: string | null
   area: string
   location: string | null
+  latitude?: number | null
+  longitude?: number | null
+  locationName?: string | null
   minPeople: number
   maxPeople: number
   currentPeople: number
@@ -178,6 +181,9 @@ export const useRecruitmentStore = defineStore('recruitment', () => {
     datetimeFlex?: string | null
     area: string
     location?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    locationName?: string | null
     minPeople?: number
     maxPeople?: number
   }) => {

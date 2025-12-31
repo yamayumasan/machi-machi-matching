@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
+
+const route = useRoute()
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-50">
-    <RouterView />
+    <RouterView :key="route.fullPath" />
   </div>
 </template>

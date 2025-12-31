@@ -12,16 +12,19 @@ datasource db {
 // ============================================
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  name        String?
-  nickname    String?
-  avatarUrl   String?
-  bio         String?
-  area        Area?
-  isOnboarded Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  nickname     String?
+  avatarUrl    String?
+  bio          String?
+  area         Area?
+  latitude     Float?
+  longitude    Float?
+  locationName String?  // 駅名・ランドマーク名
+  isOnboarded  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
   interests      UserCategory[]
@@ -69,15 +72,18 @@ model Category {
 // ============================================
 
 model WantToDo {
-  id         String         @id @default(cuid())
-  userId     String
-  categoryId String
-  timing     Timing         @default(ANYTIME)
-  comment    String?
-  status     WantToDoStatus @default(ACTIVE)
-  expiresAt  DateTime
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  id           String         @id @default(cuid())
+  userId       String
+  categoryId   String
+  timing       Timing         @default(ANYTIME)
+  comment      String?
+  latitude     Float?
+  longitude    Float?
+  locationName String?        // 駅名・ランドマーク名
+  status       WantToDoStatus @default(ACTIVE)
+  expiresAt    DateTime
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -101,6 +107,9 @@ model Recruitment {
   datetimeFlex String?
   area         Area
   location     String?
+  latitude     Float?
+  longitude    Float?
+  locationName String?           // 駅名・ランドマーク名
   minPeople    Int               @default(1)
   maxPeople    Int               @default(10)
   status       RecruitmentStatus @default(OPEN)

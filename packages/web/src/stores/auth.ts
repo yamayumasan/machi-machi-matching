@@ -9,6 +9,9 @@ interface AuthUser {
   avatarUrl: string | null
   bio?: string | null
   area: string | null
+  latitude?: number | null
+  longitude?: number | null
+  locationName?: string | null
   isOnboarded: boolean
   interests: Array<{ id: string; name: string }>
 }
@@ -249,6 +252,9 @@ export const useAuthStore = defineStore('auth', () => {
     bio?: string | null
     area: string
     categoryIds: string[]
+    latitude?: number | null
+    longitude?: number | null
+    locationName?: string | null
   }) => {
     isLoading.value = true
     error.value = null
@@ -272,6 +278,9 @@ export const useAuthStore = defineStore('auth', () => {
     nickname?: string
     bio?: string | null
     area?: string
+    latitude?: number | null
+    longitude?: number | null
+    locationName?: string | null
   }) => {
     isLoading.value = true
     error.value = null
