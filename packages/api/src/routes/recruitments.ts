@@ -10,6 +10,14 @@ import { validateRequest } from '../middlewares/validateRequest'
 import { requireAuth, requireOnboarding, optionalAuth } from '../middlewares/auth'
 import { prisma } from '../lib/prisma'
 import { Area, RecruitmentStatus, ApplicationStatus, OfferStatus } from '@prisma/client'
+import {
+  notifyApplicationReceived,
+  notifyApplicationApproved,
+  notifyApplicationRejected,
+  notifyOfferReceived,
+  notifyOfferAccepted,
+  notifyOfferDeclined,
+} from '../services/notificationService'
 
 const router = Router()
 
@@ -619,6 +627,19 @@ router.post('/:id/apply', requireAuth, requireOnboarding, async (req, res, next)
       },
     })
 
+    // 募集者に通知を送信
+    try {
+      await notifyApplicationReceived(
+        recruitment.creatorId,
+        req.user!.nickname || 'ユーザー',
+        id,
+        recruitment.title,
+        application.id
+      )
+    } catch (notifyError) {
+      console.error('Failed to send notification:', notifyError)
+    }
+
     res.status(201).json({
       success: true,
       data: {
@@ -768,6 +789,27 @@ router.put('/:recruitmentId/applications/:applicationId', requireAuth, async (re
       },
     })
 
+    // 申請者に通知を送信
+    try {
+      if (action === 'APPROVE') {
+        await notifyApplicationApproved(
+          application.applicantId,
+          recruitmentId,
+          recruitment.title,
+          applicationId
+        )
+      } else {
+        await notifyApplicationRejected(
+          application.applicantId,
+          recruitmentId,
+          recruitment.title,
+          applicationId
+        )
+      }
+    } catch (notifyError) {
+      console.error('Failed to send notification:', notifyError)
+    }
+
     res.json({
       success: true,
       data: {
@@ -863,6 +905,19 @@ router.post('/:id/offer', requireAuth, requireOnboarding, async (req, res, next)
         message,
       },
     })
+
+    // 受信者に通知を送信
+    try {
+      await notifyOfferReceived(
+        receiverId,
+        req.user!.nickname || 'ユーザー',
+        id,
+        recruitment.title,
+        offer.id
+      )
+    } catch (notifyError) {
+      console.error('Failed to send notification:', notifyError)
+    }
 
     res.status(201).json({
       success: true,
@@ -960,6 +1015,36 @@ router.put('/:recruitmentId/offers/:offerId', requireAuth, async (req, res, next
       })
     }
 
+    // オファー送信者に通知を送信
+    try {
+      // 募集情報を取得
+      const recruitment = await prisma.recruitment.findUnique({
+        where: { id: recruitmentId },
+      })
+
+      if (recruitment) {
+        if (action === 'ACCEPT') {
+          await notifyOfferAccepted(
+            offer.senderId,
+            req.user!.nickname || 'ユーザー',
+            recruitmentId,
+            recruitment.title,
+            offerId
+          )
+        } else {
+          await notifyOfferDeclined(
+            offer.senderId,
+            req.user!.nickname || 'ユーザー',
+            recruitmentId,
+            recruitment.title,
+            offerId
+          )
+        }
+      }
+    } catch (notifyError) {
+      console.error('Failed to send notification:', notifyError)
+    }
+
     res.json({
       success: true,
       data: {
@@ -967,6 +1052,131 @@ router.put('/:recruitmentId/offers/:offerId', requireAuth, async (req, res, next
         status: updated.status,
         respondedAt: updated.respondedAt,
       },
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// GET /api/recruitments/:id/suggestions - おすすめユーザー一覧
+router.get('/:id/suggestions', requireAuth, async (req, res, next) => {
+  try {
+    const { id } = req.params
+
+    const recruitment = await prisma.recruitment.findUnique({
+      where: { id },
+      include: {
+        category: true,
+      },
+    })
+
+    if (!recruitment) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Recruitment not found',
+        },
+      })
+    }
+
+    if (recruitment.creatorId !== req.user!.id) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Not authorized',
+        },
+      })
+    }
+
+    // 既にオファー送信済み・申請済みのユーザーIDを取得
+    const [existingOffers, existingApplications] = await Promise.all([
+      prisma.offer.findMany({
+        where: { recruitmentId: id },
+        select: { receiverId: true },
+      }),
+      prisma.application.findMany({
+        where: { recruitmentId: id },
+        select: { applicantId: true },
+      }),
+    ])
+
+    const excludedUserIds = new Set([
+      recruitment.creatorId,
+      ...existingOffers.map((o) => o.receiverId),
+      ...existingApplications.map((a) => a.applicantId),
+    ])
+
+    // 同じカテゴリに興味があるユーザーを取得
+    const usersWithInterest = await prisma.user.findMany({
+      where: {
+        id: { notIn: Array.from(excludedUserIds) },
+        isOnboarded: true,
+        area: recruitment.area,
+        interests: {
+          some: { categoryId: recruitment.categoryId },
+        },
+      },
+      select: {
+        id: true,
+        nickname: true,
+        avatarUrl: true,
+        bio: true,
+        interests: {
+          include: {
+            category: {
+              select: { name: true },
+            },
+          },
+        },
+        wantToDos: {
+          where: {
+            status: 'ACTIVE',
+            categoryId: recruitment.categoryId,
+          },
+          select: {
+            id: true,
+            comment: true,
+            timing: true,
+          },
+          take: 1,
+        },
+      },
+      take: 10,
+    })
+
+    // スコア計算とソート
+    const suggestions = usersWithInterest.map((user) => {
+      const hasActiveWantToDo = user.wantToDos.length > 0
+      const matchedCategories = user.interests.map((i) => i.category.name)
+
+      // スコア計算: やりたいこと表明中 > 興味カテゴリ一致
+      let score = matchedCategories.length
+      if (hasActiveWantToDo) {
+        score += 10
+      }
+
+      return {
+        user: {
+          id: user.id,
+          nickname: user.nickname || 'ユーザー',
+          avatarUrl: user.avatarUrl,
+          bio: user.bio,
+        },
+        score,
+        hasActiveWantToDo,
+        wantToDo: user.wantToDos[0] || undefined,
+        matchedCategories: matchedCategories.slice(0, 3),
+      }
+    })
+
+    // スコア順にソート
+    suggestions.sort((a, b) => b.score - a.score)
+
+    res.json({
+      success: true,
+      data: suggestions,
     })
   } catch (error) {
     next(error)

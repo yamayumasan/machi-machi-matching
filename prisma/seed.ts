@@ -1,4 +1,13 @@
-import { PrismaClient, Area, Timing, RecruitmentStatus } from '@prisma/client'
+import {
+  PrismaClient,
+  Area,
+  Timing,
+  RecruitmentStatus,
+  ApplicationStatus,
+  OfferStatus,
+  NotificationType,
+  GroupMemberRole,
+} from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -43,11 +52,31 @@ const SENDAI_LOCATIONS = [
 
 // ダミーユーザー名
 const NICKNAMES = [
-  'ゆうき', 'はると', 'そうた', 'れん', 'みなと',
-  'さくら', 'ゆい', 'あおい', 'ひまり', 'めい',
-  'たくや', 'こうき', 'りょうた', 'かいと', 'しょうた',
-  'はな', 'りこ', 'ももか', 'ゆな', 'ことね',
-  'だいき', 'けんた', 'ゆうと', 'そら', 'りく',
+  'ゆうき',
+  'はると',
+  'そうた',
+  'れん',
+  'みなと',
+  'さくら',
+  'ゆい',
+  'あおい',
+  'ひまり',
+  'めい',
+  'たくや',
+  'こうき',
+  'りょうた',
+  'かいと',
+  'しょうた',
+  'はな',
+  'りこ',
+  'ももか',
+  'ゆな',
+  'ことね',
+  'だいき',
+  'けんた',
+  'ゆうと',
+  'そら',
+  'りく',
 ]
 
 // Bio例
@@ -102,6 +131,20 @@ const WANT_TO_DO_COMMENTS: Record<string, string[]> = {
   '15': ['勉強会参加したい', '一緒に学びたい', 'スキルアップしたい'],
 }
 
+// メッセージ例
+const SAMPLE_MESSAGES = [
+  'はじめまして！よろしくお願いします！',
+  '参加できてうれしいです',
+  '楽しみにしています！',
+  '日程調整しましょう',
+  '場所はどこがいいですか？',
+  '了解です！',
+  '当日よろしくお願いします',
+  '何か持っていくものありますか？',
+  '初めてなので緊張しています',
+  'ありがとうございます！',
+]
+
 // ランダムに配列から要素を取得
 function randomPick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
@@ -129,20 +172,52 @@ function futureDate(daysFromNow: number): Date {
   return date
 }
 
+// 過去の日時を生成
+function pastDate(daysAgo: number, hoursAgo: number = 0): Date {
+  const date = new Date()
+  date.setDate(date.getDate() - daysAgo)
+  date.setHours(date.getHours() - hoursAgo)
+  return date
+}
+
 async function seedTestData() {
   console.log('🧪 Creating test data for Sendai area...')
 
-  // 既存のテストユーザーを削除（メールが test_ で始まるもの）
+  // 既存のテストデータを削除
+  console.log('🗑️ Cleaning up existing test data...')
+  await prisma.notification.deleteMany({
+    where: { user: { email: { startsWith: 'test_' } } },
+  })
+  await prisma.message.deleteMany({
+    where: { sender: { email: { startsWith: 'test_' } } },
+  })
+  await prisma.groupMember.deleteMany({
+    where: { user: { email: { startsWith: 'test_' } } },
+  })
+  await prisma.group.deleteMany({
+    where: { recruitment: { creator: { email: { startsWith: 'test_' } } } },
+  })
+  await prisma.offer.deleteMany({
+    where: { sender: { email: { startsWith: 'test_' } } },
+  })
+  await prisma.application.deleteMany({
+    where: { applicant: { email: { startsWith: 'test_' } } },
+  })
+  await prisma.wantToDo.deleteMany({
+    where: { user: { email: { startsWith: 'test_' } } },
+  })
+  await prisma.recruitment.deleteMany({
+    where: { creator: { email: { startsWith: 'test_' } } },
+  })
+  await prisma.userCategory.deleteMany({
+    where: { user: { email: { startsWith: 'test_' } } },
+  })
   await prisma.user.deleteMany({
-    where: {
-      email: {
-        startsWith: 'test_',
-      },
-    },
+    where: { email: { startsWith: 'test_' } },
   })
 
   // テストユーザーを作成（25人）
-  const users: { id: string; nickname: string }[] = []
+  const users: { id: string; nickname: string; email: string }[] = []
   for (let i = 0; i < 25; i++) {
     const location = randomPick(SENDAI_LOCATIONS)
     const jitteredLoc = jitterLocation(location.lat, location.lng)
@@ -159,25 +234,49 @@ async function seedTestData() {
         isOnboarded: true,
       },
     })
-    users.push({ id: user.id, nickname: user.nickname ?? '' })
+    users.push({ id: user.id, nickname: user.nickname ?? '', email: user.email })
   }
   console.log(`✅ Created ${users.length} test users`)
 
-  // 募集を作成（30件）
-  let recruitmentCount = 0
-  for (let i = 0; i < 30; i++) {
-    const creator = randomPick(users)
+  // ユーザーに興味カテゴリを設定（各ユーザーに2-5個）
+  for (const user of users) {
+    const categoryCount = randomInt(2, 5)
+    const categoryIds = new Set<string>()
+    while (categoryIds.size < categoryCount) {
+      categoryIds.add(String(randomInt(1, 15)))
+    }
+    for (const categoryId of categoryIds) {
+      await prisma.userCategory.create({
+        data: {
+          userId: user.id,
+          categoryId,
+        },
+      })
+    }
+  }
+  console.log(`✅ Assigned interest categories to users`)
+
+  // 募集を作成（20件）- IDを保持
+  const recruitments: {
+    id: string
+    creatorId: string
+    categoryId: string
+    title: string
+  }[] = []
+  for (let i = 0; i < 20; i++) {
+    const creator = users[i % users.length]
     const categoryId = String(randomInt(1, 15))
     const titles = RECRUITMENT_TITLES[categoryId]
     const location = randomPick(SENDAI_LOCATIONS)
     const jitteredLoc = jitterLocation(location.lat, location.lng)
-    const maxPeople = randomInt(2, 8)
+    const maxPeople = randomInt(3, 8)
+    const title = randomPick(titles)
 
-    await prisma.recruitment.create({
+    const recruitment = await prisma.recruitment.create({
       data: {
         creatorId: creator.id,
         categoryId,
-        title: randomPick(titles),
+        title,
         description: `${creator.nickname}です。一緒に楽しみましょう！`,
         datetime: Math.random() > 0.3 ? futureDate(randomInt(1, 14)) : null,
         datetimeFlex: Math.random() > 0.5 ? '週末のどこかで' : null,
@@ -191,16 +290,24 @@ async function seedTestData() {
         status: RecruitmentStatus.OPEN,
       },
     })
-    recruitmentCount++
+    recruitments.push({
+      id: recruitment.id,
+      creatorId: creator.id,
+      categoryId,
+      title,
+    })
   }
-  console.log(`✅ Created ${recruitmentCount} recruitments`)
+  console.log(`✅ Created ${recruitments.length} recruitments`)
 
-  // 表明を作成（40件）
+  // 表明を作成（30件）- 提案機能のテスト用に募集と同じカテゴリの表明を作成
   const timings: Timing[] = [Timing.THIS_WEEK, Timing.NEXT_WEEK, Timing.THIS_MONTH, Timing.ANYTIME]
   let wantToDoCount = 0
-  for (let i = 0; i < 40; i++) {
-    const user = randomPick(users)
-    const categoryId = String(randomInt(1, 15))
+  for (let i = 0; i < 30; i++) {
+    // 募集作成者以外のユーザーを選ぶ
+    const userIndex = (i + 5) % users.length
+    const user = users[userIndex]
+    // 一部は募集と同じカテゴリにする（提案機能テスト用）
+    const categoryId = i < 10 ? recruitments[i % recruitments.length].categoryId : String(randomInt(1, 15))
     const comments = WANT_TO_DO_COMMENTS[categoryId]
     const location = randomPick(SENDAI_LOCATIONS)
     const jitteredLoc = jitterLocation(location.lat, location.lng)
@@ -224,7 +331,244 @@ async function seedTestData() {
   }
   console.log(`✅ Created ${wantToDoCount} want-to-dos`)
 
+  // 参加申請を作成（様々なステータス）
+  let applicationCount = 0
+  for (let i = 0; i < 15; i++) {
+    const recruitment = recruitments[i % recruitments.length]
+    // 募集者以外のユーザーを選ぶ
+    const applicant = users.find((u) => u.id !== recruitment.creatorId)!
+
+    // 既存の申請があるかチェック
+    const existing = await prisma.application.findUnique({
+      where: {
+        recruitmentId_applicantId: {
+          recruitmentId: recruitment.id,
+          applicantId: applicant.id,
+        },
+      },
+    })
+    if (existing) continue
+
+    const statuses: ApplicationStatus[] = [
+      ApplicationStatus.PENDING,
+      ApplicationStatus.PENDING,
+      ApplicationStatus.APPROVED,
+      ApplicationStatus.REJECTED,
+    ]
+    const status = randomPick(statuses)
+
+    await prisma.application.create({
+      data: {
+        recruitmentId: recruitment.id,
+        applicantId: applicant.id,
+        status,
+        message: '参加させてください！よろしくお願いします。',
+        respondedAt: status !== ApplicationStatus.PENDING ? pastDate(randomInt(0, 3)) : null,
+      },
+    })
+    applicationCount++
+  }
+  console.log(`✅ Created ${applicationCount} applications`)
+
+  // オファーを作成（様々なステータス）
+  let offerCount = 0
+  for (let i = 0; i < 12; i++) {
+    const recruitment = recruitments[i % recruitments.length]
+    // 募集者以外のユーザーを選ぶ（申請者とも違うユーザー）
+    const receiverIndex = (i + 10) % users.length
+    const receiver = users[receiverIndex]
+    if (receiver.id === recruitment.creatorId) continue
+
+    // 既存のオファーがあるかチェック
+    const existing = await prisma.offer.findUnique({
+      where: {
+        recruitmentId_receiverId: {
+          recruitmentId: recruitment.id,
+          receiverId: receiver.id,
+        },
+      },
+    })
+    if (existing) continue
+
+    const statuses: OfferStatus[] = [
+      OfferStatus.PENDING,
+      OfferStatus.PENDING,
+      OfferStatus.ACCEPTED,
+      OfferStatus.DECLINED,
+    ]
+    const status = randomPick(statuses)
+
+    await prisma.offer.create({
+      data: {
+        recruitmentId: recruitment.id,
+        senderId: recruitment.creatorId,
+        receiverId: receiver.id,
+        status,
+        message: 'ぜひ参加しませんか？',
+        respondedAt: status !== OfferStatus.PENDING ? pastDate(randomInt(0, 3)) : null,
+      },
+    })
+    offerCount++
+  }
+  console.log(`✅ Created ${offerCount} offers`)
+
+  // グループを作成（承認済み申請または承諾済みオファーがある募集から）
+  const groupRecruitments = recruitments.slice(0, 5)
+  let groupCount = 0
+  for (const recruitment of groupRecruitments) {
+    // グループ作成
+    const group = await prisma.group.create({
+      data: {
+        recruitmentId: recruitment.id,
+        name: recruitment.title,
+      },
+    })
+
+    // オーナーをメンバーとして追加
+    await prisma.groupMember.create({
+      data: {
+        groupId: group.id,
+        userId: recruitment.creatorId,
+        role: GroupMemberRole.OWNER,
+        lastReadAt: new Date(),
+      },
+    })
+
+    // 他のメンバーを追加（2-4人）
+    const memberCount = randomInt(2, 4)
+    const addedMembers = new Set<string>([recruitment.creatorId])
+    for (let j = 0; j < memberCount; j++) {
+      const member = users[(groupCount * 5 + j + 3) % users.length]
+      if (addedMembers.has(member.id)) continue
+      addedMembers.add(member.id)
+
+      await prisma.groupMember.create({
+        data: {
+          groupId: group.id,
+          userId: member.id,
+          role: GroupMemberRole.MEMBER,
+          // 一部のメンバーは古いlastReadAtにして未読メッセージをテスト
+          lastReadAt: j === 0 ? pastDate(1) : new Date(),
+        },
+      })
+    }
+
+    // メッセージを追加（各グループに5-10件）
+    const messageCount = randomInt(5, 10)
+    const memberIds = Array.from(addedMembers)
+    for (let k = 0; k < messageCount; k++) {
+      const senderId = memberIds[k % memberIds.length]
+      await prisma.message.create({
+        data: {
+          groupId: group.id,
+          senderId,
+          content: randomPick(SAMPLE_MESSAGES),
+          createdAt: pastDate(0, messageCount - k), // 時間順に並ぶように
+        },
+      })
+    }
+
+    groupCount++
+  }
+  console.log(`✅ Created ${groupCount} groups with messages`)
+
+  // 通知を作成（各種類）
+  let notificationCount = 0
+
+  // 最初の5人のユーザーに様々な通知を作成
+  for (let i = 0; i < 5; i++) {
+    const user = users[i]
+    const recruitment = recruitments[i]
+
+    // 申請受信通知
+    await prisma.notification.create({
+      data: {
+        userId: user.id,
+        type: NotificationType.APPLICATION_RECEIVED,
+        title: '新しい参加申請',
+        body: `${users[(i + 5) % users.length].nickname}さんが「${recruitment.title}」に参加申請しました`,
+        data: { recruitmentId: recruitment.id },
+        isRead: i % 2 === 0, // 半分は既読
+        createdAt: pastDate(0, i),
+      },
+    })
+    notificationCount++
+
+    // オファー受信通知
+    await prisma.notification.create({
+      data: {
+        userId: user.id,
+        type: NotificationType.OFFER_RECEIVED,
+        title: 'オファーが届きました',
+        body: `${users[(i + 3) % users.length].nickname}さんから「${recruitments[(i + 1) % recruitments.length].title}」への参加オファーが届きました`,
+        data: { recruitmentId: recruitments[(i + 1) % recruitments.length].id },
+        isRead: false,
+        createdAt: pastDate(0, i + 2),
+      },
+    })
+    notificationCount++
+
+    // 申請承認通知
+    await prisma.notification.create({
+      data: {
+        userId: user.id,
+        type: NotificationType.APPLICATION_APPROVED,
+        title: '申請が承認されました',
+        body: `「${recruitments[(i + 2) % recruitments.length].title}」への参加が承認されました`,
+        data: { recruitmentId: recruitments[(i + 2) % recruitments.length].id },
+        isRead: i % 3 === 0,
+        createdAt: pastDate(1, i),
+      },
+    })
+    notificationCount++
+
+    // グループ作成通知
+    if (i < groupCount) {
+      await prisma.notification.create({
+        data: {
+          userId: user.id,
+          type: NotificationType.GROUP_CREATED,
+          title: 'グループが作成されました',
+          body: `「${groupRecruitments[i].title}」のグループが作成されました`,
+          data: { recruitmentId: groupRecruitments[i].id },
+          isRead: false,
+          createdAt: pastDate(0, i + 5),
+        },
+      })
+      notificationCount++
+    }
+
+    // 新着メッセージ通知
+    await prisma.notification.create({
+      data: {
+        userId: user.id,
+        type: NotificationType.NEW_MESSAGE,
+        title: '新着メッセージ',
+        body: `${users[(i + 7) % users.length].nickname}さんからメッセージが届きました`,
+        data: {},
+        isRead: false,
+        createdAt: pastDate(0, 1),
+      },
+    })
+    notificationCount++
+  }
+  console.log(`✅ Created ${notificationCount} notifications`)
+
   console.log('🧪 Test data seeding completed!')
+  console.log('')
+  console.log('📋 テストデータ概要:')
+  console.log(`   - ユーザー: ${users.length}人 (test_user_0〜24@example.com)`)
+  console.log(`   - 募集: ${recruitments.length}件`)
+  console.log(`   - やりたいこと表明: ${wantToDoCount}件`)
+  console.log(`   - 参加申請: ${applicationCount}件`)
+  console.log(`   - オファー: ${offerCount}件`)
+  console.log(`   - グループ: ${groupCount}件`)
+  console.log(`   - 通知: ${notificationCount}件`)
+  console.log('')
+  console.log('💡 動作確認用ユーザー:')
+  console.log('   test_user_0@example.com - 通知・グループ・募集あり')
+  console.log('   test_user_1@example.com - 通知・グループ・募集あり')
+  console.log('   test_user_5@example.com - やりたいこと表明あり（提案テスト用）')
 }
 
 async function main() {

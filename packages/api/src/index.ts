@@ -24,8 +24,10 @@ import { wantToDosRouter } from './routes/wantToDos'
 import { recruitmentsRouter } from './routes/recruitments'
 import { groupsRouter } from './routes/groups'
 import { nearbyRouter } from './routes/nearby'
+import { notificationsRouter } from './routes/notifications'
 import { errorHandler } from './middlewares/errorHandler'
 import { setupSocket } from './socket'
+import { startScheduler } from './services/schedulerService'
 
 const app = express()
 const httpServer = createServer(app)
@@ -64,6 +66,7 @@ app.use('/api/want-to-dos', wantToDosRouter)
 app.use('/api/recruitments', recruitmentsRouter)
 app.use('/api/groups', groupsRouter)
 app.use('/api/nearby', nearbyRouter)
+app.use('/api/notifications', notificationsRouter)
 
 // Error handler
 app.use(errorHandler)
@@ -75,6 +78,9 @@ setupSocket(io)
 const PORT = process.env.PORT || 3000
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
+
+  // スケジューラーを開始（期限切れ募集の自動締め切りなど）
+  startScheduler()
 })
 
 export { app, io }

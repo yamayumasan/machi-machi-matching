@@ -81,10 +81,17 @@ const goBack = () => {
         >
           <div class="flex items-start gap-4">
             <!-- Group icon -->
-            <div class="flex-shrink-0">
+            <div class="flex-shrink-0 relative">
               <div class="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center">
                 <span class="text-2xl">{{ group.recruitment.category.icon }}</span>
               </div>
+              <!-- 未読バッジ -->
+              <span
+                v-if="group.unreadCount && group.unreadCount > 0"
+                class="absolute -top-1 -right-1 min-w-[20px] h-[20px] flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-1"
+              >
+                {{ group.unreadCount > 99 ? '99+' : group.unreadCount }}
+              </span>
             </div>
 
             <!-- Content -->

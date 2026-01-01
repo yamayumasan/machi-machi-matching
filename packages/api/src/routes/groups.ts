@@ -3,6 +3,7 @@ import { createMessageSchema } from '@machi/shared'
 import { validateRequest } from '../middlewares/validateRequest'
 import { requireAuth, requireOnboarding } from '../middlewares/auth'
 import { prisma } from '../lib/prisma'
+import { notifyGroupCreated } from '../services/notificationService'
 
 const router = Router()
 
@@ -13,10 +14,12 @@ const router = Router()
 // GET /api/groups - 参加中のグループ一覧
 router.get('/', requireAuth, requireOnboarding, async (req, res, next) => {
   try {
+    const userId = req.user!.id
+
     const groups = await prisma.group.findMany({
       where: {
         members: {
-          some: { userId: req.user!.id },
+          some: { userId },
         },
       },
       include: {
@@ -58,34 +61,53 @@ router.get('/', requireAuth, requireOnboarding, async (req, res, next) => {
       orderBy: { updatedAt: 'desc' },
     })
 
+    // 各グループの未読数を計算
+    const groupsWithUnread = await Promise.all(
+      groups.map(async (g) => {
+        const myMembership = g.members.find((m) => m.userId === userId)
+        const lastReadAt = myMembership?.lastReadAt || new Date(0)
+
+        const unreadCount = await prisma.message.count({
+          where: {
+            groupId: g.id,
+            createdAt: { gt: lastReadAt },
+            senderId: { not: userId }, // 自分のメッセージは除外
+          },
+        })
+
+        return {
+          id: g.id,
+          name: g.name,
+          recruitment: {
+            id: g.recruitment.id,
+            title: g.recruitment.title,
+            category: g.recruitment.category,
+          },
+          members: g.members.map((m) => ({
+            id: m.user.id,
+            nickname: m.user.nickname,
+            avatarUrl: m.user.avatarUrl,
+            role: m.role,
+            joinedAt: m.joinedAt,
+          })),
+          lastMessage: g.messages[0]
+            ? {
+                id: g.messages[0].id,
+                content: g.messages[0].content,
+                senderId: g.messages[0].senderId,
+                senderNickname: g.messages[0].sender.nickname,
+                createdAt: g.messages[0].createdAt,
+              }
+            : null,
+          unreadCount,
+          updatedAt: g.updatedAt,
+        }
+      })
+    )
+
     res.json({
       success: true,
-      data: groups.map((g) => ({
-        id: g.id,
-        name: g.name,
-        recruitment: {
-          id: g.recruitment.id,
-          title: g.recruitment.title,
-          category: g.recruitment.category,
-        },
-        members: g.members.map((m) => ({
-          id: m.user.id,
-          nickname: m.user.nickname,
-          avatarUrl: m.user.avatarUrl,
-          role: m.role,
-          joinedAt: m.joinedAt,
-        })),
-        lastMessage: g.messages[0]
-          ? {
-              id: g.messages[0].id,
-              content: g.messages[0].content,
-              senderId: g.messages[0].senderId,
-              senderNickname: g.messages[0].sender.nickname,
-              createdAt: g.messages[0].createdAt,
-            }
-          : null,
-        updatedAt: g.updatedAt,
-      })),
+      data: groupsWithUnread,
     })
   } catch (error) {
     next(error)
@@ -286,6 +308,17 @@ router.post(
         return newGroup
       })
 
+      // 全メンバーに通知を送信
+      try {
+        const memberIds = [
+          recruitment.creatorId,
+          ...recruitment.applications.map((a) => a.applicantId),
+        ]
+        await notifyGroupCreated(memberIds, group.id, group.name, recruitmentId)
+      } catch (notifyError) {
+        console.error('Failed to send group created notification:', notifyError)
+      }
+
       res.status(201).json({
         success: true,
         data: {
@@ -347,6 +380,19 @@ router.get('/:id/messages', requireAuth, requireOnboarding, async (req, res, nex
       orderBy: { createdAt: 'desc' },
       take: Math.min(parseInt(limit as string, 10), 100),
     })
+
+    // 最新のメッセージを取得した場合はlastReadAtを更新
+    if (!before && messages.length > 0) {
+      await prisma.groupMember.update({
+        where: {
+          groupId_userId: {
+            groupId: id,
+            userId: req.user!.id,
+          },
+        },
+        data: { lastReadAt: new Date() },
+      })
+    }
 
     res.json({
       success: true,

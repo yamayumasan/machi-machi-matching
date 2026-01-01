@@ -145,9 +145,18 @@ export const createMessageSchema = z.object({
 })
 
 // ============================================
+// 通知スキーマ
+// ============================================
+
+export const notificationQuerySchema = paginationSchema.extend({
+  unreadOnly: z.coerce.boolean().optional().default(false),
+})
+
+// ============================================
 // 型エクスポート
 // ============================================
 
+export type NotificationQuery = z.infer<typeof notificationQuerySchema>
 export type SignUpInput = z.infer<typeof signUpSchema>
 export type SignInInput = z.infer<typeof signInSchema>
 export type UpdateUserInput = z.infer<typeof updateUserSchema>

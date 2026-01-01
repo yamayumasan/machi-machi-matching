@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useRecruitmentStore } from '../stores/recruitment'
@@ -8,7 +8,8 @@ import { AREA_LABELS, TIMING_LABELS, type Timing } from '@machi/shared'
 import ModalSheet from './ModalSheet.vue'
 import MdiIcon from './MdiIcon.vue'
 import UserAvatar from './UserAvatar.vue'
-import { getIconPath, mdiMapMarker, mdiLogout, mdiClock, mdiAccountGroup } from '../lib/icons'
+import { getIconPath, mdiMapMarker, mdiLogout, mdiClock, mdiAccountGroup, mdiCamera } from '../lib/icons'
+import { api } from '../lib/api'
 
 interface Props {
   modelValue: boolean
@@ -99,19 +100,70 @@ const getStatusClass = (status: string) => {
 
 const handleLogout = async () => {
   emit('update:modelValue', false)
-  await nextTick()
+  // Transitionのアニメーション完了を待つ（200ms + バッファ）
+  await new Promise(resolve => setTimeout(resolve, 250))
   await authStore.signOut()
   router.push('/login')
 }
 
 const goToRecruitmentApplications = async (recruitmentId: string) => {
   emit('update:modelValue', false)
-  await nextTick()
+  // Transitionのアニメーション完了を待つ（200ms + バッファ）
+  await new Promise(resolve => setTimeout(resolve, 250))
   router.push(`/recruitments/${recruitmentId}/applications`)
 }
 
 const closeModal = () => {
   emit('update:modelValue', false)
+}
+
+// アバターアップロード
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const isUploading = ref(false)
+
+const handleAvatarClick = () => {
+  fileInputRef.value?.click()
+}
+
+const handleFileSelect = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  // ファイルサイズチェック（5MB）
+  if (file.size > 5 * 1024 * 1024) {
+    alert('ファイルサイズは5MB以下にしてください')
+    return
+  }
+
+  // ファイル形式チェック
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    alert('JPEG、PNG、GIF、WebP形式の画像を選択してください')
+    return
+  }
+
+  isUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    const response = await api.postFormData<{ avatarUrl: string }>('/users/me/avatar', formData)
+
+    if (response.success) {
+      // ユーザー情報を再取得して更新
+      await authStore.fetchCurrentUser()
+    }
+  } catch (err) {
+    console.error('Avatar upload failed:', err)
+    alert('画像のアップロードに失敗しました')
+  } finally {
+    isUploading.value = false
+    // ファイル選択をリセット
+    if (target) {
+      target.value = ''
+    }
+  }
 }
 </script>
 
@@ -124,13 +176,43 @@ const closeModal = () => {
     :fullscreen="true"
   >
     <div class="p-4 space-y-4">
+      <!-- Hidden file input -->
+      <input
+        ref="fileInputRef"
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        class="hidden"
+        @change="handleFileSelect"
+      />
+
       <!-- User Info -->
       <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-        <UserAvatar
-          :src="user?.avatarUrl"
-          :name="user?.nickname"
-          size="xl"
-        />
+        <div class="relative">
+          <button
+            @click="handleAvatarClick"
+            class="group relative"
+            :disabled="isUploading"
+          >
+            <UserAvatar
+              :src="user?.avatarUrl"
+              :name="user?.nickname"
+              size="xl"
+              :class="{ 'opacity-50': isUploading }"
+            />
+            <div
+              class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              :class="{ 'opacity-100': isUploading }"
+            >
+              <div v-if="isUploading" class="animate-spin">
+                <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+              <MdiIcon v-else :path="mdiCamera" :size="24" class="text-white" />
+            </div>
+          </button>
+        </div>
         <div class="flex-1 min-w-0">
           <h2 class="text-lg font-bold truncate">{{ user?.nickname || '未設定' }}</h2>
           <div class="flex items-center gap-2 text-sm text-gray-500 mt-1">

@@ -44,6 +44,11 @@ import {
   mdiTrain,
   mdiEye,
   mdiFilterVariant,
+  mdiBell,
+  mdiBellOutline,
+  mdiCheckAll,
+  mdiDelete,
+  mdiArrowLeft,
 } from '@mdi/js'
 
 // アイコン名からパスへのマッピング
@@ -95,6 +100,11 @@ const iconMap: Record<string, string> = {
   mdiMapMarkerRadius,
   mdiTrain,
   mdiFilterVariant,
+  mdiBell,
+  mdiBellOutline,
+  mdiCheckAll,
+  mdiDelete,
+  mdiArrowLeft,
 }
 
 /**
@@ -152,4 +162,9 @@ export {
   mdiMapMarkerRadius,
   mdiTrain,
   mdiFilterVariant,
+  mdiBell,
+  mdiBellOutline,
+  mdiCheckAll,
+  mdiDelete,
+  mdiArrowLeft,
 }

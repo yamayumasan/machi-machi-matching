@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { LMap, LTileLayer } from '@vue-leaflet/vue-leaflet'
 import L from 'leaflet'
 import 'leaflet.markercluster'
@@ -389,7 +389,7 @@ onMounted(() => {
   setupPopupButtonHandler()
 })
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   // タイムアウトをクリア
   if (updateMarkersTimeout) {
     clearTimeout(updateMarkersTimeout)
@@ -398,22 +398,82 @@ onUnmounted(() => {
     clearTimeout(fetchBoundsTimeout)
   }
 
+  // 更新中フラグを設定して、進行中の更新を止める
+  isUpdatingMarkers = true
+  pendingUpdate = false
+
   const map = mapRef.value?.leafletObject
   if (map) {
     map.off('moveend', handleMoveEnd)
+  }
 
-    // クラスターグループをマップから削除
-    if (clusterGroup) {
-      try {
-        map.removeLayer(clusterGroup as unknown as L.Layer)
-      } catch {
-        // エラーを無視
+  // 各マーカーのイベントリスナーを解除してからクラスターグループから削除
+  // _leaflet_eventsエラーを防ぐため、マーカーを安全にクリーンアップ
+  markersMap.forEach((marker) => {
+    try {
+      // マーカーのすべてのイベントリスナーを解除
+      marker.off()
+      // ポップアップを閉じて解除
+      if (marker.getPopup()) {
+        marker.closePopup()
+        marker.unbindPopup()
       }
+      // アイコンのDOM要素を事前に削除（_leaflet_eventsエラー防止）
+      const icon = (marker as unknown as { _icon?: HTMLElement })._icon
+      if (icon && icon.parentNode) {
+        icon.parentNode.removeChild(icon)
+      }
+      const shadow = (marker as unknown as { _shadow?: HTMLElement })._shadow
+      if (shadow && shadow.parentNode) {
+        shadow.parentNode.removeChild(shadow)
+      }
+    } catch {
+      // エラーを無視
+    }
+  })
+
+  // クラスターグループの内部レイヤーをクリア（マーカーは既にクリーンアップ済み）
+  if (clusterGroup) {
+    try {
+      // マーカーをクラスターから直接削除せず、内部配列をクリア
+      // これによりLeafletの通常の削除プロセスをスキップ
+      const cg = clusterGroup as unknown as {
+        _featureGroup?: { clearLayers: () => void }
+        _nonPointGroup?: { clearLayers: () => void }
+        _needsClustering?: unknown[]
+        _needsRemoving?: unknown[]
+      }
+      if (cg._featureGroup) {
+        try { cg._featureGroup.clearLayers() } catch { /* ignore */ }
+      }
+      if (cg._nonPointGroup) {
+        try { cg._nonPointGroup.clearLayers() } catch { /* ignore */ }
+      }
+      if (cg._needsClustering) cg._needsClustering = []
+      if (cg._needsRemoving) cg._needsRemoving = []
+    } catch {
+      // エラーを無視
     }
   }
 
-  // マーカーマップをクリア（clearLayersは呼ばない）
+  // マーカーマップをクリア
   markersMap.clear()
+
+  // クラスターグループをマップの内部レイヤーリストから直接削除
+  // これによりvue-leafletのLMap.remove()がclusterGroupを削除しようとするのを防ぐ
+  if (map && clusterGroup) {
+    try {
+      // マップの内部_layersからclusterGroupを削除
+      const mapLayers = (map as unknown as { _layers?: Record<string, unknown> })._layers
+      const clusterId = (clusterGroup as unknown as { _leaflet_id?: number })._leaflet_id
+      if (mapLayers && clusterId !== undefined) {
+        delete mapLayers[clusterId]
+      }
+    } catch {
+      // エラーを無視
+    }
+  }
+
   clusterGroup = null
 })
 

@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth'
 import { AREA_LABELS, type NearbyItem } from '@machi/shared'
 import MdiIcon from '../components/MdiIcon.vue'
 import UserAvatar from '../components/UserAvatar.vue'
+import NotificationBell from '../components/NotificationBell.vue'
 import NearbyMap from '../components/NearbyMap.vue'
 import NearbyList from '../components/NearbyList.vue'
 import RecruitmentDetailModal from '../components/RecruitmentDetailModal.vue'
@@ -145,16 +146,19 @@ const handleDetailClick = (item: NearbyItem) => {
     <header class="header">
       <div class="container mx-auto px-4 py-3 flex justify-between items-center">
         <h1 class="text-lg font-bold text-primary-600">マチマチマッチング</h1>
-        <button
-          @click="showProfileModal = true"
-          class="flex items-center gap-2 hover:bg-gray-100 rounded-lg px-2 py-1 transition-colors"
-        >
-          <UserAvatar :src="user?.avatarUrl" :name="user?.nickname" size="sm" />
-          <div class="flex flex-col text-left">
-            <span class="text-sm font-medium text-gray-700">{{ user?.nickname }}</span>
-            <span class="text-xs text-gray-400">{{ AREA_LABELS[user?.area as keyof typeof AREA_LABELS] || user?.area }}</span>
-          </div>
-        </button>
+        <div class="flex items-center gap-2">
+          <NotificationBell />
+          <button
+            @click="showProfileModal = true"
+            class="flex items-center gap-2 hover:bg-gray-100 rounded-lg px-2 py-1 transition-colors"
+          >
+            <UserAvatar :src="user?.avatarUrl" :name="user?.nickname" size="sm" />
+            <div class="flex flex-col text-left">
+              <span class="text-sm font-medium text-gray-700">{{ user?.nickname }}</span>
+              <span class="text-xs text-gray-400">{{ AREA_LABELS[user?.area as keyof typeof AREA_LABELS] || user?.area }}</span>
+            </div>
+          </button>
+        </div>
       </div>
     </header>
 

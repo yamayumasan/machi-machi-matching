@@ -48,6 +48,7 @@ interface Group {
   recruitment: GroupRecruitment
   members: GroupMember[]
   lastMessage?: LastMessage | null
+  unreadCount?: number
   myRole?: 'OWNER' | 'MEMBER'
   updatedAt: string
   createdAt?: string

@@ -189,11 +189,12 @@ model Group {
 }
 
 model GroupMember {
-  id       String          @id @default(cuid())
-  groupId  String
-  userId   String
-  role     GroupMemberRole @default(MEMBER)
-  joinedAt DateTime        @default(now())
+  id         String          @id @default(cuid())
+  groupId    String
+  userId     String
+  role       GroupMemberRole @default(MEMBER)
+  joinedAt   DateTime        @default(now())
+  lastReadAt DateTime        @default(now()) // 最後にメッセージを読んだ日時
 
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)

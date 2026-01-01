@@ -1,9 +1,26 @@
 import { Router } from 'express'
+import multer from 'multer'
 import { updateUserSchema, updateUserCategoriesSchema, onboardingSchema } from '@machi/shared'
 import { validateRequest } from '../middlewares/validateRequest'
 import { requireAuth, requireOnboarding, optionalAuth } from '../middlewares/auth'
 import { prisma } from '../lib/prisma'
 import { supabaseAdmin } from '../lib/supabase'
+
+// multer設定（メモリストレージ、5MB制限）
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true)
+    } else {
+      cb(new Error('Invalid file type. Only JPEG, PNG, GIF and WebP are allowed.'))
+    }
+  },
+})
 
 const router = Router()
 
@@ -227,23 +244,69 @@ router.put(
   }
 )
 
-// PUT /api/users/me/avatar - アバター更新
-router.put('/me/avatar', requireAuth, async (req, res, next) => {
+// POST /api/users/me/avatar - アバター画像アップロード
+router.post('/me/avatar', requireAuth, upload.single('avatar'), async (req, res, next) => {
   try {
-    const { avatarUrl } = req.body
+    const file = req.file
 
-    if (!avatarUrl || typeof avatarUrl !== 'string') {
+    if (!file) {
       return res.status(400).json({
         success: false,
         error: {
           code: 'INVALID_INPUT',
-          message: 'Avatar URL is required',
+          message: 'Avatar image file is required',
         },
       })
     }
 
+    const userId = req.user!.id
+    const ext = file.mimetype.split('/')[1] === 'jpeg' ? 'jpg' : file.mimetype.split('/')[1]
+    const fileName = `${userId}/${Date.now()}.${ext}`
+    const bucketName = 'avatars'
+
+    // 古いアバターを削除（あれば）
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatarUrl: true },
+    })
+
+    if (currentUser?.avatarUrl) {
+      // Supabase Storage URLからパスを抽出
+      const oldPath = currentUser.avatarUrl.split(`${bucketName}/`)[1]
+      if (oldPath) {
+        await supabaseAdmin.storage.from(bucketName).remove([oldPath])
+      }
+    }
+
+    // Supabase Storageにアップロード
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(bucketName)
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        upsert: true,
+      })
+
+    if (uploadError) {
+      console.error('Avatar upload error:', uploadError)
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'UPLOAD_FAILED',
+          message: 'Failed to upload avatar image',
+        },
+      })
+    }
+
+    // 公開URLを取得
+    const { data: urlData } = supabaseAdmin.storage
+      .from(bucketName)
+      .getPublicUrl(fileName)
+
+    const avatarUrl = urlData.publicUrl
+
+    // ユーザーのavatarUrlを更新
     const user = await prisma.user.update({
-      where: { id: req.user!.id },
+      where: { id: userId },
       data: { avatarUrl },
     })
 
@@ -253,6 +316,37 @@ router.put('/me/avatar', requireAuth, async (req, res, next) => {
         avatarUrl: user.avatarUrl,
       },
     })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// DELETE /api/users/me/avatar - アバター画像削除
+router.delete('/me/avatar', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user!.id
+    const bucketName = 'avatars'
+
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatarUrl: true },
+    })
+
+    if (currentUser?.avatarUrl) {
+      // Supabase Storage URLからパスを抽出
+      const oldPath = currentUser.avatarUrl.split(`${bucketName}/`)[1]
+      if (oldPath) {
+        await supabaseAdmin.storage.from(bucketName).remove([oldPath])
+      }
+    }
+
+    // ユーザーのavatarUrlをnullに更新
+    await prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl: null },
+    })
+
+    res.status(204).send()
   } catch (error) {
     next(error)
   }

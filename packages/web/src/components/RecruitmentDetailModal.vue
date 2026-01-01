@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useRecruitmentStore } from '../stores/recruitment'
 import { AREA_LABELS } from '@machi/shared'
@@ -117,9 +117,18 @@ const handleApply = async () => {
 
 const goToApplications = async () => {
   if (recruitment.value) {
+    const targetPath = `/recruitments/${recruitment.value.id}/applications`
+    console.log('[RecruitmentDetailModal] goToApplications called, target:', targetPath)
     emit('update:modelValue', false)
-    await nextTick()
-    router.push(`/recruitments/${recruitment.value.id}/applications`)
+    // Transitionのアニメーション完了を待つ（200ms + バッファ）
+    await new Promise(resolve => setTimeout(resolve, 250))
+    console.log('[RecruitmentDetailModal] Modal closed, pushing route...')
+    try {
+      await router.push(targetPath)
+      console.log('[RecruitmentDetailModal] Route push completed')
+    } catch (e) {
+      console.error('[RecruitmentDetailModal] Route push failed:', e)
+    }
   }
 }
 </script>
