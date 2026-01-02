@@ -7,6 +7,8 @@
     "dev": "pnpm -r --parallel dev",
     "dev:web": "pnpm --filter @machi/web dev",
     "dev:api": "pnpm --filter @machi/api dev",
+    "dev:mobile": "pnpm --filter @machi/mobile start",
+    "dev:mobile:ios": "pnpm --filter @machi/mobile ios",
     "build": "pnpm -r build",
     "build:web": "pnpm --filter @machi/web build",
     "build:api": "pnpm --filter @machi/api build",

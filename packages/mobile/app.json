@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "マチマチマッチング",
+    "slug": "machi-machi-matching",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "machi-machi",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ef4444"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.machimachi.matching",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "近くの募集やユーザーを表示するために位置情報を使用します",
+        "NSLocationAlwaysUsageDescription": "近くの募集やユーザーを表示するために位置情報を使用します"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ef4444"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.machimachi.matching"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "近くの募集やユーザーを表示するために位置情報を使用します"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
