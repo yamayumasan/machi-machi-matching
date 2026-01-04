@@ -2,7 +2,8 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { LMap, LTileLayer } from '@vue-leaflet/vue-leaflet'
 import L from 'leaflet'
-import 'leaflet.markercluster'
+// NOTE: クラスタリングは一時廃止。将来再実装する場合は以下を有効化
+// import 'leaflet.markercluster'
 import type { Map as LeafletMap } from 'leaflet'
 import type { NearbyItem } from '@machi/shared'
 import { AREA_CENTER_COORDS, type Area } from '@machi/shared'
@@ -13,8 +14,9 @@ import MdiIcon from './MdiIcon.vue'
 import { mdiCrosshairsGps, mdiFilterVariant } from '../lib/icons'
 
 import 'leaflet/dist/leaflet.css'
-import 'leaflet.markercluster/dist/MarkerCluster.css'
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
+// NOTE: クラスタリング用CSS（将来再実装時に有効化）
+// import 'leaflet.markercluster/dist/MarkerCluster.css'
+// import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 
 interface Props {
   height?: string
@@ -40,7 +42,8 @@ const center = ref<[number, number]>([0, 0])
 const isMapReady = ref(false)
 
 // Leafletオブジェクトはリアクティブにしない（Vueのリアクティブシステムと競合するため）
-let clusterGroup: L.MarkerClusterGroup | null = null
+// NOTE: クラスタリング廃止につき、通常のLayerGroupを使用
+let markerLayer: L.LayerGroup | null = null
 const markersMap = new Map<string, L.Marker>()
 
 // デバウンス用
@@ -164,7 +167,7 @@ const setupPopupButtonHandler = () => {
   })
 }
 
-// マーカーを更新（差分更新方式）
+// マーカーを更新（完全リビルド方式 - 差分更新で発生するエラーを回避）
 const updateMarkers = () => {
   // デバウンス: 連続呼び出しを防ぐ
   if (updateMarkersTimeout) {
@@ -173,13 +176,13 @@ const updateMarkers = () => {
 
   updateMarkersTimeout = setTimeout(() => {
     doUpdateMarkers()
-  }, 150)
+  }, 200)
 }
 
-// 実際のマーカー更新処理
+// 実際のマーカー更新処理（差分更新方式）
 const doUpdateMarkers = () => {
   const map = mapRef.value?.leafletObject
-  if (!map || !clusterGroup) return
+  if (!map || !markerLayer) return
 
   // 更新中なら後で再試行
   if (isUpdatingMarkers) {
@@ -194,49 +197,36 @@ const doUpdateMarkers = () => {
     const newItemIds = new Set(newItems.map((item) => item.id))
     const existingIds = new Set(markersMap.keys())
 
-    // 削除するマーカーを特定
-    const toRemove: string[] = []
+    // 削除されたアイテムのマーカーを削除
     existingIds.forEach((id) => {
       if (!newItemIds.has(id)) {
-        toRemove.push(id)
-      }
-    })
-
-    // 追加するアイテムを特定
-    const toAdd = newItems.filter((item) => !existingIds.has(item.id))
-
-    // マーカーを削除
-    toRemove.forEach((id) => {
-      const marker = markersMap.get(id)
-      if (marker && clusterGroup) {
-        try {
-          clusterGroup.removeLayer(marker)
-        } catch {
-          // 削除に失敗してもエラーを無視
+        const marker = markersMap.get(id)
+        if (marker && markerLayer) {
+          markerLayer.removeLayer(marker)
+          markersMap.delete(id)
         }
-        markersMap.delete(id)
       }
     })
 
-    // 新しいマーカーを追加
-    toAdd.forEach((item) => {
-      const marker = L.marker([item.latitude, item.longitude], {
-        icon: createMarkerIcon(item),
-      })
+    // 新しいアイテムのマーカーを追加
+    newItems.forEach((item) => {
+      if (!markersMap.has(item.id)) {
+        const marker = L.marker([item.latitude, item.longitude], {
+          icon: createMarkerIcon(item),
+        })
 
-      marker.bindPopup(createPopupContent(item), {
-        closeButton: false,
-        offset: [0, -5],
-      })
+        marker.bindPopup(createPopupContent(item), {
+          closeButton: false,
+          offset: [0, -5],
+        })
 
-      marker.on('click', () => {
-        nearbyStore.selectItem(item.id)
-        emit('itemSelect', item)
-      })
+        marker.on('click', () => {
+          nearbyStore.selectItem(item.id)
+          emit('itemSelect', item)
+        })
 
-      markersMap.set(item.id, marker)
-      if (clusterGroup) {
-        clusterGroup.addLayer(marker)
+        markersMap.set(item.id, marker)
+        markerLayer?.addLayer(marker)
       }
     })
   } finally {
@@ -280,6 +270,12 @@ const handleMoveEnd = () => {
   // フォーカス中は何もしない
   if (isFocusing) return
 
+  // デバッグ: 現在のズームレベルを出力
+  const map = mapRef.value?.leafletObject
+  if (map) {
+    console.log('[NearbyMap] Current zoom level:', map.getZoom(), '| Max zoom:', map.getMaxZoom())
+  }
+
   // ユーザー操作による移動なので、選択を解除
   nearbyStore.selectItem(null)
 
@@ -319,24 +315,10 @@ const initializeMap = async () => {
   const map = mapRef.value?.leafletObject
   if (!map) return
 
-  // マーカークラスターグループを作成（非リアクティブ）
-  clusterGroup = L.markerClusterGroup({
-    maxClusterRadius: 50,
-    spiderfyOnMaxZoom: true,
-    showCoverageOnHover: false,
-    zoomToBoundsOnClick: true,
-    iconCreateFunction: (cluster) => {
-      const count = cluster.getChildCount()
-      const size = count < 10 ? 'small' : count < 30 ? 'medium' : 'large'
-      return L.divIcon({
-        html: `<div class="cluster-icon cluster-${size}">${count}</div>`,
-        className: 'custom-cluster',
-        iconSize: [40, 40],
-      })
-    },
-  })
-
-  map.addLayer(clusterGroup as unknown as L.Layer)
+  // マーカーレイヤーを作成（クラスタリングは一時廃止）
+  // NOTE: 将来クラスタリングを再実装する場合は L.markerClusterGroup() を使用
+  markerLayer = L.layerGroup()
+  map.addLayer(markerLayer)
 
   // 初期位置に移動
   center.value = [userLocation.value.lat, userLocation.value.lng]
@@ -407,50 +389,23 @@ onBeforeUnmount(() => {
     map.off('moveend', handleMoveEnd)
   }
 
-  // 各マーカーのイベントリスナーを解除してからクラスターグループから削除
-  // _leaflet_eventsエラーを防ぐため、マーカーを安全にクリーンアップ
+  // 各マーカーのイベントリスナーを解除
   markersMap.forEach((marker) => {
     try {
-      // マーカーのすべてのイベントリスナーを解除
       marker.off()
-      // ポップアップを閉じて解除
       if (marker.getPopup()) {
         marker.closePopup()
         marker.unbindPopup()
-      }
-      // アイコンのDOM要素を事前に削除（_leaflet_eventsエラー防止）
-      const icon = (marker as unknown as { _icon?: HTMLElement })._icon
-      if (icon && icon.parentNode) {
-        icon.parentNode.removeChild(icon)
-      }
-      const shadow = (marker as unknown as { _shadow?: HTMLElement })._shadow
-      if (shadow && shadow.parentNode) {
-        shadow.parentNode.removeChild(shadow)
       }
     } catch {
       // エラーを無視
     }
   })
 
-  // クラスターグループの内部レイヤーをクリア（マーカーは既にクリーンアップ済み）
-  if (clusterGroup) {
+  // マーカーレイヤーをクリア
+  if (markerLayer) {
     try {
-      // マーカーをクラスターから直接削除せず、内部配列をクリア
-      // これによりLeafletの通常の削除プロセスをスキップ
-      const cg = clusterGroup as unknown as {
-        _featureGroup?: { clearLayers: () => void }
-        _nonPointGroup?: { clearLayers: () => void }
-        _needsClustering?: unknown[]
-        _needsRemoving?: unknown[]
-      }
-      if (cg._featureGroup) {
-        try { cg._featureGroup.clearLayers() } catch { /* ignore */ }
-      }
-      if (cg._nonPointGroup) {
-        try { cg._nonPointGroup.clearLayers() } catch { /* ignore */ }
-      }
-      if (cg._needsClustering) cg._needsClustering = []
-      if (cg._needsRemoving) cg._needsRemoving = []
+      markerLayer.clearLayers()
     } catch {
       // エラーを無視
     }
@@ -458,23 +413,7 @@ onBeforeUnmount(() => {
 
   // マーカーマップをクリア
   markersMap.clear()
-
-  // クラスターグループをマップの内部レイヤーリストから直接削除
-  // これによりvue-leafletのLMap.remove()がclusterGroupを削除しようとするのを防ぐ
-  if (map && clusterGroup) {
-    try {
-      // マップの内部_layersからclusterGroupを削除
-      const mapLayers = (map as unknown as { _layers?: Record<string, unknown> })._layers
-      const clusterId = (clusterGroup as unknown as { _leaflet_id?: number })._leaflet_id
-      if (mapLayers && clusterId !== undefined) {
-        delete mapLayers[clusterId]
-      }
-    } catch {
-      // エラーを無視
-    }
-  }
-
-  clusterGroup = null
+  markerLayer = null
 })
 
 // 外部からアイテムを選択するための関数をexpose
@@ -542,7 +481,7 @@ defineExpose({
   transform: scale(1.1);
 }
 
-/* クラスターアイコンスタイル */
+/* NOTE: クラスターアイコンスタイル（将来再実装時に有効化）
 .custom-cluster {
   background: transparent;
 }
@@ -577,6 +516,7 @@ defineExpose({
   height: 48px;
   font-size: 16px;
 }
+*/
 
 /* Leaflet ポップアップスタイル調整 */
 .leaflet-popup-content-wrapper {

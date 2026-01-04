@@ -15,7 +15,7 @@ interface Props {
   /** 背景クリックで閉じる */
   closeOnBackdrop?: boolean
   /** 最大幅（PC時） */
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -87,12 +87,14 @@ onUnmounted(() => {
 
 // PC時の最大幅クラス
 const maxWidthClass = computed(() => {
-  const widths = {
+  const widths: Record<string, string> = {
     sm: 'max-w-sm',
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-xl',
     '2xl': 'max-w-2xl',
+    '3xl': 'max-w-3xl',
+    '4xl': 'max-w-4xl',
   }
   return widths[props.maxWidth]
 })

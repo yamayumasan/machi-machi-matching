@@ -6,11 +6,16 @@ import { AREA_LABELS } from '@machi/shared'
 import ModalSheet from './ModalSheet.vue'
 import MdiIcon from './MdiIcon.vue'
 import UserAvatar from './UserAvatar.vue'
-import { getIconPath, mdiMapMarker, mdiAccountGroup, mdiClock } from '../lib/icons'
+import EmbeddedGroupChat from './EmbeddedGroupChat.vue'
+import { getIconPath, mdiMapMarker, mdiAccountGroup, mdiClock, mdiForum } from '../lib/icons'
 
 interface Props {
   modelValue: boolean
   recruitmentId: string | null
+  /** 参加中の場合のグループID */
+  groupId?: string | null
+  /** 参加中かどうか（チャット表示の判定に使用） */
+  isParticipating?: boolean
 }
 
 const props = defineProps<Props>()
@@ -24,6 +29,11 @@ const recruitmentStore = useRecruitmentStore()
 
 const showApplyModal = ref(false)
 const applyMessage = ref('')
+// モバイル時のタブ切り替え（参加中の場合のみ使用）
+const activeTab = ref<'detail' | 'chat'>('detail')
+
+// 参加中かつグループIDがある場合にチャットを表示可能
+const canShowChat = computed(() => props.isParticipating && props.groupId)
 
 const isLoading = computed(() => recruitmentStore.isLoading)
 const recruitment = computed(() => recruitmentStore.currentRecruitment)
@@ -35,6 +45,8 @@ watch(
   async (isOpen) => {
     if (isOpen && props.recruitmentId) {
       await recruitmentStore.fetchRecruitment(props.recruitmentId)
+      // タブをリセット
+      activeTab.value = 'detail'
     }
   },
   { immediate: true }
@@ -138,7 +150,7 @@ const goToApplications = async () => {
     :model-value="modelValue"
     @update:model-value="emit('update:modelValue', $event)"
     title="募集詳細"
-    max-width="lg"
+    :max-width="canShowChat ? '4xl' : '3xl'"
     :fullscreen="true"
   >
     <!-- Loading -->
@@ -154,97 +166,161 @@ const goToApplications = async () => {
       <p class="text-red-600">{{ error }}</p>
     </div>
 
-    <!-- Content -->
-    <div v-else-if="recruitment" class="p-4 space-y-4">
-      <!-- Title & Status -->
-      <div class="flex items-start gap-3">
-        <div class="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-          <MdiIcon :path="getIconPath(recruitment.category.icon)" :size="28" class="text-orange-600" />
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-sm text-gray-500">{{ recruitment.category.name }}</span>
-            <span
-              :class="[
-                'px-2 py-0.5 rounded-full text-xs font-medium',
-                getStatusClass(recruitment.status),
-              ]"
-            >
-              {{ getStatusLabel(recruitment.status) }}
-            </span>
+    <!-- Content (参加中の場合は2カラム / タブ切り替え) -->
+    <div v-else-if="recruitment" class="h-full flex flex-col">
+      <!-- モバイル用タブ（参加中の場合のみ表示） -->
+      <div v-if="canShowChat" class="md:hidden flex border-b">
+        <button
+          @click="activeTab = 'detail'"
+          :class="[
+            'flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-1.5',
+            activeTab === 'detail'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          ]"
+        >
+          <MdiIcon :path="mdiAccountGroup" :size="18" />
+          詳細
+        </button>
+        <button
+          @click="activeTab = 'chat'"
+          :class="[
+            'flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-1.5',
+            activeTab === 'chat'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          ]"
+        >
+          <MdiIcon :path="mdiForum" :size="18" />
+          チャット
+        </button>
+      </div>
+
+      <!-- デスクトップ: 2カラム / モバイル: タブ切り替え -->
+      <div :class="[
+        'flex-1 min-h-0',
+        canShowChat ? 'md:flex md:gap-4' : ''
+      ]">
+        <!-- 左カラム: 詳細情報 -->
+        <div
+          :class="[
+            'overflow-y-auto',
+            canShowChat ? 'md:w-1/2 md:border-r md:pr-4' : 'w-full',
+            canShowChat && activeTab !== 'detail' ? 'hidden md:block' : ''
+          ]"
+        >
+          <div class="p-4 space-y-4">
+            <!-- Title & Status -->
+            <div class="flex items-start gap-3">
+              <div class="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                <MdiIcon :path="getIconPath(recruitment.category.icon)" :size="28" class="text-orange-600" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-sm text-gray-500">{{ recruitment.category.name }}</span>
+                  <span
+                    :class="[
+                      'px-2 py-0.5 rounded-full text-xs font-medium',
+                      getStatusClass(recruitment.status),
+                    ]"
+                  >
+                    {{ getStatusLabel(recruitment.status) }}
+                  </span>
+                </div>
+                <h2 class="text-lg font-bold">{{ recruitment.title }}</h2>
+              </div>
+            </div>
+
+            <!-- Info -->
+            <div class="flex flex-wrap gap-3 text-sm text-gray-600">
+              <div class="flex items-center gap-1">
+                <MdiIcon :path="mdiMapMarker" :size="16" />
+                <span>{{ AREA_LABELS[recruitment.area as keyof typeof AREA_LABELS] }}</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <MdiIcon :path="mdiAccountGroup" :size="16" />
+                <span>{{ recruitment.currentPeople }}/{{ recruitment.maxPeople }}人</span>
+              </div>
+              <div v-if="recruitment.datetime || recruitment.datetimeFlex" class="flex items-center gap-1">
+                <MdiIcon :path="mdiClock" :size="16" />
+                <span>{{ formatDate(recruitment.datetime) || recruitment.datetimeFlex }}</span>
+              </div>
+            </div>
+
+            <!-- Location -->
+            <div v-if="recruitment.location" class="bg-gray-50 rounded-lg p-3">
+              <div class="flex items-center gap-2 text-sm">
+                <MdiIcon :path="mdiMapMarker" :size="16" class="text-gray-400" />
+                <span class="text-gray-600">{{ recruitment.location }}</span>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div v-if="recruitment.description" class="border-t border-gray-100 pt-4">
+              <h3 class="text-sm font-medium text-gray-500 mb-2">詳細</h3>
+              <p class="text-gray-800 whitespace-pre-wrap text-sm">{{ recruitment.description }}</p>
+            </div>
+
+            <!-- Creator -->
+            <div class="border-t border-gray-100 pt-4">
+              <h3 class="text-sm font-medium text-gray-500 mb-3">募集者</h3>
+              <div class="flex items-center gap-3">
+                <UserAvatar :src="recruitment.creator?.avatarUrl" :name="recruitment.creator?.nickname" size="lg" />
+                <div class="flex-1">
+                  <p class="font-semibold">{{ recruitment.creator?.nickname }}</p>
+                  <p v-if="recruitment.creator?.bio" class="text-gray-500 text-sm line-clamp-2">
+                    {{ recruitment.creator.bio }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Members Preview -->
+            <div v-if="recruitment.members && recruitment.members.length > 0" class="border-t border-gray-100 pt-4">
+              <h3 class="text-sm font-medium text-gray-500 mb-3">参加者 ({{ recruitment.members.length }}人)</h3>
+              <div class="flex -space-x-2">
+                <UserAvatar
+                  v-for="member in recruitment.members.slice(0, 5)"
+                  :key="member.id"
+                  :src="member.avatarUrl"
+                  :name="member.nickname"
+                  size="sm"
+                  class="ring-2 ring-white"
+                />
+                <div
+                  v-if="recruitment.members.length > 5"
+                  class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 ring-2 ring-white"
+                >
+                  +{{ recruitment.members.length - 5 }}
+                </div>
+              </div>
+            </div>
           </div>
-          <h2 class="text-lg font-bold">{{ recruitment.title }}</h2>
         </div>
-      </div>
 
-      <!-- Info -->
-      <div class="flex flex-wrap gap-3 text-sm text-gray-600">
-        <div class="flex items-center gap-1">
-          <MdiIcon :path="mdiMapMarker" :size="16" />
-          <span>{{ AREA_LABELS[recruitment.area as keyof typeof AREA_LABELS] }}</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <MdiIcon :path="mdiAccountGroup" :size="16" />
-          <span>{{ recruitment.currentPeople }}/{{ recruitment.maxPeople }}人</span>
-        </div>
-        <div v-if="recruitment.datetime || recruitment.datetimeFlex" class="flex items-center gap-1">
-          <MdiIcon :path="mdiClock" :size="16" />
-          <span>{{ formatDate(recruitment.datetime) || recruitment.datetimeFlex }}</span>
-        </div>
-      </div>
-
-      <!-- Location -->
-      <div v-if="recruitment.location" class="bg-gray-50 rounded-lg p-3">
-        <div class="flex items-center gap-2 text-sm">
-          <MdiIcon :path="mdiMapMarker" :size="16" class="text-gray-400" />
-          <span class="text-gray-600">{{ recruitment.location }}</span>
-        </div>
-      </div>
-
-      <!-- Description -->
-      <div v-if="recruitment.description" class="border-t border-gray-100 pt-4">
-        <h3 class="text-sm font-medium text-gray-500 mb-2">詳細</h3>
-        <p class="text-gray-800 whitespace-pre-wrap text-sm">{{ recruitment.description }}</p>
-      </div>
-
-      <!-- Creator -->
-      <div class="border-t border-gray-100 pt-4">
-        <h3 class="text-sm font-medium text-gray-500 mb-3">募集者</h3>
-        <div class="flex items-center gap-3">
-          <UserAvatar :src="recruitment.creator?.avatarUrl" :name="recruitment.creator?.nickname" size="lg" />
-          <div class="flex-1">
-            <p class="font-semibold">{{ recruitment.creator?.nickname }}</p>
-            <p v-if="recruitment.creator?.bio" class="text-gray-500 text-sm line-clamp-2">
-              {{ recruitment.creator.bio }}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Members Preview -->
-      <div v-if="recruitment.members && recruitment.members.length > 0" class="border-t border-gray-100 pt-4">
-        <h3 class="text-sm font-medium text-gray-500 mb-3">参加者 ({{ recruitment.members.length }}人)</h3>
-        <div class="flex -space-x-2">
-          <UserAvatar
-            v-for="member in recruitment.members.slice(0, 5)"
-            :key="member.id"
-            :src="member.avatarUrl"
-            :name="member.nickname"
-            size="sm"
-            class="ring-2 ring-white"
-          />
-          <div
-            v-if="recruitment.members.length > 5"
-            class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 ring-2 ring-white"
-          >
-            +{{ recruitment.members.length - 5 }}
+        <!-- 右カラム: チャット（参加中の場合のみ） -->
+        <div
+          v-if="canShowChat && groupId"
+          :class="[
+            'md:w-1/2 h-full',
+            activeTab !== 'chat' ? 'hidden md:block' : ''
+          ]"
+        >
+          <div class="h-full flex flex-col p-2 md:p-0">
+            <div class="hidden md:block text-sm font-medium text-gray-500 mb-2 px-2">
+              グループチャット
+            </div>
+            <div class="flex-1 min-h-0">
+              <EmbeddedGroupChat :group-id="groupId" class="h-full" />
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <template #footer>
-      <div class="p-4 space-y-3">
+      <!-- フッターは参加中でない場合のみ表示 -->
+      <div v-if="!canShowChat" class="p-4 space-y-3">
         <!-- Owner actions -->
         <template v-if="recruitment?.isOwner">
           <button
@@ -274,6 +350,15 @@ const goToApplications = async () => {
             <p class="text-gray-500 text-sm">この募集は現在受け付けていません</p>
           </div>
         </template>
+      </div>
+      <!-- 参加中の場合はフッターボタンを表示（申請管理など） -->
+      <div v-else-if="recruitment?.isOwner" class="p-4 border-t">
+        <button
+          @click="goToApplications"
+          class="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+        >
+          申請を管理
+        </button>
       </div>
     </template>
   </ModalSheet>

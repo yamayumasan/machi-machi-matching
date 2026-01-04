@@ -72,7 +72,7 @@ onUnmounted(() => {
     <Transition name="dropdown">
       <div
         v-if="showDropdown"
-        class="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+        class="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-[2000]"
       >
         <div class="p-3 border-b border-gray-100">
           <div class="flex items-center justify-between">

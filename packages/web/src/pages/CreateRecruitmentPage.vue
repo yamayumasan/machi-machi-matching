@@ -125,10 +125,6 @@ const resetForm = () => {
 }
 
 // モーダルアクション
-const handleViewRecruitment = () => {
-  router.push(`/recruitments/${createdRecruitmentId.value}`)
-}
-
 const handleGoHome = () => {
   router.push('/')
 }
@@ -352,7 +348,6 @@ const goBack = () => {
       v-model="showCreatedModal"
       :recruitment-id="createdRecruitmentId"
       :recruitment-title="createdRecruitmentTitle"
-      @view-recruitment="handleViewRecruitment"
       @go-home="handleGoHome"
       @create-another="handleCreateAnother"
     />

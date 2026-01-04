@@ -7,6 +7,7 @@ interface NearbyFilters {
   types: 'all' | 'recruitment' | 'wantToDo'
   categoryIds: string[]
   radius: number
+  participatingOnly: boolean // 参加中の募集のみ表示
 }
 
 export const useNearbyStore = defineStore('nearby', () => {
@@ -20,6 +21,7 @@ export const useNearbyStore = defineStore('nearby', () => {
     types: 'all',
     categoryIds: [],
     radius: 5000, // 5km
+    participatingOnly: false,
   })
 
   // Getters
@@ -49,7 +51,24 @@ export const useNearbyStore = defineStore('nearby', () => {
       result = result.filter((item) => filters.value.categoryIds.includes(item.category.id))
     }
 
+    // 参加中フィルター
+    if (filters.value.participatingOnly) {
+      result = result.filter((item) => {
+        if (item.type === 'recruitment') {
+          return item.isParticipating === true
+        }
+        return false // 表明は参加中フィルターには含めない
+      })
+    }
+
     return result
+  })
+
+  // 参加中の募集数
+  const participatingCount = computed(() => {
+    return items.value.filter(
+      (item) => item.type === 'recruitment' && item.isParticipating === true
+    ).length
   })
 
   // Actions
@@ -150,6 +169,7 @@ export const useNearbyStore = defineStore('nearby', () => {
     recruitments,
     wantToDos,
     filteredItems,
+    participatingCount,
     // Actions
     fetchNearby,
     fetchByBounds,

@@ -90,6 +90,9 @@ router.get('/', requireAuth, requireOnboarding, async (req, res, next) => {
         icon: string
       }
       createdAt: Date
+      // 参加中フラグ（募集のみ）
+      isParticipating?: boolean
+      groupId?: string | null
     }> = []
 
     // 募集を取得
@@ -123,6 +126,18 @@ router.get('/', requireAuth, requireOnboarding, async (req, res, next) => {
               },
             },
           },
+          // 自分の承認済み申請があるか
+          applications: {
+            where: {
+              applicantId: req.user!.id,
+              status: 'APPROVED',
+            },
+            select: { id: true },
+          },
+          // グループがあれば取得
+          group: {
+            select: { id: true },
+          },
         },
         take: limit * 2, // 距離フィルタ後に足りなくならないよう多めに取得
       })
@@ -132,6 +147,11 @@ router.get('/', requireAuth, requireOnboarding, async (req, res, next) => {
 
         const distance = calculateDistance(lat, lng, r.latitude, r.longitude)
         if (distance <= radius) {
+          // 自分がオーナーか、承認済み参加者かを判定
+          const isOwner = r.creatorId === req.user!.id
+          const isApprovedMember = r.applications.length > 0
+          const isParticipating = isOwner || isApprovedMember
+
           results.push({
             id: r.id,
             type: 'recruitment',
@@ -149,6 +169,8 @@ router.get('/', requireAuth, requireOnboarding, async (req, res, next) => {
             creator: r.creator,
             category: r.category,
             createdAt: r.createdAt,
+            isParticipating,
+            groupId: r.group?.id || null,
           })
         }
       }
@@ -273,6 +295,8 @@ router.get('/bounds', requireAuth, requireOnboarding, async (req, res, next) => 
       currentPeople?: number
       maxPeople?: number
       createdAt: Date
+      isParticipating?: boolean
+      groupId?: string | null
     }> = []
 
     // 募集を取得
@@ -294,6 +318,18 @@ router.get('/bounds', requireAuth, requireOnboarding, async (req, res, next) => 
           _count: {
             select: { applications: { where: { status: 'APPROVED' } } },
           },
+          // 自分の承認済み申請があるか
+          applications: {
+            where: {
+              applicantId: req.user!.id,
+              status: 'APPROVED',
+            },
+            select: { id: true },
+          },
+          // グループがあれば取得
+          group: {
+            select: { id: true },
+          },
         },
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -301,6 +337,11 @@ router.get('/bounds', requireAuth, requireOnboarding, async (req, res, next) => 
 
       for (const r of recruitments) {
         if (r.latitude === null || r.longitude === null) continue
+        // 自分がオーナーか、承認済み参加者かを判定
+        const isOwner = r.creatorId === req.user!.id
+        const isApprovedMember = r.applications.length > 0
+        const isParticipating = isOwner || isApprovedMember
+
         results.push({
           id: r.id,
           type: 'recruitment',
@@ -312,6 +353,8 @@ router.get('/bounds', requireAuth, requireOnboarding, async (req, res, next) => 
           currentPeople: r._count.applications + 1,
           maxPeople: r.maxPeople,
           createdAt: r.createdAt,
+          isParticipating,
+          groupId: r.group?.id || null,
         })
       }
     }

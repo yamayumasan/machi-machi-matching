@@ -22,6 +22,9 @@ const showWantToDoDetailModal = ref(false)
 const showProfileModal = ref(false)
 const selectedRecruitmentId = ref<string | null>(null)
 const selectedWantToDoId = ref<string | null>(null)
+// 参加中の募集の場合に使用
+const selectedRecruitmentIsParticipating = ref(false)
+const selectedRecruitmentGroupId = ref<string | null>(null)
 const mapRef = ref<InstanceType<typeof NearbyMap> | null>(null)
 
 // レスポンシブ対応
@@ -132,6 +135,9 @@ const handleFilterClick = () => {
 const handleDetailClick = (item: NearbyItem) => {
   if (item.type === 'recruitment') {
     selectedRecruitmentId.value = item.id
+    // 参加中かどうかとグループIDを設定
+    selectedRecruitmentIsParticipating.value = item.isParticipating ?? false
+    selectedRecruitmentGroupId.value = item.groupId ?? null
     showRecruitmentDetailModal.value = true
   } else {
     selectedWantToDoId.value = item.id
@@ -254,6 +260,8 @@ const handleDetailClick = (item: NearbyItem) => {
     <RecruitmentDetailModal
       v-model="showRecruitmentDetailModal"
       :recruitment-id="selectedRecruitmentId"
+      :is-participating="selectedRecruitmentIsParticipating"
+      :group-id="selectedRecruitmentGroupId"
     />
 
     <!-- WantToDo Detail Modal -->
@@ -291,7 +299,8 @@ export default {
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
-  z-index: 20;
+  position: relative;
+  z-index: 1100; /* Leafletマップ（z-index: 1000）より上に表示 */
 }
 
 .quick-actions {
@@ -381,7 +390,7 @@ export default {
   }
 
   .pc-list {
-    width: 320px;
+    width: 380px;
     flex: none;
     flex-shrink: 0;
     border-left: 1px solid #e5e7eb;
@@ -391,14 +400,14 @@ export default {
 /* 大画面 */
 @media (min-width: 1024px) {
   .pc-list {
-    width: 360px;
+    width: 420px;
   }
 }
 
 /* 超大画面 */
 @media (min-width: 1280px) {
   .pc-list {
-    width: 400px;
+    width: 480px;
   }
 }
 </style>

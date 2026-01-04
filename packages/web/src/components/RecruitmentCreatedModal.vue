@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import MdiIcon from './MdiIcon.vue'
 import UserAvatar from './UserAvatar.vue'
-import { mdiCheckCircle, mdiEye, mdiHome, mdiPlus, mdiAccountGroup, mdiSend } from '../lib/icons'
+import { mdiCheckCircle, mdiHome, mdiPlus, mdiAccountGroup, mdiSend } from '../lib/icons'
 import { api } from '../lib/api'
 
 interface Suggestion {
@@ -32,14 +32,12 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  viewRecruitment: []
   goHome: []
   createAnother: []
 }>()
 
 const suggestions = ref<Suggestion[]>([])
 const isLoadingSuggestions = ref(false)
-const showSuggestions = ref(false)
 const sentOffers = ref<Set<string>>(new Set())
 
 // モーダルが開いたらサジェストを取得
@@ -47,7 +45,6 @@ watch(() => props.modelValue, async (isOpen) => {
   if (isOpen && props.recruitmentId) {
     await fetchSuggestions()
   } else {
-    showSuggestions.value = false
     sentOffers.value.clear()
   }
 })
@@ -84,11 +81,6 @@ const sendOffer = async (userId: string) => {
   }
 }
 
-const handleViewRecruitment = () => {
-  emit('viewRecruitment')
-  emit('update:modelValue', false)
-}
-
 const handleGoHome = () => {
   emit('goHome')
   emit('update:modelValue', false)
@@ -97,10 +89,6 @@ const handleGoHome = () => {
 const handleCreateAnother = () => {
   emit('createAnother')
   emit('update:modelValue', false)
-}
-
-const handleViewSuggestions = () => {
-  showSuggestions.value = true
 }
 </script>
 
@@ -150,19 +138,13 @@ const handleViewSuggestions = () => {
               参加者からの申請を待ちましょう
             </p>
 
-            <!-- Suggestions Section -->
-            <div v-if="showSuggestions" class="mb-4">
-              <div class="flex items-center justify-between mb-3">
+            <!-- Suggestions Section（常に表示） -->
+            <div class="mb-4">
+              <div class="flex items-center justify-center mb-3">
                 <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-1">
                   <MdiIcon :path="mdiAccountGroup" :size="18" />
                   おすすめユーザー
                 </h3>
-                <button
-                  @click="showSuggestions = false"
-                  class="text-xs text-gray-500 hover:text-gray-700"
-                >
-                  閉じる
-                </button>
               </div>
 
               <!-- Loading State -->
@@ -172,7 +154,7 @@ const handleViewSuggestions = () => {
               </div>
 
               <!-- No Suggestions -->
-              <div v-else-if="suggestions.length === 0" class="py-4 text-center">
+              <div v-else-if="suggestions.length === 0" class="py-3 text-center bg-gray-50 rounded-lg">
                 <p class="text-sm text-gray-500">現在おすすめのユーザーはいません</p>
               </div>
 
@@ -226,29 +208,10 @@ const handleViewSuggestions = () => {
 
             <!-- Action Buttons -->
             <div class="space-y-3">
-              <!-- View Suggestions (if not showing) -->
-              <button
-                v-if="!showSuggestions && suggestions.length > 0"
-                @click="handleViewSuggestions"
-                class="w-full flex items-center justify-center gap-2 py-3 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 transition-colors"
-              >
-                <MdiIcon :path="mdiAccountGroup" :size="20" />
-                おすすめユーザーを見る ({{ suggestions.length }}人)
-              </button>
-
-              <!-- View Recruitment -->
-              <button
-                @click="handleViewRecruitment"
-                class="w-full flex items-center justify-center gap-2 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
-              >
-                <MdiIcon :path="mdiEye" :size="20" />
-                募集を見る
-              </button>
-
               <!-- Go Home -->
               <button
                 @click="handleGoHome"
-                class="w-full flex items-center justify-center gap-2 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                class="w-full flex items-center justify-center gap-2 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
               >
                 <MdiIcon :path="mdiHome" :size="20" />
                 トップへ戻る

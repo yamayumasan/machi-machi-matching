@@ -263,6 +263,10 @@ export interface NearbyRecruitment extends NearbyItemBase {
     nickname: string | null
     avatarUrl: string | null
   }
+  /** 自分が参加中（オーナーまたは承認済み参加者）かどうか */
+  isParticipating?: boolean
+  /** 参加中の場合のグループID */
+  groupId?: string | null
 }
 
 export interface NearbyWantToDo extends NearbyItemBase {

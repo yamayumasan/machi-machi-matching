@@ -100,7 +100,7 @@ const handleSendMessage = async () => {
     :model-value="modelValue"
     @update:model-value="emit('update:modelValue', $event)"
     title="表明の詳細"
-    max-width="lg"
+    max-width="2xl"
     :fullscreen="true"
   >
     <!-- Loading -->

@@ -131,18 +131,56 @@ const WANT_TO_DO_COMMENTS: Record<string, string[]> = {
   '15': ['勉強会参加したい', '一緒に学びたい', 'スキルアップしたい'],
 }
 
-// メッセージ例
-const SAMPLE_MESSAGES = [
+// メッセージ例（会話の流れを意識）
+const SAMPLE_MESSAGES_INTRO = [
   'はじめまして！よろしくお願いします！',
-  '参加できてうれしいです',
-  '楽しみにしています！',
-  '日程調整しましょう',
-  '場所はどこがいいですか？',
+  '参加できてうれしいです！',
+  'よろしくお願いします〜',
+  '今回初参加です。よろしくです！',
+  'わくわくしています！',
+]
+
+const SAMPLE_MESSAGES_PLANNING = [
+  '日程調整しましょうか',
+  '場所はどこがいいですかね？',
+  '今週末って皆さん空いてますか？',
+  '仙台駅周辺とかどうですか？',
+  '何時スタートにしましょう？',
+  '13時集合でいかがでしょうか',
   '了解です！',
-  '当日よろしくお願いします',
+  'OKです！',
+  'いいですね〜',
+  'それで大丈夫です',
+]
+
+const SAMPLE_MESSAGES_DETAILS = [
   '何か持っていくものありますか？',
+  '特に持ち物は必要ないと思います',
+  '動きやすい服装で来てください',
   '初めてなので緊張しています',
+  '私も初めてなので安心してください！',
+  '楽しみにしています！',
+  '当日よろしくお願いします',
+  '集合場所はあとで共有しますね',
+  '天気良さそうでよかった',
+  '雨だったら室内に変更しましょう',
+]
+
+const SAMPLE_MESSAGES_CONFIRM = [
   'ありがとうございます！',
+  '楽しみにしてます！',
+  '明日よろしくお願いします',
+  '皆さんよろしくです！',
+  '今日はありがとうございました！また次回も参加したいです',
+  '楽しかったです！またやりましょう！',
+  '次回の予定も立てましょうか',
+]
+
+const ALL_MESSAGES = [
+  ...SAMPLE_MESSAGES_INTRO,
+  ...SAMPLE_MESSAGES_PLANNING,
+  ...SAMPLE_MESSAGES_DETAILS,
+  ...SAMPLE_MESSAGES_CONFIRM,
 ]
 
 // ランダムに配列から要素を取得
@@ -413,8 +451,10 @@ async function seedTestData() {
   console.log(`✅ Created ${offerCount} offers`)
 
   // グループを作成（承認済み申請または承諾済みオファーがある募集から）
-  const groupRecruitments = recruitments.slice(0, 5)
+  // グループ数を8に増やし、メッセージも充実させる
+  const groupRecruitments = recruitments.slice(0, 8)
   let groupCount = 0
+  let totalMessageCount = 0
   for (const recruitment of groupRecruitments) {
     // グループ作成
     const group = await prisma.group.create({
@@ -434,9 +474,10 @@ async function seedTestData() {
       },
     })
 
-    // 他のメンバーを追加（2-4人）
-    const memberCount = randomInt(2, 4)
+    // 他のメンバーを追加（3-5人）
+    const memberCount = randomInt(3, 5)
     const addedMembers = new Set<string>([recruitment.creatorId])
+
     for (let j = 0; j < memberCount; j++) {
       const member = users[(groupCount * 5 + j + 3) % users.length]
       if (addedMembers.has(member.id)) continue
@@ -448,29 +489,57 @@ async function seedTestData() {
           userId: member.id,
           role: GroupMemberRole.MEMBER,
           // 一部のメンバーは古いlastReadAtにして未読メッセージをテスト
-          lastReadAt: j === 0 ? pastDate(1) : new Date(),
+          lastReadAt: j === 0 ? pastDate(0, 2) : new Date(),
         },
       })
     }
 
-    // メッセージを追加（各グループに5-10件）
-    const messageCount = randomInt(5, 10)
+    // メッセージを追加（各グループに15-25件）
+    // 会話の流れを意識：挨拶 → 計画 → 詳細 → 確認
     const memberIds = Array.from(addedMembers)
-    for (let k = 0; k < messageCount; k++) {
+    const messageSequence: string[] = []
+
+    // 1. 挨拶フェーズ（各メンバーが1回ずつ挨拶）
+    for (let i = 0; i < memberIds.length; i++) {
+      messageSequence.push(randomPick(SAMPLE_MESSAGES_INTRO))
+    }
+
+    // 2. 計画フェーズ（4-6件のやり取り）
+    for (let i = 0; i < randomInt(4, 6); i++) {
+      messageSequence.push(randomPick(SAMPLE_MESSAGES_PLANNING))
+    }
+
+    // 3. 詳細フェーズ（3-5件のやり取り）
+    for (let i = 0; i < randomInt(3, 5); i++) {
+      messageSequence.push(randomPick(SAMPLE_MESSAGES_DETAILS))
+    }
+
+    // 4. 確認フェーズ（2-4件のやり取り）
+    for (let i = 0; i < randomInt(2, 4); i++) {
+      messageSequence.push(randomPick(SAMPLE_MESSAGES_CONFIRM))
+    }
+
+    // メッセージを作成
+    const baseDate = pastDate(randomInt(1, 5))
+    for (let k = 0; k < messageSequence.length; k++) {
       const senderId = memberIds[k % memberIds.length]
+      const msgDate = new Date(baseDate)
+      msgDate.setMinutes(msgDate.getMinutes() + k * randomInt(5, 30))
+
       await prisma.message.create({
         data: {
           groupId: group.id,
           senderId,
-          content: randomPick(SAMPLE_MESSAGES),
-          createdAt: pastDate(0, messageCount - k), // 時間順に並ぶように
+          content: messageSequence[k],
+          createdAt: msgDate,
         },
       })
+      totalMessageCount++
     }
 
     groupCount++
   }
-  console.log(`✅ Created ${groupCount} groups with messages`)
+  console.log(`✅ Created ${groupCount} groups with ${totalMessageCount} messages`)
 
   // 通知を作成（各種類）
   let notificationCount = 0
@@ -563,12 +632,260 @@ async function seedTestData() {
   console.log(`   - 参加申請: ${applicationCount}件`)
   console.log(`   - オファー: ${offerCount}件`)
   console.log(`   - グループ: ${groupCount}件`)
+  console.log(`   - メッセージ: ${totalMessageCount}件`)
   console.log(`   - 通知: ${notificationCount}件`)
   console.log('')
-  console.log('💡 動作確認用ユーザー:')
-  console.log('   test_user_0@example.com - 通知・グループ・募集あり')
-  console.log('   test_user_1@example.com - 通知・グループ・募集あり')
+  console.log('💡 動作確認用ユーザー（Supabaseでログイン後に確認）:')
+  console.log('   test_user_0@example.com - 募集作成者、グループオーナー、通知あり')
+  console.log('   test_user_1@example.com - 募集作成者、グループオーナー、通知あり')
+  console.log('   test_user_3@example.com - グループメンバー（複数グループに参加）')
   console.log('   test_user_5@example.com - やりたいこと表明あり（提案テスト用）')
+  console.log('')
+  console.log('⚠️ 注意: テストユーザーはSupabase Authには登録されていません')
+  console.log('   実際にログインするには、ご自身のアカウントでログイン後、')
+  console.log('   DBのテストユーザーのemailを自分のものに変更するか、')
+  console.log('   新規にグループやチャットを作成してテストしてください')
+}
+
+// 特定のユーザーを参加中状態にする（グループ・チャットデータ作成）
+async function createParticipatingDataForUser(userEmail: string) {
+  console.log(`\n🎯 Creating participating data for: ${userEmail}`)
+
+  // ユーザーを取得
+  const user = await prisma.user.findFirst({
+    where: { email: userEmail },
+  })
+
+  if (!user) {
+    console.log(`❌ User not found: ${userEmail}`)
+    return
+  }
+
+  console.log(`✅ Found user: ${user.nickname} (${user.id})`)
+
+  // 既存の募集を取得（グループがまだないもの優先）
+  const recruitmentsWithoutGroup = await prisma.recruitment.findMany({
+    where: {
+      status: RecruitmentStatus.OPEN,
+      group: null,
+      creatorId: { not: user.id }, // 自分が作成者でない募集
+    },
+    include: {
+      creator: true,
+      category: true,
+    },
+    take: 3,
+  })
+
+  // 自分が作成した募集も取得
+  const myRecruitments = await prisma.recruitment.findMany({
+    where: {
+      creatorId: user.id,
+      group: null,
+    },
+    include: {
+      creator: true,
+      category: true,
+    },
+    take: 2,
+  })
+
+  const allRecruitments = [...recruitmentsWithoutGroup, ...myRecruitments]
+
+  if (allRecruitments.length === 0) {
+    console.log('❌ No suitable recruitments found. Creating new ones...')
+    // 新しい募集を作成
+    const location = randomPick(SENDAI_LOCATIONS)
+    const jitteredLoc = jitterLocation(location.lat, location.lng)
+
+    const newRecruitment = await prisma.recruitment.create({
+      data: {
+        creatorId: user.id,
+        categoryId: '1', // ボードゲーム
+        title: 'ボドゲ会やりませんか？',
+        description: '仙台でボードゲーム仲間を募集しています！',
+        datetime: futureDate(randomInt(3, 10)),
+        area: Area.SENDAI,
+        location: location.name,
+        latitude: jitteredLoc.lat,
+        longitude: jitteredLoc.lng,
+        locationName: location.name,
+        minPeople: 2,
+        maxPeople: 6,
+        status: RecruitmentStatus.OPEN,
+      },
+      include: {
+        creator: true,
+        category: true,
+      },
+    })
+    allRecruitments.push(newRecruitment)
+  }
+
+  let createdGroups = 0
+  let createdMessages = 0
+
+  for (const recruitment of allRecruitments) {
+    // 既存のグループがあるかチェック
+    const existingGroup = await prisma.group.findUnique({
+      where: { recruitmentId: recruitment.id },
+    })
+
+    if (existingGroup) {
+      // 既存グループにメンバーとして追加を試みる
+      const existingMember = await prisma.groupMember.findUnique({
+        where: {
+          groupId_userId: {
+            groupId: existingGroup.id,
+            userId: user.id,
+          },
+        },
+      })
+
+      if (!existingMember) {
+        await prisma.groupMember.create({
+          data: {
+            groupId: existingGroup.id,
+            userId: user.id,
+            role: GroupMemberRole.MEMBER,
+            lastReadAt: new Date(),
+          },
+        })
+        console.log(`  ➕ Added to existing group: ${existingGroup.name}`)
+      }
+      continue
+    }
+
+    // 新しいグループを作成
+    const group = await prisma.group.create({
+      data: {
+        recruitmentId: recruitment.id,
+        name: recruitment.title,
+      },
+    })
+
+    // オーナーを追加
+    const isOwner = recruitment.creatorId === user.id
+    if (isOwner) {
+      await prisma.groupMember.create({
+        data: {
+          groupId: group.id,
+          userId: user.id,
+          role: GroupMemberRole.OWNER,
+          lastReadAt: new Date(),
+        },
+      })
+    } else {
+      // 募集者をオーナーとして追加
+      await prisma.groupMember.create({
+        data: {
+          groupId: group.id,
+          userId: recruitment.creatorId,
+          role: GroupMemberRole.OWNER,
+          lastReadAt: new Date(),
+        },
+      })
+      // 自分をメンバーとして追加
+      await prisma.groupMember.create({
+        data: {
+          groupId: group.id,
+          userId: user.id,
+          role: GroupMemberRole.MEMBER,
+          lastReadAt: new Date(),
+        },
+      })
+
+      // 承認済み申請も作成
+      await prisma.application.upsert({
+        where: {
+          recruitmentId_applicantId: {
+            recruitmentId: recruitment.id,
+            applicantId: user.id,
+          },
+        },
+        update: {
+          status: ApplicationStatus.APPROVED,
+          respondedAt: new Date(),
+        },
+        create: {
+          recruitmentId: recruitment.id,
+          applicantId: user.id,
+          status: ApplicationStatus.APPROVED,
+          message: '参加させてください！',
+          respondedAt: new Date(),
+        },
+      })
+    }
+
+    // 他のテストユーザーをメンバーとして追加（2-3人）
+    const testUsers = await prisma.user.findMany({
+      where: {
+        email: { startsWith: 'test_' },
+        id: { not: user.id, notIn: [recruitment.creatorId] },
+      },
+      take: randomInt(2, 3),
+    })
+
+    for (const testUser of testUsers) {
+      await prisma.groupMember.create({
+        data: {
+          groupId: group.id,
+          userId: testUser.id,
+          role: GroupMemberRole.MEMBER,
+          lastReadAt: pastDate(0, randomInt(1, 5)),
+        },
+      })
+    }
+
+    // メッセージを作成（会話の流れ）
+    const allMembers = [
+      user,
+      ...(isOwner ? [] : [recruitment.creator]),
+      ...testUsers,
+    ]
+
+    const messages = [
+      { sender: recruitment.creator, content: 'グループへようこそ！' },
+      { sender: user, content: 'はじめまして！よろしくお願いします！' },
+      { sender: testUsers[0], content: 'よろしくお願いします〜' },
+      { sender: recruitment.creator, content: '日程調整しましょうか' },
+      { sender: user, content: '今週末って皆さん空いてますか？' },
+      { sender: testUsers[0], content: '土曜日なら大丈夫です！' },
+      { sender: testUsers[1] || testUsers[0], content: '私も土曜OKです' },
+      { sender: recruitment.creator, content: 'じゃあ土曜日にしましょう！' },
+      { sender: user, content: 'いいですね！何時くらいがいいですかね？' },
+      { sender: recruitment.creator, content: '13時集合でいかがでしょうか' },
+      { sender: testUsers[0], content: '了解です！' },
+      { sender: user, content: 'OKです！楽しみにしています' },
+      { sender: testUsers[1] || testUsers[0], content: '場所はどこにしますか？' },
+      { sender: recruitment.creator, content: `${recruitment.locationName || '仙台駅周辺'}にしましょうか` },
+      { sender: user, content: 'いいですね！当日よろしくお願いします' },
+    ]
+
+    const baseDate = pastDate(randomInt(1, 3))
+    for (let i = 0; i < messages.length; i++) {
+      const msg = messages[i]
+      if (!msg.sender) continue
+
+      const msgDate = new Date(baseDate)
+      msgDate.setMinutes(msgDate.getMinutes() + i * randomInt(3, 15))
+
+      await prisma.message.create({
+        data: {
+          groupId: group.id,
+          senderId: msg.sender.id,
+          content: msg.content,
+          createdAt: msgDate,
+        },
+      })
+      createdMessages++
+    }
+
+    createdGroups++
+    console.log(`  ✅ Created group: ${group.name} with ${messages.length} messages`)
+  }
+
+  console.log(`\n📊 Created ${createdGroups} groups with ${createdMessages} messages for ${user.nickname}`)
 }
 
 async function main() {
@@ -596,6 +913,12 @@ async function main() {
 
   // テストデータの作成
   await seedTestData()
+
+  // 環境変数でユーザーメールが指定されていれば、そのユーザー用のデータを作成
+  const targetUserEmail = process.env.SEED_USER_EMAIL
+  if (targetUserEmail) {
+    await createParticipatingDataForUser(targetUserEmail)
+  }
 
   console.log('🌱 Seeding completed!')
 }
