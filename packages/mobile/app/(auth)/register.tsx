@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native'
 import { Link, router } from 'expo-router'
 import { useAuthStore } from '@/stores/auth'
@@ -18,7 +19,8 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { signUp } = useAuthStore()
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const { signUp, signInWithGoogle } = useAuthStore()
 
   const handleRegister = async () => {
     if (!email || !password || !confirmPassword) {
@@ -47,6 +49,19 @@ export default function RegisterScreen() {
     }
   }
 
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true)
+    try {
+      await signInWithGoogle()
+    } catch (error: any) {
+      if (error.message !== 'ログインがキャンセルされました') {
+        Alert.alert('Googleログインエラー', error.message || 'ログインに失敗しました')
+      }
+    } finally {
+      setIsGoogleLoading(false)
+    }
+  }
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -61,6 +76,29 @@ export default function RegisterScreen() {
         </View>
 
         <View style={styles.form}>
+          {/* Googleログインボタン */}
+          <TouchableOpacity
+            style={[styles.googleButton, isGoogleLoading && styles.buttonDisabled]}
+            onPress={handleGoogleLogin}
+            disabled={isLoading || isGoogleLoading}
+          >
+            {isGoogleLoading ? (
+              <ActivityIndicator color={colors.gray[700]} />
+            ) : (
+              <>
+                <Text style={styles.googleIcon}>G</Text>
+                <Text style={styles.googleButtonText}>Googleで登録</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* 区切り線 */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>または</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
           <TextInput
             style={styles.input}
             placeholder="メールアドレス"
@@ -95,11 +133,13 @@ export default function RegisterScreen() {
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled]}
             onPress={handleRegister}
-            disabled={isLoading}
+            disabled={isLoading || isGoogleLoading}
           >
-            <Text style={styles.buttonText}>
-              {isLoading ? '登録中...' : '登録する'}
-            </Text>
+            {isLoading ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <Text style={styles.buttonText}>登録する</Text>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -166,6 +206,42 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.sm,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.gray[300],
+  },
+  dividerText: {
+    color: colors.gray[500],
+    fontSize: 14,
+    marginHorizontal: spacing.md,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.gray[300],
+    borderRadius: 8,
+    paddingVertical: spacing.md,
+  },
+  googleIcon: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4285F4',
+    marginRight: spacing.sm,
+  },
+  googleButtonText: {
+    color: colors.gray[700],
+    fontSize: 16,
+    fontWeight: '500',
   },
   footer: {
     alignItems: 'center',

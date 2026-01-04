@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { router } from 'expo-router'
 import { useAuthStore } from '@/stores/auth'
 import { colors, spacing } from '@/constants/theme'
 
@@ -27,7 +28,7 @@ export default function ProfileScreen() {
         <Text style={styles.title}>プロフィール</Text>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView style={styles.content}>
         {/* アバター */}
         <View style={styles.avatarSection}>
           <View style={styles.avatar}>
@@ -49,25 +50,87 @@ export default function ProfileScreen() {
               {user?.area === 'TOKYO' ? '東京' : user?.area === 'SENDAI' ? '仙台' : '未設定'}
             </Text>
           </View>
-          <View style={styles.infoRow}>
+          <View style={[styles.infoRow, styles.lastInfoRow]}>
             <Text style={styles.infoLabel}>自己紹介</Text>
-            <Text style={styles.infoValue}>
+            <Text style={styles.infoValue} numberOfLines={3}>
               {user?.bio || '未設定'}
             </Text>
           </View>
         </View>
 
+        {/* 興味カテゴリ */}
+        {user?.interests && user.interests.length > 0 && (
+          <View style={styles.interestsSection}>
+            <Text style={styles.sectionTitle}>興味のあるカテゴリ</Text>
+            <View style={styles.interestsList}>
+              {user.interests.map((interest) => (
+                <View key={interest.id} style={styles.interestChip}>
+                  <Text style={styles.interestIcon}>{interest.icon}</Text>
+                  <Text style={styles.interestName}>{interest.name}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* アクション */}
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.editButton}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => router.push('/profile/edit')}
+          >
             <Text style={styles.editButtonText}>プロフィールを編集</Text>
           </TouchableOpacity>
+        </View>
 
+        {/* 設定メニュー */}
+        <View style={styles.menuSection}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => Alert.alert('実装予定', '通知設定は今後実装されます')}
+          >
+            <Text style={styles.menuIcon}>🔔</Text>
+            <Text style={styles.menuText}>通知設定</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => Alert.alert('実装予定', 'ヘルプは今後実装されます')}
+          >
+            <Text style={styles.menuIcon}>❓</Text>
+            <Text style={styles.menuText}>ヘルプ</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => Alert.alert('実装予定', '利用規約は今後実装されます')}
+          >
+            <Text style={styles.menuIcon}>📄</Text>
+            <Text style={styles.menuText}>利用規約</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuItem, styles.lastMenuItem]}
+            onPress={() => Alert.alert('実装予定', 'プライバシーポリシーは今後実装されます')}
+          >
+            <Text style={styles.menuIcon}>🔒</Text>
+            <Text style={styles.menuText}>プライバシーポリシー</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ログアウト */}
+        <View style={styles.logoutSection}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutButtonText}>ログアウト</Text>
           </TouchableOpacity>
         </View>
-      </View>
+
+        <View style={{ height: spacing.xl }} />
+      </ScrollView>
     </SafeAreaView>
   )
 }
@@ -91,11 +154,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: spacing.lg,
   },
   avatarSection: {
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    paddingVertical: spacing.xl,
+    backgroundColor: colors.white,
   },
   avatar: {
     width: 80,
@@ -123,14 +186,16 @@ const styles = StyleSheet.create({
   },
   infoSection: {
     backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   infoRow: {
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.gray[100],
+  },
+  lastInfoRow: {
+    borderBottomWidth: 0,
   },
   infoLabel: {
     fontSize: 12,
@@ -141,21 +206,82 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.gray[900],
   },
+  interestsSection: {
+    backgroundColor: colors.white,
+    marginTop: spacing.sm,
+    padding: spacing.md,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.gray[700],
+    marginBottom: spacing.sm,
+  },
+  interestsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  interestChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary[50],
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 16,
+  },
+  interestIcon: {
+    fontSize: 14,
+    marginRight: 4,
+  },
+  interestName: {
+    fontSize: 13,
+    color: colors.primary[700],
+  },
   actions: {
-    gap: spacing.md,
+    padding: spacing.md,
   },
   editButton: {
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.primary[500],
+    backgroundColor: colors.primary[500],
     borderRadius: 12,
     paddingVertical: spacing.md,
     alignItems: 'center',
   },
   editButtonText: {
-    color: colors.primary[500],
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  menuSection: {
+    backgroundColor: colors.white,
+    marginTop: spacing.sm,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray[100],
+  },
+  lastMenuItem: {
+    borderBottomWidth: 0,
+  },
+  menuIcon: {
+    fontSize: 18,
+    marginRight: spacing.md,
+  },
+  menuText: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.gray[900],
+  },
+  menuArrow: {
+    fontSize: 18,
+    color: colors.gray[400],
+  },
+  logoutSection: {
+    padding: spacing.md,
   },
   logoutButton: {
     backgroundColor: colors.white,
@@ -164,7 +290,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoutButtonText: {
-    color: colors.gray[500],
+    color: colors.error[500],
     fontSize: 16,
   },
 })

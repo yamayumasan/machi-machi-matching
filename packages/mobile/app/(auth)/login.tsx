@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native'
 import { Link, router } from 'expo-router'
 import { useAuthStore } from '@/stores/auth'
@@ -17,7 +18,8 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { signIn } = useAuthStore()
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const { signIn, signInWithGoogle } = useAuthStore()
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -32,6 +34,19 @@ export default function LoginScreen() {
       Alert.alert('ログインエラー', error.message || 'ログインに失敗しました')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true)
+    try {
+      await signInWithGoogle()
+    } catch (error: any) {
+      if (error.message !== 'ログインがキャンセルされました') {
+        Alert.alert('Googleログインエラー', error.message || 'ログインに失敗しました')
+      }
+    } finally {
+      setIsGoogleLoading(false)
     }
   }
 
@@ -72,11 +87,36 @@ export default function LoginScreen() {
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled]}
             onPress={handleLogin}
-            disabled={isLoading}
+            disabled={isLoading || isGoogleLoading}
           >
-            <Text style={styles.buttonText}>
-              {isLoading ? 'ログイン中...' : 'ログイン'}
-            </Text>
+            {isLoading ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <Text style={styles.buttonText}>ログイン</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* 区切り線 */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>または</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Googleログインボタン */}
+          <TouchableOpacity
+            style={[styles.googleButton, isGoogleLoading && styles.buttonDisabled]}
+            onPress={handleGoogleLogin}
+            disabled={isLoading || isGoogleLoading}
+          >
+            {isGoogleLoading ? (
+              <ActivityIndicator color={colors.gray[700]} />
+            ) : (
+              <>
+                <Text style={styles.googleIcon}>G</Text>
+                <Text style={styles.googleButtonText}>Googleでログイン</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -148,6 +188,42 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.gray[300],
+  },
+  dividerText: {
+    color: colors.gray[500],
+    fontSize: 14,
+    marginHorizontal: spacing.md,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.gray[300],
+    borderRadius: 8,
+    paddingVertical: spacing.md,
+  },
+  googleIcon: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4285F4',
+    marginRight: spacing.sm,
+  },
+  googleButtonText: {
+    color: colors.gray[700],
+    fontSize: 16,
+    fontWeight: '500',
   },
   footer: {
     alignItems: 'center',

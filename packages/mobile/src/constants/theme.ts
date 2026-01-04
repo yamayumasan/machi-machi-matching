@@ -26,9 +26,15 @@ export const colors = {
   },
   white: '#ffffff',
   black: '#000000',
-  success: '#10b981',
-  warning: '#f59e0b',
-  error: '#ef4444',
+  success: {
+    500: '#10b981',
+  },
+  warning: {
+    500: '#f59e0b',
+  },
+  error: {
+    500: '#ef4444',
+  },
 }
 
 export const spacing = {
