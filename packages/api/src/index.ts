@@ -33,19 +33,56 @@ const app = express()
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true)
+        return
+      }
+      if (
+        origin.includes('vercel.app') ||
+        origin.includes('localhost') ||
+        origin === process.env.FRONTEND_URL
+      ) {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 })
 
+// CORS設定
+const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[]
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // originがない場合（サーバー間通信など）は許可
+    if (!origin) {
+      callback(null, true)
+      return
+    }
+    // 許可リストに含まれているか、VercelのプレビューURLかチェック
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.includes('vercel.app') ||
+      origin.includes('localhost')
+    ) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true,
+}
+
 // Middleware
 app.use(helmet())
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    credentials: true,
-  })
-)
+app.use(cors(corsOptions))
 app.use(express.json())
 
 // Rate limiting
