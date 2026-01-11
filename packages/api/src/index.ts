@@ -81,8 +81,11 @@ const corsOptions: cors.CorsOptions = {
 }
 
 // Middleware
-app.use(helmet())
+// CORSを最初に設定（preflightリクエスト対応）
 app.use(cors(corsOptions))
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}))
 app.use(express.json())
 
 // Rate limiting
