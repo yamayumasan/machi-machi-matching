@@ -3,5 +3,8 @@
   "buildCommand": "cd packages/shared && pnpm build && cd ../web && pnpm build",
   "outputDirectory": "packages/web/dist",
   "installCommand": "pnpm install",
-  "framework": "vite"
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
