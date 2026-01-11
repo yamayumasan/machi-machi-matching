@@ -94,7 +94,7 @@ export const useGroupStore = defineStore('group', () => {
       return
     }
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
     socket.value = io(apiUrl, {
       auth: { token },
