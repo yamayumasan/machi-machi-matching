@@ -117,7 +117,8 @@ httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
 
   // スケジューラーを開始（期限切れ募集の自動締め切りなど）
-  startScheduler()
+  // TODO: DB接続が安定したら有効化する
+  // startScheduler()
 })
 
 export { app, io }
