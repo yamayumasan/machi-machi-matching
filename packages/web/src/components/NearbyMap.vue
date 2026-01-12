@@ -308,16 +308,17 @@ const moveToCurrentLocation = async () => {
   }
 }
 
-// マップ初期化
-const initializeMap = async () => {
-  await nextTick()
-  const map = mapRef.value?.leafletObject
-  if (!map) return
-
+// マップ初期化（@readyイベントから呼び出される）
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const initializeMap = async (map: any) => {
   // マーカーレイヤーを作成（クラスタリングは一時廃止）
   // NOTE: 将来クラスタリングを再実装する場合は L.markerClusterGroup() を使用
   markerLayer = L.layerGroup()
   map.addLayer(markerLayer)
+
+  // サイズを再計算（コンテナサイズ確定後）
+  await nextTick()
+  map.invalidateSize()
 
   // 初期位置に移動
   center.value = [userLocation.value.lat, userLocation.value.lng]
@@ -334,6 +335,24 @@ const initializeMap = async () => {
 
   // 移動終了イベントを設定
   map.on('moveend', handleMoveEnd)
+}
+
+// LMapの@readyイベントハンドラ
+const handleMapReady = () => {
+  const map = mapRef.value?.leafletObject
+  if (map) {
+    initializeMap(map)
+  }
+}
+
+// 外部からサイズ再計算を呼び出すための関数
+const invalidateSize = () => {
+  const map = mapRef.value?.leafletObject
+  if (map) {
+    nextTick(() => {
+      map.invalidateSize()
+    })
+  }
 }
 
 // アイテムの変更を監視
@@ -364,8 +383,6 @@ watch(
 )
 
 onMounted(() => {
-  // マップの準備ができたら初期化
-  setTimeout(initializeMap, 100)
   // ポップアップ内のボタンクリックハンドラを設定
   setupPopupButtonHandler()
 })
@@ -413,6 +430,7 @@ onBeforeUnmount(() => {
 // 外部からアイテムを選択するための関数をexpose
 defineExpose({
   focusOnItem,
+  invalidateSize,
 })
 </script>
 
@@ -425,6 +443,7 @@ defineExpose({
       :use-global-leaflet="false"
       :zoom-control="false"
       class="w-full h-full"
+      @ready="handleMapReady"
     >
       <LTileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

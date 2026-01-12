@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { AREA_LABELS, type NearbyItem } from '@machi/shared'
@@ -41,64 +41,71 @@ onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
 })
 
-// モバイル用: スクロール連動型レイアウト
-const sheetContentRef = ref<HTMLElement | null>(null)
+// モバイル用: リサイズ可能レイアウト
+const mobileLayoutRef = ref<HTMLElement | null>(null)
 
-// 地図の高さ設定（px単位で管理）
-const MAP_MAX_HEIGHT = 400 // px - 地図の最大高さ（ヘッダー削除分を拡大）
-const MAP_MIN_HEIGHT = 120 // px - 地図の最小高さ
-const currentMapHeight = ref(MAP_MAX_HEIGHT)
+// 地図の高さ設定（%単位で管理）
+const MAP_EXPANDED_PERCENT = 80 // % - 地図拡大時
+const MAP_COLLAPSED_PERCENT = 20 // % - 地図縮小時
+const currentMapPercent = ref(MAP_EXPANDED_PERCENT)
 
-// 地図が最小化されているか
-const isMapMinimized = computed(() => currentMapHeight.value <= MAP_MIN_HEIGHT)
+// 地図が縮小されているか
+const isMapMinimized = computed(() => currentMapPercent.value <= MAP_COLLAPSED_PERCENT)
 
-// タッチ/スクロール処理用
-let lastTouchY = 0
+// ドラッグ中フラグ
+const isDragging = ref(false)
 
-// タッチ開始
-const handleTouchStart = (e: TouchEvent) => {
-  lastTouchY = e.touches[0].clientY
+// リサイズバーのドラッグ開始
+const handleResizeStart = (e: TouchEvent | MouseEvent) => {
+  e.preventDefault()
+  isDragging.value = true
+
+  const startY = 'touches' in e ? e.touches[0].clientY : e.clientY
+  const startPercent = currentMapPercent.value
+  const layoutEl = mobileLayoutRef.value
+  if (!layoutEl) return
+
+  const layoutHeight = layoutEl.clientHeight
+
+  const handleMove = (moveEvent: TouchEvent | MouseEvent) => {
+    const currentY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY
+    const deltaY = currentY - startY
+    const deltaPercent = (deltaY / layoutHeight) * 100
+    const newPercent = Math.max(MAP_COLLAPSED_PERCENT, Math.min(MAP_EXPANDED_PERCENT, startPercent + deltaPercent))
+    currentMapPercent.value = newPercent
+  }
+
+  const handleEnd = () => {
+    isDragging.value = false
+    document.removeEventListener('touchmove', handleMove)
+    document.removeEventListener('touchend', handleEnd)
+    document.removeEventListener('mousemove', handleMove)
+    document.removeEventListener('mouseup', handleEnd)
+    // リサイズ完了後にマップのサイズを再計算
+    nextTick(() => {
+      mapRef.value?.invalidateSize()
+    })
+  }
+
+  document.addEventListener('touchmove', handleMove, { passive: false })
+  document.addEventListener('touchend', handleEnd)
+  document.addEventListener('mousemove', handleMove)
+  document.addEventListener('mouseup', handleEnd)
 }
 
-// タッチ移動（スクロール連動）
-const handleTouchMove = (e: TouchEvent) => {
-  const currentY = e.touches[0].clientY
-  const deltaY = lastTouchY - currentY // 正: 上スクロール, 負: 下スクロール
-  lastTouchY = currentY
+// リサイズバーをタップでトグル
+const handleResizeToggle = () => {
+  if (isDragging.value) return // ドラッグ中はトグルしない
 
-  const listEl = sheetContentRef.value
-  if (!listEl) return
-
-  const listScrollTop = listEl.scrollTop
-  const isAtListTop = listScrollTop <= 0
-
-  // 上にスクロール（deltaY > 0）
-  if (deltaY > 0) {
-    if (!isMapMinimized.value) {
-      // 地図がまだ縮小可能 → 地図を縮小
-      e.preventDefault()
-      const newHeight = Math.max(MAP_MIN_HEIGHT, currentMapHeight.value - deltaY)
-      currentMapHeight.value = newHeight
-    }
-    // 地図が最小 → リストの通常スクロールに任せる
-  }
-  // 下にスクロール（deltaY < 0）
-  else if (deltaY < 0) {
-    if (isAtListTop && currentMapHeight.value < MAP_MAX_HEIGHT) {
-      // リストが最上部 & 地図が拡大可能 → 地図を拡大
-      e.preventDefault()
-      const newHeight = Math.min(MAP_MAX_HEIGHT, currentMapHeight.value - deltaY)
-      currentMapHeight.value = newHeight
-    }
-    // それ以外 → リストの通常スクロールに任せる
-  }
-}
-
-// 地図エリアをタップで展開
-const handleMapAreaClick = () => {
   if (isMapMinimized.value) {
-    currentMapHeight.value = MAP_MAX_HEIGHT
+    currentMapPercent.value = MAP_EXPANDED_PERCENT
+  } else {
+    currentMapPercent.value = MAP_COLLAPSED_PERCENT
   }
+  // トグル後にマップのサイズを再計算
+  nextTick(() => {
+    mapRef.value?.invalidateSize()
+  })
 }
 
 const user = computed(() => authStore.user)
@@ -221,13 +228,12 @@ const handleDetailClick = (item: NearbyItem) => {
 
       <!-- モバイル版: 地図 + スクロール連動リスト -->
       <template v-else>
-        <div class="mobile-layout">
-          <!-- 地図（クリックで展開可能） -->
+        <div ref="mobileLayoutRef" class="mobile-layout">
+          <!-- 地図エリア -->
           <div
             class="mobile-map"
             :class="{ 'is-minimized': isMapMinimized }"
-            :style="{ height: `${currentMapHeight}px` }"
-            @click="handleMapAreaClick"
+            :style="{ height: `${currentMapPercent}%` }"
           >
             <NearbyMap
               ref="mapRef"
@@ -235,19 +241,21 @@ const handleDetailClick = (item: NearbyItem) => {
               @item-select="handleMapItemSelect"
               @detail-click="handleDetailClick"
             />
-            <!-- 最小化時の展開ヒント -->
-            <div v-if="isMapMinimized" class="map-expand-hint">
-              タップで地図を拡大
-            </div>
           </div>
 
-          <!-- リストエリア（スクロール連動） -->
+          <!-- リサイズバー -->
           <div
-            ref="sheetContentRef"
-            class="mobile-list"
-            @touchstart.passive="handleTouchStart"
-            @touchmove="handleTouchMove"
+            class="resize-bar"
+            :class="{ 'is-dragging': isDragging }"
+            @touchstart.prevent="handleResizeStart"
+            @mousedown.prevent="handleResizeStart"
+            @click="handleResizeToggle"
           >
+            <div class="resize-handle"></div>
+          </div>
+
+          <!-- リストエリア -->
+          <div class="mobile-list">
             <NearbyList
               @item-click="handleListItemClick"
               @detail-click="handleDetailClick"
@@ -438,18 +446,37 @@ const handleDetailClick = (item: NearbyItem) => {
   cursor: pointer;
 }
 
-.map-expand-hint {
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 12px;
-  pointer-events: none;
-  z-index: 1000;
+/* リサイズバー */
+.resize-bar {
+  flex-shrink: 0;
+  height: 24px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 10;
+}
+
+.resize-bar:active,
+.resize-bar.is-dragging {
+  background: #e5e7eb;
+}
+
+.resize-handle {
+  width: 40px;
+  height: 4px;
+  background: #9ca3af;
+  border-radius: 2px;
+}
+
+.resize-bar:active .resize-handle,
+.resize-bar.is-dragging .resize-handle {
+  background: #6b7280;
 }
 
 .mobile-list {
