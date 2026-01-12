@@ -1,23 +1,54 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotificationStore } from '../stores/notification'
 import MdiIcon from './MdiIcon.vue'
-import { mdiBell, mdiBellOutline } from '../lib/icons'
+import ModalSheet from './ModalSheet.vue'
+import NotificationList from './NotificationList.vue'
+import { mdiBell, mdiBellOutline, mdiCheckAll } from '../lib/icons'
 
 const router = useRouter()
 const notificationStore = useNotificationStore()
 
 const showDropdown = ref(false)
+const showModal = ref(false)
 let pollInterval: ReturnType<typeof setInterval> | null = null
 
-const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value
+// レスポンシブ判定
+const isMobile = ref(false)
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768
+}
+
+const toggleNotifications = () => {
+  if (isMobile.value) {
+    // モバイル: モーダル表示
+    showModal.value = true
+    // 通知一覧を取得
+    notificationStore.fetchNotifications(1, false)
+  } else {
+    // PC: ドロップダウン表示
+    showDropdown.value = !showDropdown.value
+    if (showDropdown.value) {
+      // 通知一覧を取得
+      notificationStore.fetchNotifications(1, false)
+    }
+  }
 }
 
 const goToNotifications = () => {
   showDropdown.value = false
+  showModal.value = false
   router.push('/notifications')
+}
+
+const handleMarkAllAsRead = async () => {
+  await notificationStore.markAllAsRead()
+}
+
+const handleNotificationClick = () => {
+  showDropdown.value = false
+  showModal.value = false
 }
 
 const closeDropdown = (e: MouseEvent) => {
@@ -27,7 +58,14 @@ const closeDropdown = (e: MouseEvent) => {
   }
 }
 
+const hasMoreNotifications = computed(() => {
+  return notificationStore.pagination.total > 10
+})
+
 onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+
   // 初期ロード
   notificationStore.fetchUnreadCount()
 
@@ -40,6 +78,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
   if (pollInterval) {
     clearInterval(pollInterval)
   }
@@ -50,7 +89,7 @@ onUnmounted(() => {
 <template>
   <div class="notification-bell relative">
     <button
-      @click="toggleDropdown"
+      @click="toggleNotifications"
       class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
       aria-label="通知"
     >
@@ -68,34 +107,94 @@ onUnmounted(() => {
       </span>
     </button>
 
-    <!-- ドロップダウン -->
+    <!-- PC版: ドロップダウン -->
     <Transition name="dropdown">
       <div
-        v-if="showDropdown"
-        class="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-[2000]"
+        v-if="showDropdown && !isMobile"
+        class="dropdown-panel"
       >
-        <div class="p-3 border-b border-gray-100">
+        <!-- ヘッダー -->
+        <div class="dropdown-header">
           <div class="flex items-center justify-between">
             <h3 class="font-semibold text-gray-900">通知</h3>
-            <span
+            <button
               v-if="notificationStore.hasUnread"
-              class="text-xs text-primary-600"
+              @click="handleMarkAllAsRead"
+              class="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700"
             >
-              {{ notificationStore.unreadCount }}件の未読
-            </span>
+              <MdiIcon :path="mdiCheckAll" :size="14" />
+              <span>すべて既読</span>
+            </button>
           </div>
         </div>
 
-        <div class="p-4 text-center">
+        <!-- 通知リスト -->
+        <div class="dropdown-content">
+          <div v-if="notificationStore.isLoading" class="flex justify-center py-8">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+          </div>
+          <NotificationList
+            v-else
+            :max-items="10"
+            :show-delete="false"
+            :compact="true"
+            @item-click="handleNotificationClick"
+          />
+        </div>
+
+        <!-- フッター -->
+        <div v-if="hasMoreNotifications" class="dropdown-footer">
           <button
             @click="goToNotifications"
-            class="w-full py-2 px-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
+            class="w-full py-2 text-sm text-primary-600 hover:text-primary-700 font-medium"
           >
-            通知一覧を見る
+            すべての通知を見る
           </button>
         </div>
       </div>
     </Transition>
+
+    <!-- モバイル版: モーダル -->
+    <ModalSheet v-model="showModal" title="通知">
+      <template #header>
+        <div class="flex items-center justify-between w-full">
+          <h2 class="text-lg font-bold">通知</h2>
+          <button
+            v-if="notificationStore.hasUnread"
+            @click="handleMarkAllAsRead"
+            class="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+          >
+            <MdiIcon :path="mdiCheckAll" :size="16" />
+            <span>すべて既読</span>
+          </button>
+        </div>
+      </template>
+
+      <template #default>
+        <div class="modal-content">
+          <div v-if="notificationStore.isLoading" class="flex justify-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          </div>
+          <NotificationList
+            v-else
+            :max-items="20"
+            :show-delete="true"
+            :compact="false"
+            @item-click="handleNotificationClick"
+          />
+
+          <!-- すべて見るボタン -->
+          <div v-if="hasMoreNotifications" class="px-4 py-4 border-t border-gray-100">
+            <button
+              @click="goToNotifications"
+              class="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+            >
+              すべての通知を見る
+            </button>
+          </div>
+        </div>
+      </template>
+    </ModalSheet>
   </div>
 </template>
 
@@ -109,5 +208,45 @@ onUnmounted(() => {
 .dropdown-leave-to {
   opacity: 0;
   transform: translateY(-10px);
+}
+
+.dropdown-panel {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 8px;
+  width: 360px;
+  max-height: 480px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dropdown-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+
+.dropdown-content {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 360px;
+}
+
+.dropdown-footer {
+  padding: 8px 16px;
+  border-top: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+
+.modal-content {
+  max-height: 70vh;
+  overflow-y: auto;
 }
 </style>
