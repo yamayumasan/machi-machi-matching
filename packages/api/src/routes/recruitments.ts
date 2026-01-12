@@ -17,6 +17,8 @@ import {
   notifyOfferReceived,
   notifyOfferAccepted,
   notifyOfferDeclined,
+  notifyGroupCreated,
+  notifyMemberJoined,
 } from '../services/notificationService'
 
 const router = Router()
@@ -192,6 +194,11 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
             },
           },
         },
+        group: {
+          select: {
+            id: true,
+          },
+        },
       },
     })
 
@@ -229,6 +236,11 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       })
     }
 
+    // 参加中かどうかを判定（オーナーまたは承認済み申請者）
+    const isOwner = req.user?.id === recruitment.creatorId
+    const isApprovedApplicant = userApplication?.status === 'APPROVED'
+    const isParticipating = isOwner || isApprovedApplicant
+
     res.json({
       success: true,
       data: {
@@ -263,7 +275,9 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
             role: 'MEMBER',
           })),
         ],
-        isOwner: req.user?.id === recruitment.creatorId,
+        isOwner,
+        isParticipating,
+        groupId: recruitment.group?.id || null,
         hasApplied: !!userApplication,
         applicationStatus: userApplication?.status || null,
         hasReceivedOffer: !!userOffer,
@@ -733,6 +747,16 @@ router.put('/:recruitmentId/applications/:applicationId', requireAuth, async (re
 
     const recruitment = await prisma.recruitment.findUnique({
       where: { id: recruitmentId },
+      include: {
+        group: true,
+        _count: {
+          select: {
+            applications: {
+              where: { status: 'APPROVED' },
+            },
+          },
+        },
+      },
     })
 
     if (!recruitment) {
@@ -757,6 +781,14 @@ router.put('/:recruitmentId/applications/:applicationId', requireAuth, async (re
 
     const application = await prisma.application.findUnique({
       where: { id: applicationId },
+      include: {
+        applicant: {
+          select: {
+            id: true,
+            nickname: true,
+          },
+        },
+      },
     })
 
     if (!application || application.recruitmentId !== recruitmentId) {
@@ -781,43 +813,146 @@ router.put('/:recruitmentId/applications/:applicationId', requireAuth, async (re
 
     const newStatus: ApplicationStatus = action === 'APPROVE' ? 'APPROVED' : 'REJECTED'
 
-    const updated = await prisma.application.update({
-      where: { id: applicationId },
-      data: {
-        status: newStatus,
-        respondedAt: new Date(),
-      },
-    })
+    let groupId: string | undefined
 
-    // 申請者に通知を送信
-    try {
-      if (action === 'APPROVE') {
+    if (action === 'APPROVE') {
+      // 承認の場合: グループ作成/参加処理をトランザクションで実行
+      const result = await prisma.$transaction(async (tx) => {
+        // 申請を承認
+        const updatedApplication = await tx.application.update({
+          where: { id: applicationId },
+          data: {
+            status: newStatus,
+            respondedAt: new Date(),
+          },
+        })
+
+        let group = recruitment.group
+
+        if (!group) {
+          // グループが存在しない場合: 新規作成
+          group = await tx.group.create({
+            data: {
+              recruitmentId,
+              name: recruitment.title,
+            },
+          })
+
+          // 募集者をオーナーとして追加
+          await tx.groupMember.create({
+            data: {
+              groupId: group.id,
+              userId: recruitment.creatorId,
+              role: 'OWNER',
+            },
+          })
+        }
+
+        // 承認された申請者をメンバーとして追加
+        await tx.groupMember.create({
+          data: {
+            groupId: group.id,
+            userId: application.applicantId,
+            role: 'MEMBER',
+          },
+        })
+
+        // 定員に達したかチェック（現在の承認済み + 今回の1人 + 募集者1人）
+        const newCurrentPeople = recruitment._count.applications + 1 + 1
+        if (newCurrentPeople >= recruitment.maxPeople) {
+          await tx.recruitment.update({
+            where: { id: recruitmentId },
+            data: {
+              status: 'CLOSED',
+              closedAt: new Date(),
+            },
+          })
+        }
+
+        return { updatedApplication, group, isNewGroup: !recruitment.group }
+      })
+
+      groupId = result.group.id
+
+      // 通知送信
+      try {
+        if (result.isNewGroup) {
+          // 新規グループ作成時: 募集者と申請者両方に通知
+          await notifyGroupCreated(
+            [recruitment.creatorId, application.applicantId],
+            result.group.id,
+            result.group.name,
+            recruitmentId
+          )
+        } else {
+          // 既存グループへの追加: 既存メンバーに通知
+          const existingMembers = await prisma.groupMember.findMany({
+            where: { groupId: result.group.id },
+            select: { userId: true },
+          })
+          const existingMemberIds = existingMembers.map((m) => m.userId)
+
+          await notifyMemberJoined(
+            existingMemberIds,
+            application.applicantId,
+            application.applicant.nickname || 'ユーザー',
+            result.group.id,
+            result.group.name
+          )
+        }
+
+        // 申請者に承認通知（groupId付き）
         await notifyApplicationApproved(
           application.applicantId,
           recruitmentId,
           recruitment.title,
-          applicationId
+          applicationId,
+          result.group.id
         )
-      } else {
+      } catch (notifyError) {
+        console.error('Failed to send notification:', notifyError)
+      }
+
+      res.json({
+        success: true,
+        data: {
+          id: result.updatedApplication.id,
+          status: result.updatedApplication.status,
+          respondedAt: result.updatedApplication.respondedAt,
+          groupId: result.group.id,
+        },
+      })
+    } else {
+      // 却下の場合
+      const updated = await prisma.application.update({
+        where: { id: applicationId },
+        data: {
+          status: newStatus,
+          respondedAt: new Date(),
+        },
+      })
+
+      // 申請者に却下通知
+      try {
         await notifyApplicationRejected(
           application.applicantId,
           recruitmentId,
           recruitment.title,
           applicationId
         )
+      } catch (notifyError) {
+        console.error('Failed to send notification:', notifyError)
       }
-    } catch (notifyError) {
-      console.error('Failed to send notification:', notifyError)
-    }
 
-    res.json({
-      success: true,
-      data: {
-        id: updated.id,
-        status: updated.status,
-        respondedAt: updated.respondedAt,
-      },
-    })
+      res.json({
+        success: true,
+        data: {
+          id: updated.id,
+          status: updated.status,
+          respondedAt: updated.respondedAt,
+        },
+      })
+    }
   } catch (error) {
     next(error)
   }

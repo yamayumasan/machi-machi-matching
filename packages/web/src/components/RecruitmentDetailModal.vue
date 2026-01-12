@@ -12,9 +12,9 @@ import { getIconPath, mdiMapMarker, mdiAccountGroup, mdiClock, mdiForum } from '
 interface Props {
   modelValue: boolean
   recruitmentId: string | null
-  /** 参加中の場合のグループID */
+  /** 参加中の場合のグループID（propsから渡す場合、APIレスポンスより優先） */
   groupId?: string | null
-  /** 参加中かどうか（チャット表示の判定に使用） */
+  /** 参加中かどうか（propsから渡す場合、APIレスポンスより優先） */
   isParticipating?: boolean
 }
 
@@ -32,8 +32,18 @@ const applyMessage = ref('')
 // モバイル時のタブ切り替え（参加中の場合のみ使用）
 const activeTab = ref<'detail' | 'chat'>('detail')
 
+// グループID: propsから渡されたものがあればそれを優先、なければAPIレスポンスから取得
+const effectiveGroupId = computed(() =>
+  props.groupId ?? recruitmentStore.currentRecruitment?.groupId ?? null
+)
+
+// 参加中かどうか: propsから渡されたものがあればそれを優先、なければAPIレスポンスから取得
+const effectiveIsParticipating = computed(() =>
+  props.isParticipating ?? recruitmentStore.currentRecruitment?.isParticipating ?? false
+)
+
 // 参加中かつグループIDがある場合にチャットを表示可能
-const canShowChat = computed(() => props.isParticipating && props.groupId)
+const canShowChat = computed(() => effectiveIsParticipating.value && effectiveGroupId.value)
 
 const isLoading = computed(() => recruitmentStore.isLoading)
 const recruitment = computed(() => recruitmentStore.currentRecruitment)
@@ -300,7 +310,7 @@ const goToApplications = async () => {
 
         <!-- 右カラム: チャット（参加中の場合のみ） -->
         <div
-          v-if="canShowChat && groupId"
+          v-if="canShowChat && effectiveGroupId"
           :class="[
             'md:w-1/2 h-full',
             activeTab !== 'chat' ? 'hidden md:block' : ''
@@ -311,7 +321,7 @@ const goToApplications = async () => {
               グループチャット
             </div>
             <div class="flex-1 min-h-0">
-              <EmbeddedGroupChat :group-id="groupId" class="h-full" />
+              <EmbeddedGroupChat :group-id="effectiveGroupId" class="h-full" />
             </div>
           </div>
         </div>

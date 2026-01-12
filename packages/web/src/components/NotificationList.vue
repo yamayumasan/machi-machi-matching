@@ -58,11 +58,22 @@ const handleNotificationClick = async (notification: Notification) => {
   const data = notification.data as Record<string, string> | null
   switch (notification.type) {
     case 'APPLICATION_RECEIVED':
-    case 'APPLICATION_APPROVED':
-    case 'APPLICATION_REJECTED':
+      // 募集者向け: 申請管理画面へ
       if (data?.recruitmentId) {
         router.push(`/recruitments/${data.recruitmentId}/applications`)
       }
+      break
+    case 'APPLICATION_APPROVED':
+      // 申請者向け: グループがあればグループへ、なければ募集詳細へ
+      if (data?.groupId) {
+        router.push(`/groups/${data.groupId}`)
+      } else if (data?.recruitmentId) {
+        router.push(`/recruitments/${data.recruitmentId}`)
+      }
+      break
+    case 'APPLICATION_REJECTED':
+      // 申請者向け: 募集一覧（ホーム）へ
+      router.push('/')
       break
     case 'GROUP_CREATED':
     case 'NEW_MESSAGE':

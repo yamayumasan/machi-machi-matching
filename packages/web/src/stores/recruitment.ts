@@ -43,6 +43,8 @@ interface Recruitment {
   creator?: RecruitmentUser
   members?: RecruitmentMember[]
   isOwner?: boolean
+  isParticipating?: boolean
+  groupId?: string | null
   hasApplied?: boolean
   applicationStatus?: string | null
   hasReceivedOffer?: boolean

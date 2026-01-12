@@ -60,14 +60,15 @@ export async function notifyApplicationApproved(
   applicantId: string,
   recruitmentId: string,
   recruitmentTitle: string,
-  applicationId: string
+  applicationId: string,
+  groupId?: string
 ) {
   return createNotification(
     applicantId,
     'APPLICATION_APPROVED',
     '参加申請が承認されました',
-    `「${recruitmentTitle}」への参加申請が承認されました`,
-    { recruitmentId, recruitmentTitle, applicationId }
+    `「${recruitmentTitle}」への参加申請が承認されました。グループチャットで詳細を話し合いましょう！`,
+    { recruitmentId, recruitmentTitle, applicationId, groupId }
   )
 }
 
