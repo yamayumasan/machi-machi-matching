@@ -49,15 +49,15 @@ onMounted(async () => {
       <div class="container mx-auto px-4 py-3 flex items-center gap-3">
         <button
           @click="router.back()"
-          class="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
+          class="p-2 -ml-2 hover:bg-primary-100 rounded-full transition-colors text-primary-700"
         >
           <MdiIcon :path="mdiArrowLeft" :size="24" />
         </button>
-        <h1 class="text-lg font-bold text-gray-900 flex-1">通知</h1>
+        <h1 class="text-lg font-semibold text-primary-900 flex-1">通知</h1>
         <button
           v-if="notificationStore.hasUnread"
           @click="handleMarkAllAsRead"
-          class="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+          class="flex items-center gap-1 text-sm text-primary-700 hover:text-primary-900"
         >
           <MdiIcon :path="mdiCheckAll" :size="18" />
           <span>すべて既読</span>
@@ -71,10 +71,10 @@ onMounted(async () => {
         <button
           @click="toggleUnreadOnly"
           :class="[
-            'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+            'px-3 py-1.5 rounded text-sm font-medium transition-colors',
             showUnreadOnly
-              ? 'bg-primary-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-primary-900 text-white'
+              : 'bg-primary-100 text-primary-700 hover:bg-primary-200'
           ]"
         >
           未読のみ
@@ -86,7 +86,7 @@ onMounted(async () => {
     <div class="content">
       <!-- Loading -->
       <div v-if="loading" class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-700"></div>
       </div>
 
       <!-- Notification List -->
@@ -100,7 +100,7 @@ onMounted(async () => {
         <div v-if="hasMore" class="load-more">
           <button
             @click="handleLoadMore"
-            class="w-full py-2 text-sm text-primary-600 hover:text-primary-700 font-medium"
+            class="w-full py-2 text-sm text-primary-700 hover:text-primary-900 font-medium"
           >
             もっと見る
           </button>
@@ -115,12 +115,12 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #f9fafb;
+  background-color: #fafafa;
 }
 
 .header {
   background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #e5e5e5;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -128,7 +128,7 @@ onMounted(async () => {
 
 .filter-bar {
   background: white;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e5e5;
 }
 
 .content {
@@ -138,6 +138,6 @@ onMounted(async () => {
 
 .load-more {
   padding: 16px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid #f5f5f5;
 }
 </style>

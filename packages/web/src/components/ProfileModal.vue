@@ -196,7 +196,7 @@ const handleFileSelect = async (event: Event) => {
       />
 
       <!-- User Info -->
-      <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+      <div class="flex items-center gap-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
         <div class="relative">
           <button
             @click="handleAvatarClick"
@@ -224,12 +224,12 @@ const handleFileSelect = async (event: Event) => {
           </button>
         </div>
         <div class="flex-1 min-w-0">
-          <h2 class="text-lg font-bold truncate">{{ user?.nickname || '未設定' }}</h2>
-          <div class="flex items-center gap-2 text-sm text-gray-500 mt-1">
+          <h2 class="text-lg font-semibold text-primary-900 truncate">{{ user?.nickname || '未設定' }}</h2>
+          <div class="flex items-center gap-2 text-sm text-primary-500 mt-1">
             <MdiIcon :path="mdiMapMarker" :size="14" />
             <span>{{ AREA_LABELS[user?.area as keyof typeof AREA_LABELS] || user?.area || '未設定' }}</span>
           </div>
-          <p v-if="user?.bio" class="text-gray-600 text-sm mt-2 line-clamp-2">
+          <p v-if="user?.bio" class="text-primary-600 text-sm mt-2 line-clamp-2">
             {{ user.bio }}
           </p>
         </div>
@@ -237,12 +237,12 @@ const handleFileSelect = async (event: Event) => {
 
       <!-- Interests -->
       <div v-if="user?.interests && user.interests.length > 0" class="space-y-2">
-        <h3 class="text-sm font-medium text-gray-500">興味のあるカテゴリ</h3>
+        <h3 class="text-sm font-medium text-primary-500">興味のあるカテゴリ</h3>
         <div class="flex flex-wrap gap-2">
           <span
             v-for="interest in user.interests"
             :key="interest.id"
-            class="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm"
+            class="px-3 py-1 bg-accent-100 text-accent-700 rounded-full text-sm"
           >
             {{ interest.name }}
           </span>
@@ -250,15 +250,15 @@ const handleFileSelect = async (event: Event) => {
       </div>
 
       <!-- Tabs -->
-      <div class="border-b border-gray-200">
+      <div class="border-b border-primary-200">
         <div class="flex">
           <button
             @click="activeTab = 'recruitments'"
             :class="[
               'flex-1 py-3 text-sm font-medium border-b-2 transition-colors',
               activeTab === 'recruitments'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700',
+                ? 'border-primary-900 text-primary-900'
+                : 'border-transparent text-primary-400 hover:text-primary-600',
             ]"
           >
             募集 ({{ myRecruitments.length }})
@@ -268,8 +268,8 @@ const handleFileSelect = async (event: Event) => {
             :class="[
               'flex-1 py-3 text-sm font-medium border-b-2 transition-colors',
               activeTab === 'wantToDos'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700',
+                ? 'border-primary-900 text-primary-900'
+                : 'border-transparent text-primary-400 hover:text-primary-600',
             ]"
           >
             表明 ({{ myWantToDos.length }})
@@ -287,13 +287,13 @@ const handleFileSelect = async (event: Event) => {
 
       <!-- Recruitments Tab -->
       <div v-else-if="activeTab === 'recruitments'" class="space-y-3">
-        <div v-if="myRecruitments.length === 0" class="text-center py-8 text-gray-500">
+        <div v-if="myRecruitments.length === 0" class="text-center py-8 text-primary-500">
           <p>まだ募集を作成していません</p>
         </div>
         <div
           v-for="recruitment in myRecruitments"
           :key="recruitment.id"
-          class="bg-white border border-gray-200 rounded-lg p-4 space-y-2"
+          class="bg-white border border-primary-200 rounded-lg p-4 space-y-2"
         >
           <div class="flex items-start justify-between gap-2">
             <div class="flex items-center gap-2">
@@ -301,8 +301,8 @@ const handleFileSelect = async (event: Event) => {
                 <MdiIcon :path="getIconPath(recruitment.category.icon)" :size="18" class="text-orange-600" />
               </div>
               <div>
-                <h4 class="font-medium text-gray-900 line-clamp-1">{{ recruitment.title }}</h4>
-                <p class="text-xs text-gray-500">{{ recruitment.category.name }}</p>
+                <h4 class="font-medium text-primary-900 line-clamp-1">{{ recruitment.title }}</h4>
+                <p class="text-xs text-primary-500">{{ recruitment.category.name }}</p>
               </div>
             </div>
             <span
@@ -315,7 +315,7 @@ const handleFileSelect = async (event: Event) => {
             </span>
           </div>
 
-          <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+          <div class="flex flex-wrap items-center gap-3 text-sm text-primary-500">
             <div v-if="recruitment.datetime || recruitment.datetimeFlex" class="flex items-center gap-1">
               <MdiIcon :path="mdiClock" :size="14" />
               <span>{{ formatDate(recruitment.datetime) || recruitment.datetimeFlex }}</span>
@@ -329,7 +329,7 @@ const handleFileSelect = async (event: Event) => {
           <button
             v-if="recruitment.status === 'OPEN'"
             @click="goToRecruitmentApplications(recruitment.id)"
-            class="w-full py-2 text-sm text-primary-600 font-medium hover:bg-primary-50 rounded-lg transition-colors"
+            class="w-full py-2 text-sm text-primary-900 font-medium hover:bg-primary-50 rounded-lg transition-colors border border-primary-200"
           >
             申請を管理
           </button>
@@ -341,28 +341,28 @@ const handleFileSelect = async (event: Event) => {
         <!-- 新規表明ボタン -->
         <button
           @click="showCreateWantToDoModal = true"
-          class="w-full flex items-center justify-center gap-2 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+          class="w-full flex items-center justify-center gap-2 py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 transition-colors"
         >
           <MdiIcon :path="mdiPlus" :size="20" />
           <span>やりたいことを表明する</span>
         </button>
 
-        <div v-if="myWantToDos.length === 0" class="text-center py-8 text-gray-500">
+        <div v-if="myWantToDos.length === 0" class="text-center py-8 text-primary-500">
           <p>まだ表明をしていません</p>
         </div>
         <div
           v-for="wantToDo in myWantToDos"
           :key="wantToDo.id"
-          class="bg-white border border-gray-200 rounded-lg p-4 space-y-2"
+          class="bg-white border border-primary-200 rounded-lg p-4 space-y-2"
         >
           <div class="flex items-start justify-between gap-2">
             <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                <MdiIcon :path="getIconPath(wantToDo.category.icon)" :size="18" class="text-green-600" />
+              <div class="w-8 h-8 rounded-lg bg-accent-100 flex items-center justify-center flex-shrink-0">
+                <MdiIcon :path="getIconPath(wantToDo.category.icon)" :size="18" class="text-accent-600" />
               </div>
               <div>
-                <h4 class="font-medium text-gray-900">{{ wantToDo.category.name }}</h4>
-                <p class="text-xs text-gray-500">{{ getTimingLabel(wantToDo.timing) }}</p>
+                <h4 class="font-medium text-primary-900">{{ wantToDo.category.name }}</h4>
+                <p class="text-xs text-primary-500">{{ getTimingLabel(wantToDo.timing) }}</p>
               </div>
             </div>
             <span
@@ -375,11 +375,11 @@ const handleFileSelect = async (event: Event) => {
             </span>
           </div>
 
-          <p v-if="wantToDo.comment" class="text-sm text-gray-600 line-clamp-2">
+          <p v-if="wantToDo.comment" class="text-sm text-primary-600 line-clamp-2">
             {{ wantToDo.comment }}
           </p>
 
-          <div class="text-xs text-gray-400">
+          <div class="text-xs text-primary-400">
             {{ formatDate(wantToDo.createdAt) }} 投稿
           </div>
         </div>
@@ -390,14 +390,14 @@ const handleFileSelect = async (event: Event) => {
       <div class="p-4 space-y-3">
         <button
           @click="handleLogout"
-          class="w-full flex items-center justify-center gap-2 py-3 border border-red-300 text-red-600 rounded-lg font-semibold hover:bg-red-50 transition-colors"
+          class="w-full flex items-center justify-center gap-2 py-3 border border-red-300 text-red-600 rounded font-medium hover:bg-red-50 transition-colors"
         >
           <MdiIcon :path="mdiLogout" :size="20" />
           <span>ログアウト</span>
         </button>
         <button
           @click="closeModal"
-          class="w-full py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+          class="w-full py-3 border border-primary-200 text-primary-700 rounded font-medium hover:bg-primary-50 transition-colors"
         >
           閉じる
         </button>

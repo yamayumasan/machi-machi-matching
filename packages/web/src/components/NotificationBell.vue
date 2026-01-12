@@ -90,7 +90,7 @@ onUnmounted(() => {
   <div class="notification-bell relative">
     <button
       @click="toggleNotifications"
-      class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+      class="relative p-2 text-primary-600 hover:text-primary-900 hover:bg-primary-100 rounded-full transition-colors"
       aria-label="通知"
     >
       <MdiIcon
@@ -116,11 +116,11 @@ onUnmounted(() => {
         <!-- ヘッダー -->
         <div class="dropdown-header">
           <div class="flex items-center justify-between">
-            <h3 class="font-semibold text-gray-900">通知</h3>
+            <h3 class="font-semibold text-primary-900">通知</h3>
             <button
               v-if="notificationStore.hasUnread"
               @click="handleMarkAllAsRead"
-              class="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700"
+              class="flex items-center gap-1 text-xs text-primary-700 hover:text-primary-900"
             >
               <MdiIcon :path="mdiCheckAll" :size="14" />
               <span>すべて既読</span>
@@ -131,7 +131,7 @@ onUnmounted(() => {
         <!-- 通知リスト -->
         <div class="dropdown-content">
           <div v-if="notificationStore.isLoading" class="flex justify-center py-8">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-700"></div>
           </div>
           <NotificationList
             v-else
@@ -146,7 +146,7 @@ onUnmounted(() => {
         <div v-if="hasMoreNotifications" class="dropdown-footer">
           <button
             @click="goToNotifications"
-            class="w-full py-2 text-sm text-primary-600 hover:text-primary-700 font-medium"
+            class="w-full py-2 text-sm text-primary-700 hover:text-primary-900 font-medium"
           >
             すべての通知を見る
           </button>
@@ -158,11 +158,11 @@ onUnmounted(() => {
     <ModalSheet v-model="showModal" title="通知">
       <template #header>
         <div class="flex items-center justify-between w-full">
-          <h2 class="text-lg font-bold">通知</h2>
+          <h2 class="text-lg font-semibold text-primary-900">通知</h2>
           <button
             v-if="notificationStore.hasUnread"
             @click="handleMarkAllAsRead"
-            class="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+            class="flex items-center gap-1 text-sm text-primary-700 hover:text-primary-900"
           >
             <MdiIcon :path="mdiCheckAll" :size="16" />
             <span>すべて既読</span>
@@ -173,7 +173,7 @@ onUnmounted(() => {
       <template #default>
         <div class="modal-content">
           <div v-if="notificationStore.isLoading" class="flex justify-center py-12">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-700"></div>
           </div>
           <NotificationList
             v-else
@@ -184,10 +184,10 @@ onUnmounted(() => {
           />
 
           <!-- すべて見るボタン -->
-          <div v-if="hasMoreNotifications" class="px-4 py-4 border-t border-gray-100">
+          <div v-if="hasMoreNotifications" class="px-4 py-4 border-t border-primary-100">
             <button
               @click="goToNotifications"
-              class="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+              class="w-full py-3 bg-primary-100 text-primary-700 rounded font-medium hover:bg-primary-200 transition-colors"
             >
               すべての通知を見る
             </button>
@@ -218,9 +218,9 @@ onUnmounted(() => {
   width: 360px;
   max-height: 480px;
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e5e5e5;
   z-index: 2000;
   display: flex;
   flex-direction: column;
@@ -229,7 +229,7 @@ onUnmounted(() => {
 
 .dropdown-header {
   padding: 12px 16px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #f5f5f5;
   flex-shrink: 0;
 }
 
@@ -241,7 +241,7 @@ onUnmounted(() => {
 
 .dropdown-footer {
   padding: 8px 16px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid #f5f5f5;
   flex-shrink: 0;
 }
 

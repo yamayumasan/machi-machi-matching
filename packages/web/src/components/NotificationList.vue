@@ -105,7 +105,7 @@ const handleDelete = async (id: string, event: Event) => {
       :class="{ 'compact': compact }"
     >
       <MdiIcon :path="mdiBell" :size="compact ? 32 : 48" class="opacity-50" />
-      <p class="text-sm text-gray-500 mt-2">通知はありません</p>
+      <p class="text-sm text-primary-500 mt-2">通知はありません</p>
     </div>
 
     <!-- Notification Items -->
@@ -149,7 +149,7 @@ const handleDelete = async (id: string, event: Event) => {
   align-items: center;
   justify-content: center;
   padding: 48px 16px;
-  color: #9ca3af;
+  color: #a3a3a3;
 }
 
 .empty-state.compact {
@@ -161,7 +161,7 @@ const handleDelete = async (id: string, event: Event) => {
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #f5f5f5;
   cursor: pointer;
   transition: background-color 0.15s;
 }
@@ -176,15 +176,15 @@ const handleDelete = async (id: string, event: Event) => {
 }
 
 .notification-item:hover {
-  background-color: #f9fafb;
+  background-color: #fafafa;
 }
 
 .notification-item.is-unread {
-  background-color: #eff6ff;
+  background-color: #f5f5f5;
 }
 
 .notification-item.is-unread:hover {
-  background-color: #dbeafe;
+  background-color: #e5e5e5;
 }
 
 .notification-icon {
@@ -194,8 +194,8 @@ const handleDelete = async (id: string, event: Event) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #e0e7ff;
-  color: #4f46e5;
+  background: #e5e5e5;
+  color: #525252;
   border-radius: 50%;
 }
 
@@ -211,7 +211,7 @@ const handleDelete = async (id: string, event: Event) => {
 
 .notification-title {
   font-weight: 600;
-  color: #111827;
+  color: #171717;
   font-size: 14px;
   margin-bottom: 2px;
 }
@@ -221,7 +221,7 @@ const handleDelete = async (id: string, event: Event) => {
 }
 
 .notification-body {
-  color: #6b7280;
+  color: #737373;
   font-size: 13px;
   line-height: 1.4;
   margin-bottom: 4px;
@@ -237,7 +237,7 @@ const handleDelete = async (id: string, event: Event) => {
 }
 
 .notification-time {
-  color: #9ca3af;
+  color: #a3a3a3;
   font-size: 12px;
 }
 
@@ -245,7 +245,7 @@ const handleDelete = async (id: string, event: Event) => {
   flex-shrink: 0;
   padding: 8px;
   margin: -8px;
-  color: #9ca3af;
+  color: #a3a3a3;
   opacity: 0;
   transition: opacity 0.15s, color 0.15s;
 }

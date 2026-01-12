@@ -151,17 +151,17 @@ const handleDetailClick = (item: NearbyItem) => {
     <!-- PC版: Header -->
     <header v-if="!isMobile" class="header">
       <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-        <h1 class="text-lg font-bold text-primary-600">マチマチマッチング</h1>
-        <div class="flex items-center gap-2">
+        <h1 class="text-lg font-semibold text-primary-900 tracking-tight">マチマチマッチング</h1>
+        <div class="flex items-center gap-3">
           <NotificationBell />
           <button
             @click="showProfileModal = true"
-            class="flex items-center gap-2 hover:bg-gray-100 rounded-lg px-2 py-1 transition-colors"
+            class="flex items-center gap-2.5 hover:bg-primary-50 rounded-md px-2.5 py-1.5 transition-colors"
           >
             <UserAvatar :src="user?.avatarUrl" :name="user?.nickname" size="sm" />
             <div class="flex flex-col text-left">
-              <span class="text-sm font-medium text-gray-700">{{ user?.nickname }}</span>
-              <span class="text-xs text-gray-400">{{ AREA_LABELS[user?.area as keyof typeof AREA_LABELS] || user?.area }}</span>
+              <span class="text-sm font-medium text-primary-800">{{ user?.nickname }}</span>
+              <span class="text-xs text-primary-400">{{ AREA_LABELS[user?.area as keyof typeof AREA_LABELS] || user?.area }}</span>
             </div>
           </button>
         </div>
@@ -172,7 +172,7 @@ const handleDetailClick = (item: NearbyItem) => {
     <div v-if="!isMobile" class="quick-actions">
       <button
         @click="goToCreateRecruitment"
-        class="flex items-center justify-center gap-1.5 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+        class="flex items-center justify-center gap-2 px-4 py-2 bg-primary-900 text-white rounded-md text-sm font-medium hover:bg-primary-800 transition-colors"
       >
         <MdiIcon :path="mdiBullhorn" :size="16" />
         <span>募集する</span>
@@ -292,20 +292,20 @@ const handleDetailClick = (item: NearbyItem) => {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background-color: #f9fafb;
+  background-color: #fafafa;
 }
 
 .header {
   background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #e5e5e5;
   flex-shrink: 0;
   position: relative;
-  z-index: 1100; /* Leafletマップ（z-index: 1000）より上に表示 */
+  z-index: 1100;
 }
 
 .quick-actions {
   background: white;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e5e5;
   padding: 0.5rem 1rem;
   flex-shrink: 0;
   z-index: 20;
@@ -335,18 +335,18 @@ const handleDetailClick = (item: NearbyItem) => {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #4f46e5;
+  background: #171717;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
 }
 
 .mobile-fab:hover {
-  background: #4338ca;
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.5);
+  background: #262626;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .mobile-fab:active {
@@ -361,8 +361,8 @@ const handleDetailClick = (item: NearbyItem) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 }
 
 .floating-btn:active {
@@ -373,13 +373,14 @@ const handleDetailClick = (item: NearbyItem) => {
   background: white;
   padding: 2px;
   overflow: hidden;
+  border: 1px solid #e5e5e5;
 }
 
 .floating-btn-group-right {
   pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .floating-notification {
@@ -392,14 +393,15 @@ const handleDetailClick = (item: NearbyItem) => {
   height: 44px;
   background: white;
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e5e5;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .mobile-floating-buttons-top :deep(.notification-bell:hover) {
-  background: #f9fafb;
+  background: #fafafa;
 }
 
 .main-content {
@@ -450,33 +452,33 @@ const handleDetailClick = (item: NearbyItem) => {
 .resize-bar {
   flex-shrink: 0;
   height: 24px;
-  background: #f3f4f6;
+  background: #fafafa;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: ns-resize;
   touch-action: none;
   user-select: none;
-  border-top: 1px solid #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
+  border-top: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
   z-index: 10;
 }
 
 .resize-bar:active,
 .resize-bar.is-dragging {
-  background: #e5e7eb;
+  background: #f5f5f5;
 }
 
 .resize-handle {
   width: 40px;
   height: 4px;
-  background: #9ca3af;
+  background: #d4d4d4;
   border-radius: 2px;
 }
 
 .resize-bar:active .resize-handle,
 .resize-bar.is-dragging .resize-handle {
-  background: #6b7280;
+  background: #a3a3a3;
 }
 
 .mobile-list {
@@ -503,7 +505,7 @@ const handleDetailClick = (item: NearbyItem) => {
     width: 380px;
     flex: none;
     flex-shrink: 0;
-    border-left: 1px solid #e5e7eb;
+    border-left: 1px solid #e5e5e5;
   }
 }
 

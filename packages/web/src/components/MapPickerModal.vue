@@ -171,17 +171,17 @@ onMounted(() => {
       class="fixed inset-0 z-50 flex flex-col bg-white"
     >
       <!-- Header -->
-      <header class="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
+      <header class="flex items-center justify-between px-4 py-3 bg-white border-b border-primary-200">
         <button
           @click="closeModal"
-          class="p-2 -ml-2 text-gray-500 hover:text-gray-700"
+          class="p-2 -ml-2 text-primary-500 hover:text-primary-700"
         >
           <MdiIcon :path="mdiClose" :size="24" />
         </button>
-        <h2 class="text-lg font-semibold">場所を選択</h2>
+        <h2 class="text-lg font-semibold text-primary-900">場所を選択</h2>
         <button
           @click="confirmSelection"
-          class="p-2 -mr-2 text-primary-600 hover:text-primary-700"
+          class="p-2 -mr-2 text-primary-700 hover:text-primary-900"
         >
           <MdiIcon :path="mdiCheck" :size="24" />
         </button>
@@ -240,12 +240,12 @@ onMounted(() => {
         <button
           @click="moveToCurrentLocation"
           :disabled="gpsLoading"
-          class="absolute z-[1000] bottom-24 right-4 p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          class="absolute z-[1000] bottom-24 right-4 p-3 bg-white rounded-full shadow-lg hover:bg-primary-50 disabled:opacity-50 transition-colors"
         >
           <MdiIcon
             :path="mdiCrosshairsGps"
             :size="24"
-            :class="gpsLoading ? 'animate-pulse text-primary-600' : 'text-gray-700'"
+            :class="gpsLoading ? 'animate-pulse text-primary-700' : 'text-primary-700'"
           />
         </button>
 
@@ -256,16 +256,16 @@ onMounted(() => {
       </div>
 
       <!-- Footer -->
-      <div class="px-4 py-4 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+      <div class="px-4 py-4 bg-white border-t border-primary-200">
         <div class="mb-3">
-          <p class="text-xs text-gray-500 mb-1">選択中の場所</p>
+          <p class="text-xs text-primary-500 mb-1">選択中の場所</p>
           <div class="flex items-center gap-2">
             <div
               class="w-2 h-2 rounded-full"
               :class="isLoadingName ? 'bg-yellow-400 animate-pulse' : 'bg-green-500'"
             ></div>
-            <p class="font-medium text-gray-800 flex-1">
-              <span v-if="isLoadingName" class="text-gray-400">地名を取得中...</span>
+            <p class="font-medium text-primary-900 flex-1">
+              <span v-if="isLoadingName" class="text-primary-400">地名を取得中...</span>
               <span v-else>{{ locationName }}</span>
             </p>
           </div>
@@ -273,7 +273,7 @@ onMounted(() => {
         <button
           @click="confirmSelection"
           :disabled="isLoadingName"
-          class="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 transition-colors"
+          class="w-full py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 disabled:opacity-50 transition-colors"
         >
           この場所を選択
         </button>

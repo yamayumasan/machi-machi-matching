@@ -179,14 +179,14 @@ const goToApplications = async () => {
     <!-- Content (参加中の場合は2カラム / タブ切り替え) -->
     <div v-else-if="recruitment" class="h-full flex flex-col">
       <!-- モバイル用タブ（参加中の場合のみ表示） -->
-      <div v-if="canShowChat" class="md:hidden flex border-b">
+      <div v-if="canShowChat" class="md:hidden flex border-b border-primary-200">
         <button
           @click="activeTab = 'detail'"
           :class="[
             'flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-1.5',
             activeTab === 'detail'
-              ? 'border-primary-600 text-primary-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-primary-900 text-primary-900'
+              : 'border-transparent text-primary-400 hover:text-primary-600'
           ]"
         >
           <MdiIcon :path="mdiAccountGroup" :size="18" />
@@ -197,8 +197,8 @@ const goToApplications = async () => {
           :class="[
             'flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-1.5',
             activeTab === 'chat'
-              ? 'border-primary-600 text-primary-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-primary-900 text-primary-900'
+              : 'border-transparent text-primary-400 hover:text-primary-600'
           ]"
         >
           <MdiIcon :path="mdiForum" :size="18" />
@@ -215,7 +215,7 @@ const goToApplications = async () => {
         <div
           :class="[
             'overflow-y-auto',
-            canShowChat ? 'md:w-1/2 md:border-r md:pr-4' : 'w-full',
+            canShowChat ? 'md:w-1/2 md:border-r md:border-primary-200 md:pr-4' : 'w-full',
             canShowChat && activeTab !== 'detail' ? 'hidden md:block' : ''
           ]"
         >
@@ -227,7 +227,7 @@ const goToApplications = async () => {
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-1">
-                  <span class="text-sm text-gray-500">{{ recruitment.category.name }}</span>
+                  <span class="text-sm text-primary-500">{{ recruitment.category.name }}</span>
                   <span
                     :class="[
                       'px-2 py-0.5 rounded-full text-xs font-medium',
@@ -237,12 +237,12 @@ const goToApplications = async () => {
                     {{ getStatusLabel(recruitment.status) }}
                   </span>
                 </div>
-                <h2 class="text-lg font-bold">{{ recruitment.title }}</h2>
+                <h2 class="text-lg font-semibold text-primary-900">{{ recruitment.title }}</h2>
               </div>
             </div>
 
             <!-- Info -->
-            <div class="flex flex-wrap gap-3 text-sm text-gray-600">
+            <div class="flex flex-wrap gap-3 text-sm text-primary-600">
               <div class="flex items-center gap-1">
                 <MdiIcon :path="mdiMapMarker" :size="16" />
                 <span>{{ AREA_LABELS[recruitment.area as keyof typeof AREA_LABELS] }}</span>
@@ -258,27 +258,27 @@ const goToApplications = async () => {
             </div>
 
             <!-- Location -->
-            <div v-if="recruitment.location" class="bg-gray-50 rounded-lg p-3">
+            <div v-if="recruitment.location" class="bg-primary-50 rounded-lg p-3 border border-primary-200">
               <div class="flex items-center gap-2 text-sm">
-                <MdiIcon :path="mdiMapMarker" :size="16" class="text-gray-400" />
-                <span class="text-gray-600">{{ recruitment.location }}</span>
+                <MdiIcon :path="mdiMapMarker" :size="16" class="text-primary-400" />
+                <span class="text-primary-600">{{ recruitment.location }}</span>
               </div>
             </div>
 
             <!-- Description -->
-            <div v-if="recruitment.description" class="border-t border-gray-100 pt-4">
-              <h3 class="text-sm font-medium text-gray-500 mb-2">詳細</h3>
-              <p class="text-gray-800 whitespace-pre-wrap text-sm">{{ recruitment.description }}</p>
+            <div v-if="recruitment.description" class="border-t border-primary-200 pt-4">
+              <h3 class="text-sm font-medium text-primary-500 mb-2">詳細</h3>
+              <p class="text-primary-800 whitespace-pre-wrap text-sm">{{ recruitment.description }}</p>
             </div>
 
             <!-- Creator -->
-            <div class="border-t border-gray-100 pt-4">
-              <h3 class="text-sm font-medium text-gray-500 mb-3">募集者</h3>
+            <div class="border-t border-primary-200 pt-4">
+              <h3 class="text-sm font-medium text-primary-500 mb-3">募集者</h3>
               <div class="flex items-center gap-3">
                 <UserAvatar :src="recruitment.creator?.avatarUrl" :name="recruitment.creator?.nickname" size="lg" />
                 <div class="flex-1">
-                  <p class="font-semibold">{{ recruitment.creator?.nickname }}</p>
-                  <p v-if="recruitment.creator?.bio" class="text-gray-500 text-sm line-clamp-2">
+                  <p class="font-semibold text-primary-900">{{ recruitment.creator?.nickname }}</p>
+                  <p v-if="recruitment.creator?.bio" class="text-primary-500 text-sm line-clamp-2">
                     {{ recruitment.creator.bio }}
                   </p>
                 </div>
@@ -286,8 +286,8 @@ const goToApplications = async () => {
             </div>
 
             <!-- Members Preview -->
-            <div v-if="recruitment.members && recruitment.members.length > 0" class="border-t border-gray-100 pt-4">
-              <h3 class="text-sm font-medium text-gray-500 mb-3">参加者 ({{ recruitment.members.length }}人)</h3>
+            <div v-if="recruitment.members && recruitment.members.length > 0" class="border-t border-primary-200 pt-4">
+              <h3 class="text-sm font-medium text-primary-500 mb-3">参加者 ({{ recruitment.members.length }}人)</h3>
               <div class="flex -space-x-2">
                 <UserAvatar
                   v-for="member in recruitment.members.slice(0, 5)"
@@ -299,7 +299,7 @@ const goToApplications = async () => {
                 />
                 <div
                   v-if="recruitment.members.length > 5"
-                  class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 ring-2 ring-white"
+                  class="w-8 h-8 rounded-full bg-primary-200 flex items-center justify-center text-xs text-primary-600 ring-2 ring-white"
                 >
                   +{{ recruitment.members.length - 5 }}
                 </div>
@@ -317,7 +317,7 @@ const goToApplications = async () => {
           ]"
         >
           <div class="h-full flex flex-col p-2 md:p-0">
-            <div class="hidden md:block text-sm font-medium text-gray-500 mb-2 px-2">
+            <div class="hidden md:block text-sm font-medium text-primary-500 mb-2 px-2">
               グループチャット
             </div>
             <div class="flex-1 min-h-0">
@@ -335,7 +335,7 @@ const goToApplications = async () => {
         <template v-if="recruitment?.isOwner">
           <button
             @click="goToApplications"
-            class="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+            class="w-full py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 transition-colors"
           >
             申請を管理
           </button>
@@ -343,29 +343,29 @@ const goToApplications = async () => {
 
         <!-- Visitor actions -->
         <template v-else-if="recruitment">
-          <div v-if="recruitment.hasApplied" class="bg-gray-50 rounded-lg p-3 text-center">
-            <p class="text-gray-600 text-sm">
+          <div v-if="recruitment.hasApplied" class="bg-primary-50 border border-primary-200 rounded-lg p-3 text-center">
+            <p class="text-primary-600 text-sm">
               申請済み:
-              <span class="font-semibold">{{ getApplicationStatusLabel(recruitment.applicationStatus) }}</span>
+              <span class="font-medium">{{ getApplicationStatusLabel(recruitment.applicationStatus) }}</span>
             </p>
           </div>
           <button
             v-else-if="recruitment.status === 'OPEN'"
             @click="showApplyModal = true"
-            class="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+            class="w-full py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 transition-colors"
           >
             参加を申請する
           </button>
-          <div v-else class="bg-gray-50 rounded-lg p-3 text-center">
-            <p class="text-gray-500 text-sm">この募集は現在受け付けていません</p>
+          <div v-else class="bg-primary-50 border border-primary-200 rounded-lg p-3 text-center">
+            <p class="text-primary-500 text-sm">この募集は現在受け付けていません</p>
           </div>
         </template>
       </div>
       <!-- 参加中の場合はフッターボタンを表示（申請管理など） -->
-      <div v-else-if="recruitment?.isOwner" class="p-4 border-t">
+      <div v-else-if="recruitment?.isOwner" class="p-4 border-t border-primary-200">
         <button
           @click="goToApplications"
-          class="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+          class="w-full py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 transition-colors"
         >
           申請を管理
         </button>
@@ -380,12 +380,12 @@ const goToApplications = async () => {
     max-width="md"
   >
     <div class="p-4">
-      <label class="block text-sm text-gray-600 mb-2">メッセージ（任意）</label>
+      <label class="block text-sm text-primary-600 mb-2">メッセージ（任意）</label>
       <textarea
         v-model="applyMessage"
         placeholder="自己紹介やコメントを入力できます"
         rows="3"
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+        class="w-full px-4 py-3 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400 resize-none"
       ></textarea>
     </div>
 
@@ -393,14 +393,14 @@ const goToApplications = async () => {
       <div class="flex gap-3 p-4">
         <button
           @click="showApplyModal = false"
-          class="flex-1 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+          class="flex-1 py-3 border border-primary-200 text-primary-700 rounded font-medium hover:bg-primary-50 transition-colors"
         >
           キャンセル
         </button>
         <button
           @click="handleApply"
           :disabled="isLoading"
-          class="flex-1 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 transition-colors"
+          class="flex-1 py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 disabled:opacity-50 transition-colors"
         >
           申請する
         </button>

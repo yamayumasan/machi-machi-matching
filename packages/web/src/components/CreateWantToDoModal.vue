@@ -68,7 +68,7 @@ const handleSubmit = async () => {
     <form @submit.prevent="handleSubmit" class="p-4 space-y-6">
       <!-- Category selection -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">
+        <label class="block text-sm font-medium text-primary-700 mb-2">
           カテゴリ <span class="text-red-500">*</span>
         </label>
         <div class="grid grid-cols-3 gap-2">
@@ -78,21 +78,21 @@ const handleSubmit = async () => {
             type="button"
             @click="selectedCategoryId = category.id"
             :class="[
-              'flex flex-col items-center p-3 rounded-lg border-2 transition-all',
+              'flex flex-col items-center p-3 rounded border-2 transition-all',
               selectedCategoryId === category.id
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-gray-200 hover:border-gray-300',
+                ? 'border-primary-900 bg-primary-50'
+                : 'border-primary-200 hover:border-primary-300',
             ]"
           >
-            <MdiIcon :path="getIconPath(category.icon)" :size="24" class="text-primary-600" />
-            <span class="text-xs text-gray-700 mt-1">{{ category.name }}</span>
+            <MdiIcon :path="getIconPath(category.icon)" :size="24" class="text-primary-700" />
+            <span class="text-xs text-primary-700 mt-1">{{ category.name }}</span>
           </button>
         </div>
       </div>
 
       <!-- Timing selection -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">
+        <label class="block text-sm font-medium text-primary-700 mb-2">
           タイミング <span class="text-red-500">*</span>
         </label>
         <div class="grid grid-cols-2 gap-2">
@@ -102,10 +102,10 @@ const handleSubmit = async () => {
             type="button"
             @click="selectedTiming = key"
             :class="[
-              'py-2 px-4 rounded-lg border-2 text-sm transition-all',
+              'py-2 px-4 rounded border-2 text-sm transition-all',
               selectedTiming === key
-                ? 'border-primary-500 bg-primary-50 text-primary-700'
-                : 'border-gray-200 hover:border-gray-300 text-gray-700',
+                ? 'border-primary-900 bg-primary-50 text-primary-900'
+                : 'border-primary-200 hover:border-primary-300 text-primary-700',
             ]"
           >
             {{ label }}
@@ -115,21 +115,21 @@ const handleSubmit = async () => {
 
       <!-- Comment -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">
+        <label class="block text-sm font-medium text-primary-700 mb-2">
           コメント（任意）
         </label>
         <textarea
           v-model="comment"
           rows="3"
           maxlength="200"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+          class="w-full px-4 py-2 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400 resize-none"
           placeholder="例：初心者ですが一緒に楽しみたいです！"
         ></textarea>
-        <p class="text-xs text-gray-400 text-right mt-1">{{ comment.length }}/200</p>
+        <p class="text-xs text-primary-400 text-right mt-1">{{ comment.length }}/200</p>
       </div>
 
       <!-- Error -->
-      <div v-if="error" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+      <div v-if="error" class="p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
         {{ error }}
       </div>
     </form>
@@ -139,7 +139,7 @@ const handleSubmit = async () => {
         <button
           type="button"
           @click="emit('update:modelValue', false)"
-          class="flex-1 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+          class="flex-1 py-3 border border-primary-200 rounded font-medium hover:bg-primary-50 transition-colors text-primary-700"
         >
           キャンセル
         </button>
@@ -147,7 +147,7 @@ const handleSubmit = async () => {
           type="button"
           @click="handleSubmit"
           :disabled="!canSubmit"
-          class="flex-1 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="flex-1 py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <span v-if="isLoading" class="flex items-center justify-center gap-2">
             <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

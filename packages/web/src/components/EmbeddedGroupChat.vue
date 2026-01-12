@@ -117,7 +117,7 @@ const sendMessage = async () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-gray-50 rounded-lg overflow-hidden">
+  <div class="flex flex-col h-full bg-primary-50 rounded-lg overflow-hidden">
     <!-- Messages -->
     <div
       ref="messagesContainer"
@@ -133,8 +133,8 @@ const sendMessage = async () => {
 
       <!-- Empty state -->
       <div v-else-if="messages.length === 0" class="text-center py-6">
-        <p class="text-gray-500 text-sm">まだメッセージはありません</p>
-        <p class="text-xs text-gray-400 mt-1">メッセージを送ってみましょう</p>
+        <p class="text-primary-500 text-sm">まだメッセージはありません</p>
+        <p class="text-xs text-primary-400 mt-1">メッセージを送ってみましょう</p>
       </div>
 
       <!-- Messages -->
@@ -142,7 +142,7 @@ const sendMessage = async () => {
         <template v-for="(message, index) in messages" :key="message.id">
           <!-- Date separator -->
           <div v-if="shouldShowDate(index)" class="flex justify-center">
-            <span class="px-2 py-0.5 bg-gray-200 rounded-full text-xs text-gray-600">
+            <span class="px-2 py-0.5 bg-primary-200 rounded-full text-xs text-primary-600">
               {{ formatDate(message.createdAt) }}
             </span>
           </div>
@@ -165,22 +165,22 @@ const sendMessage = async () => {
 
             <!-- Message content -->
             <div :class="['max-w-[75%]', message.isOwn ? 'items-end' : 'items-start']">
-              <p v-if="!message.isOwn" class="text-xs text-gray-500 mb-0.5 ml-1">
+              <p v-if="!message.isOwn" class="text-xs text-primary-500 mb-0.5 ml-1">
                 {{ message.sender.nickname }}
               </p>
               <div
                 :class="[
                   'px-3 py-2 rounded-2xl break-words',
                   message.isOwn
-                    ? 'bg-primary-600 text-white rounded-br-md'
-                    : 'bg-white text-gray-800 rounded-bl-md shadow-sm',
+                    ? 'bg-accent-600 text-white rounded-br-sm'
+                    : 'bg-white text-primary-900 rounded-bl-sm border border-primary-100',
                 ]"
               >
                 <p class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
               </div>
               <p
                 :class="[
-                  'text-xs text-gray-400 mt-0.5',
+                  'text-xs text-primary-400 mt-0.5',
                   message.isOwn ? 'text-right mr-1' : 'ml-1',
                 ]"
               >
@@ -192,30 +192,30 @@ const sendMessage = async () => {
       </template>
 
       <!-- Typing indicator -->
-      <div v-if="typingUsers.length > 0" class="flex items-center gap-2 text-xs text-gray-500">
+      <div v-if="typingUsers.length > 0" class="flex items-center gap-2 text-xs text-primary-500">
         <div class="flex space-x-1">
-          <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
-          <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-          <div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+          <div class="w-1.5 h-1.5 bg-primary-400 rounded-full animate-bounce"></div>
+          <div class="w-1.5 h-1.5 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+          <div class="w-1.5 h-1.5 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
         </div>
         <span>{{ typingUsers.map((u) => u.nickname).join(', ') }}が入力中...</span>
       </div>
     </div>
 
     <!-- Input -->
-    <div class="bg-white border-t p-2">
+    <div class="bg-white border-t border-primary-200 p-2">
       <form @submit.prevent="sendMessage" class="flex items-center gap-2">
         <input
           v-model="messageInput"
           type="text"
           placeholder="メッセージを入力..."
-          class="flex-1 px-3 py-2 text-base border border-gray-300 rounded-full focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          class="flex-1 px-3 py-2 text-base border border-primary-200 rounded-full focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
           @input="handleInput"
         />
         <button
           type="submit"
           :disabled="!messageInput.trim()"
-          class="p-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="p-2 bg-primary-900 text-white rounded-full hover:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <MdiIcon :path="mdiSend" :size="18" />
         </button>

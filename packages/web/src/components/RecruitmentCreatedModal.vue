@@ -104,7 +104,7 @@ const handleCreateAnother = () => {
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       >
         <Transition
           enter-active-class="transition duration-300 ease-out"
@@ -116,7 +116,7 @@ const handleCreateAnother = () => {
         >
           <div
             v-if="modelValue"
-            class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm text-center"
+            class="bg-white rounded-lg shadow-elevated p-6 w-full max-w-sm text-center"
           >
             <!-- Success Icon -->
             <div class="flex justify-center mb-4">
@@ -126,22 +126,22 @@ const handleCreateAnother = () => {
             </div>
 
             <!-- Title -->
-            <h2 class="text-xl font-bold text-gray-900 mb-2">
+            <h2 class="text-xl font-semibold text-primary-900 mb-2">
               募集を作成しました！
             </h2>
 
             <!-- Recruitment Title -->
-            <p v-if="recruitmentTitle" class="text-gray-600 mb-6">
+            <p v-if="recruitmentTitle" class="text-primary-600 mb-6">
               「{{ recruitmentTitle }}」
             </p>
-            <p v-else class="text-gray-600 mb-6">
+            <p v-else class="text-primary-600 mb-6">
               参加者からの申請を待ちましょう
             </p>
 
             <!-- Suggestions Section（常に表示） -->
             <div class="mb-4">
               <div class="flex items-center justify-center mb-3">
-                <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-1">
+                <h3 class="text-sm font-semibold text-primary-700 flex items-center gap-1">
                   <MdiIcon :path="mdiAccountGroup" :size="18" />
                   おすすめユーザー
                 </h3>
@@ -149,13 +149,13 @@ const handleCreateAnother = () => {
 
               <!-- Loading State -->
               <div v-if="isLoadingSuggestions" class="py-4 text-center">
-                <div class="inline-block w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
-                <p class="text-sm text-gray-500 mt-2">読み込み中...</p>
+                <div class="inline-block w-6 h-6 border-2 border-primary-700 border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-sm text-primary-500 mt-2">読み込み中...</p>
               </div>
 
               <!-- No Suggestions -->
-              <div v-else-if="suggestions.length === 0" class="py-3 text-center bg-gray-50 rounded-lg">
-                <p class="text-sm text-gray-500">現在おすすめのユーザーはいません</p>
+              <div v-else-if="suggestions.length === 0" class="py-3 text-center bg-primary-50 rounded-lg">
+                <p class="text-sm text-primary-500">現在おすすめのユーザーはいません</p>
               </div>
 
               <!-- Suggestions List -->
@@ -163,7 +163,7 @@ const handleCreateAnother = () => {
                 <div
                   v-for="suggestion in suggestions"
                   :key="suggestion.user.id"
-                  class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg"
+                  class="flex items-center gap-3 p-2 bg-primary-50 rounded-lg"
                 >
                   <UserAvatar
                     :src="suggestion.user.avatarUrl"
@@ -171,10 +171,10 @@ const handleCreateAnother = () => {
                     size="md"
                   />
                   <div class="flex-1 min-w-0 text-left">
-                    <p class="text-sm font-medium text-gray-900 truncate">
+                    <p class="text-sm font-medium text-primary-900 truncate">
                       {{ suggestion.user.nickname }}
                     </p>
-                    <p v-if="suggestion.wantToDo" class="text-xs text-gray-500 truncate">
+                    <p v-if="suggestion.wantToDo" class="text-xs text-primary-500 truncate">
                       {{ suggestion.wantToDo.comment || 'やりたいこと表明中' }}
                     </p>
                     <div v-if="suggestion.matchedCategories.length > 0" class="flex flex-wrap gap-1 mt-1">
@@ -190,7 +190,7 @@ const handleCreateAnother = () => {
                   <button
                     v-if="!sentOffers.has(suggestion.user.id)"
                     @click="sendOffer(suggestion.user.id)"
-                    class="flex-shrink-0 flex items-center gap-1 px-2 py-1 bg-primary-600 text-white text-xs font-medium rounded hover:bg-primary-700 transition-colors"
+                    class="flex-shrink-0 flex items-center gap-1 px-2 py-1 bg-primary-900 text-white text-xs font-medium rounded hover:bg-primary-800 transition-colors"
                   >
                     <MdiIcon :path="mdiSend" :size="14" />
                     誘う
@@ -211,7 +211,7 @@ const handleCreateAnother = () => {
               <!-- Go Home -->
               <button
                 @click="handleGoHome"
-                class="w-full flex items-center justify-center gap-2 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+                class="w-full flex items-center justify-center gap-2 py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 transition-colors"
               >
                 <MdiIcon :path="mdiHome" :size="20" />
                 トップへ戻る
@@ -220,7 +220,7 @@ const handleCreateAnother = () => {
               <!-- Create Another -->
               <button
                 @click="handleCreateAnother"
-                class="w-full flex items-center justify-center gap-2 py-2 text-primary-600 font-medium hover:text-primary-700 transition-colors"
+                class="w-full flex items-center justify-center gap-2 py-2 text-primary-700 font-medium hover:text-primary-900 transition-colors"
               >
                 <MdiIcon :path="mdiPlus" :size="18" />
                 続けて作成

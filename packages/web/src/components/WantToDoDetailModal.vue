@@ -105,7 +105,7 @@ const handleSendMessage = async () => {
   >
     <!-- Loading -->
     <div v-if="isLoading" class="flex justify-center py-12">
-      <svg class="animate-spin h-8 w-8 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <svg class="animate-spin h-8 w-8 text-primary-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
@@ -119,50 +119,50 @@ const handleSendMessage = async () => {
     <!-- Content -->
     <div v-else-if="wantToDo" class="p-4 space-y-4">
       <!-- User Info Section -->
-      <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+      <div class="flex items-center gap-4 p-4 bg-primary-50 rounded-lg">
         <UserAvatar
           :src="wantToDo.user?.avatarUrl"
           :name="wantToDo.user?.nickname"
           size="xl"
         />
         <div class="flex-1 min-w-0">
-          <h2 class="text-lg font-bold truncate">{{ wantToDo.user?.nickname || '匿名' }}</h2>
-          <div class="flex items-center gap-2 text-sm text-gray-500 mt-1">
+          <h2 class="text-lg font-semibold text-primary-900 truncate">{{ wantToDo.user?.nickname || '匿名' }}</h2>
+          <div class="flex items-center gap-2 text-sm text-primary-500 mt-1">
             <MdiIcon :path="mdiMapMarker" :size="14" />
             <span>{{ AREA_LABELS[wantToDo.user?.area as keyof typeof AREA_LABELS] || wantToDo.user?.area || '未設定' }}</span>
           </div>
-          <p v-if="wantToDo.user?.bio" class="text-gray-600 text-sm mt-2 line-clamp-2">
+          <p v-if="wantToDo.user?.bio" class="text-primary-600 text-sm mt-2 line-clamp-2">
             {{ wantToDo.user.bio }}
           </p>
         </div>
       </div>
 
       <!-- WantToDo Info -->
-      <div class="border border-gray-200 rounded-xl p-4 space-y-3">
+      <div class="border border-primary-200 rounded-lg p-4 space-y-3">
         <!-- Category -->
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-            <MdiIcon :path="getIconPath(wantToDo.category.icon)" :size="28" class="text-green-600" />
+          <div class="w-12 h-12 rounded-lg bg-accent-100 flex items-center justify-center flex-shrink-0">
+            <MdiIcon :path="getIconPath(wantToDo.category.icon)" :size="28" class="text-accent-600" />
           </div>
           <div>
-            <p class="text-sm text-gray-500">やりたいこと</p>
-            <p class="text-lg font-bold">{{ wantToDo.category.name }}</p>
+            <p class="text-sm text-primary-500">やりたいこと</p>
+            <p class="text-lg font-semibold text-primary-900">{{ wantToDo.category.name }}</p>
           </div>
         </div>
 
         <!-- Timing & Expiry -->
-        <div class="flex flex-wrap gap-3 pt-2 border-t border-gray-100">
+        <div class="flex flex-wrap gap-3 pt-2 border-t border-primary-100">
           <div class="flex items-center gap-2 text-sm">
-            <MdiIcon :path="mdiClock" :size="16" class="text-gray-400" />
-            <span class="text-gray-600">希望時期:</span>
-            <span class="font-medium">{{ getTimingLabel(wantToDo.timing) }}</span>
+            <MdiIcon :path="mdiClock" :size="16" class="text-primary-400" />
+            <span class="text-primary-600">希望時期:</span>
+            <span class="font-medium text-primary-900">{{ getTimingLabel(wantToDo.timing) }}</span>
           </div>
           <div class="flex items-center gap-2 text-sm">
-            <span class="text-gray-600">有効期限:</span>
+            <span class="text-primary-600">有効期限:</span>
             <span
               :class="[
                 'font-medium',
-                new Date(wantToDo.expiresAt) <= new Date() ? 'text-red-500' : 'text-gray-700'
+                new Date(wantToDo.expiresAt) <= new Date() ? 'text-red-500' : 'text-primary-700'
               ]"
             >
               {{ formatExpiresAt(wantToDo.expiresAt) }}
@@ -172,9 +172,9 @@ const handleSendMessage = async () => {
       </div>
 
       <!-- Comment -->
-      <div v-if="wantToDo.comment" class="border-t border-gray-100 pt-4">
-        <h3 class="text-sm font-medium text-gray-500 mb-2">コメント</h3>
-        <p class="text-gray-800 whitespace-pre-wrap text-sm bg-gray-50 rounded-lg p-3">
+      <div v-if="wantToDo.comment" class="border-t border-primary-100 pt-4">
+        <h3 class="text-sm font-medium text-primary-500 mb-2">コメント</h3>
+        <p class="text-primary-800 whitespace-pre-wrap text-sm bg-primary-50 rounded-lg p-3">
           {{ wantToDo.comment }}
         </p>
       </div>
@@ -187,24 +187,24 @@ const handleSendMessage = async () => {
 
     <template #footer>
       <!-- Message Input (for non-owners) -->
-      <div v-if="wantToDo && !wantToDo.isOwner && wantToDo.user?.id !== currentUserId" class="p-4 border-t border-gray-100">
+      <div v-if="wantToDo && !wantToDo.isOwner && wantToDo.user?.id !== currentUserId" class="p-4 border-t border-primary-100">
         <div class="flex gap-2">
           <input
             v-model="message"
             type="text"
             placeholder="メッセージを送る..."
-            class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            class="flex-1 px-4 py-3 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
             @keydown.enter.prevent="handleSendMessage"
           />
           <button
             @click="handleSendMessage"
             :disabled="!message.trim() || isSending"
-            class="px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="px-4 py-3 bg-primary-900 text-white rounded hover:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <MdiIcon :path="mdiSend" :size="20" />
           </button>
         </div>
-        <p class="text-xs text-gray-400 mt-2 text-center">
+        <p class="text-xs text-primary-400 mt-2 text-center">
           メッセージを送って一緒に活動しましょう
         </p>
       </div>
@@ -213,7 +213,7 @@ const handleSendMessage = async () => {
       <div v-else-if="wantToDo?.isOwner" class="p-4">
         <button
           @click="emit('update:modelValue', false)"
-          class="w-full py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+          class="w-full py-3 border border-primary-200 rounded font-medium hover:bg-primary-50 transition-colors text-primary-700"
         >
           閉じる
         </button>

@@ -98,7 +98,7 @@ watch(
 
 <template>
   <div class="space-y-3">
-    <label v-if="label" class="block text-sm font-medium text-gray-700">
+    <label v-if="label" class="block text-sm font-medium text-primary-700">
       {{ label }}
       <span v-if="required" class="text-red-500">*</span>
     </label>
@@ -109,13 +109,13 @@ watch(
       class="flex items-center justify-between bg-primary-50 border border-primary-200 rounded-lg p-3"
     >
       <div class="flex items-center gap-2">
-        <MdiIcon :path="mdiMapMarker" :size="20" class="text-primary-600" />
-        <span class="font-medium text-primary-700">{{ modelValue.locationName }}</span>
+        <MdiIcon :path="mdiMapMarker" :size="20" class="text-primary-700" />
+        <span class="font-medium text-primary-900">{{ modelValue.locationName }}</span>
       </div>
       <button
         type="button"
         @click="clearSelection"
-        class="text-gray-400 hover:text-gray-600 text-sm"
+        class="text-primary-400 hover:text-primary-600 text-sm"
       >
         変更
       </button>
@@ -128,7 +128,7 @@ watch(
         <button
           type="button"
           @click="showMapPicker = true"
-          class="w-full flex items-center justify-center gap-2 py-3 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-400 hover:text-primary-600 transition-colors"
+          class="w-full flex items-center justify-center gap-2 py-3 px-4 border-2 border-dashed border-primary-200 rounded-lg text-primary-600 hover:border-primary-400 hover:text-primary-700 transition-colors"
         >
           <MdiIcon :path="mdiMapMarkerRadius" :size="20" />
           <span>マップから選択</span>
@@ -137,7 +137,7 @@ watch(
 
       <!-- ランドマーク選択 -->
       <div>
-        <p class="text-sm text-gray-500 mb-2">
+        <p class="text-sm text-primary-500 mb-2">
           <MdiIcon :path="mdiTrain" :size="16" class="inline mr-1" />
           主要駅から選ぶ
         </p>
@@ -150,8 +150,8 @@ watch(
             :class="[
               'px-3 py-1.5 text-sm rounded-full border transition-colors',
               selectedLandmarkIndex === index
-                ? 'bg-primary-100 border-primary-500 text-primary-700'
-                : 'bg-white border-gray-300 text-gray-700 hover:border-primary-400',
+                ? 'bg-primary-100 border-primary-900 text-primary-900'
+                : 'bg-white border-primary-200 text-primary-700 hover:border-primary-400',
             ]"
           >
             {{ landmark.name }}
@@ -161,20 +161,20 @@ watch(
 
       <!-- 手動入力 -->
       <div>
-        <p class="text-sm text-gray-500 mb-2">または場所を入力</p>
+        <p class="text-sm text-primary-500 mb-2">または場所を入力</p>
         <div class="flex gap-2">
           <input
             v-model="customLocationName"
             type="text"
             placeholder="例: 〇〇駅周辺、△△カフェなど"
-            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            class="flex-1 px-3 py-2 text-base border border-primary-200 rounded text-sm focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
             @keyup.enter="handleManualInput"
           />
           <button
             type="button"
             @click="handleManualInput"
             :disabled="!customLocationName.trim()"
-            class="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="px-4 py-2 bg-primary-900 text-white text-sm rounded hover:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             設定
           </button>

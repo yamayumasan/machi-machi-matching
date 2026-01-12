@@ -103,7 +103,7 @@ const maxWidthClass = computed(() => {
 const sheetClass = computed(() => {
   if (!isMobile.value) {
     // PC: 中央モーダル
-    return `${maxWidthClass.value} w-full max-h-[90vh] rounded-xl`
+    return `${maxWidthClass.value} w-full max-h-[90vh] rounded-lg`
   }
   // モバイル: ボトムシート
   if (props.fullscreen) {
@@ -138,7 +138,7 @@ const containerClass = computed(() => {
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-[9999] bg-black/50"
+        class="fixed inset-0 z-[9999] bg-black/30 backdrop-blur-sm"
         :class="containerClass"
         @click.self="handleBackdropClick"
       >
@@ -152,7 +152,7 @@ const containerClass = computed(() => {
         >
           <div
             v-if="modelValue"
-            class="bg-white shadow-2xl flex flex-col overflow-hidden"
+            class="bg-white shadow-elevated flex flex-col overflow-hidden"
             :class="sheetClass"
           >
             <!-- ドラッグハンドル（モバイル・非フルスクリーン時） -->
@@ -160,19 +160,19 @@ const containerClass = computed(() => {
               v-if="isMobile && !fullscreen"
               class="flex justify-center py-2 flex-shrink-0"
             >
-              <div class="w-10 h-1 bg-gray-300 rounded-full"></div>
+              <div class="w-10 h-1 bg-primary-300 rounded-full"></div>
             </div>
 
             <!-- ヘッダー -->
             <div
               v-if="title || showClose"
-              class="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0"
+              class="flex items-center justify-between px-4 py-3 border-b border-primary-200 flex-shrink-0"
             >
-              <h2 class="text-lg font-bold text-gray-900">{{ title }}</h2>
+              <h2 class="text-lg font-semibold text-primary-900">{{ title }}</h2>
               <button
                 v-if="showClose"
                 @click="close"
-                class="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+                class="p-1 text-primary-400 hover:text-primary-600 rounded-full hover:bg-primary-100 transition-colors"
               >
                 <MdiIcon :path="mdiClose" :size="24" />
               </button>
@@ -184,7 +184,7 @@ const containerClass = computed(() => {
             </div>
 
             <!-- フッター（オプション） -->
-            <div v-if="$slots.footer" class="flex-shrink-0 border-t border-gray-100">
+            <div v-if="$slots.footer" class="flex-shrink-0 border-t border-primary-200">
               <slot name="footer"></slot>
             </div>
           </div>
