@@ -11,12 +11,11 @@ import NearbyList from '../components/NearbyList.vue'
 import RecruitmentDetailModal from '../components/RecruitmentDetailModal.vue'
 import WantToDoDetailModal from '../components/WantToDoDetailModal.vue'
 import ProfileModal from '../components/ProfileModal.vue'
-import { mdiPencil, mdiBullhorn } from '../lib/icons'
+import { mdiPlus, mdiBullhorn } from '../lib/icons'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const showCreateModal = ref(false)
 const showRecruitmentDetailModal = ref(false)
 const showWantToDoDetailModal = ref(false)
 const showProfileModal = ref(false)
@@ -46,8 +45,8 @@ onUnmounted(() => {
 const sheetContentRef = ref<HTMLElement | null>(null)
 
 // 地図の高さ設定（px単位で管理）
-const MAP_MAX_HEIGHT = 300 // px - 地図の最大高さ
-const MAP_MIN_HEIGHT = 100 // px - 地図の最小高さ
+const MAP_MAX_HEIGHT = 400 // px - 地図の最大高さ（ヘッダー削除分を拡大）
+const MAP_MIN_HEIGHT = 120 // px - 地図の最小高さ
 const currentMapHeight = ref(MAP_MAX_HEIGHT)
 
 // 地図が最小化されているか
@@ -125,12 +124,6 @@ const handleListItemClick = (item: NearbyItem) => {
   mapRef.value?.focusOnItem(item)
 }
 
-// フィルターモーダル（簡易版）
-const handleFilterClick = () => {
-  // TODO: フィルターモーダルを実装
-  console.log('Filter clicked')
-}
-
 // 詳細モーダルを開く
 const handleDetailClick = (item: NearbyItem) => {
   if (item.type === 'recruitment') {
@@ -148,8 +141,8 @@ const handleDetailClick = (item: NearbyItem) => {
 
 <template>
   <div class="home-page">
-    <!-- Header -->
-    <header class="header">
+    <!-- PC版: Header -->
+    <header v-if="!isMobile" class="header">
       <div class="container mx-auto px-4 py-3 flex justify-between items-center">
         <h1 class="text-lg font-bold text-primary-600">マチマチマッチング</h1>
         <div class="flex items-center gap-2">
@@ -168,25 +161,41 @@ const handleDetailClick = (item: NearbyItem) => {
       </div>
     </header>
 
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-      <div class="flex gap-2">
+    <!-- PC版: Quick Actions -->
+    <div v-if="!isMobile" class="quick-actions">
+      <button
+        @click="goToCreateRecruitment"
+        class="flex items-center justify-center gap-1.5 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+      >
+        <MdiIcon :path="mdiBullhorn" :size="16" />
+        <span>募集する</span>
+      </button>
+    </div>
+
+    <!-- モバイル版: フローティングボタン（上部） -->
+    <div v-if="isMobile" class="mobile-floating-buttons-top">
+      <!-- 右上: 通知 & プロフィール -->
+      <div class="floating-btn-group-right">
+        <NotificationBell class="floating-notification" />
         <button
-          @click="showCreateModal = true"
-          class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+          @click.stop.prevent="showProfileModal = true"
+          class="floating-btn floating-btn-profile"
+          aria-label="プロフィール"
         >
-          <MdiIcon :path="mdiPencil" :size="16" />
-          <span>表明する</span>
-        </button>
-        <button
-          @click="goToCreateRecruitment"
-          class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-primary-600 text-primary-600 rounded-lg text-sm font-medium hover:bg-primary-50 transition-colors"
-        >
-          <MdiIcon :path="mdiBullhorn" :size="16" />
-          <span>募集する</span>
+          <UserAvatar :src="user?.avatarUrl" :name="user?.nickname" size="sm" />
         </button>
       </div>
     </div>
+
+    <!-- モバイル版: 募集作成ボタン（右下FAB） -->
+    <button
+      v-if="isMobile"
+      @click.stop.prevent="goToCreateRecruitment"
+      class="mobile-fab"
+      aria-label="募集を作成"
+    >
+      <MdiIcon :path="mdiPlus" :size="28" />
+    </button>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -198,7 +207,6 @@ const handleDetailClick = (item: NearbyItem) => {
               ref="mapRef"
               height="100%"
               @item-select="handleMapItemSelect"
-              @filter-click="handleFilterClick"
               @detail-click="handleDetailClick"
             />
           </div>
@@ -225,7 +233,6 @@ const handleDetailClick = (item: NearbyItem) => {
               ref="mapRef"
               height="100%"
               @item-select="handleMapItemSelect"
-              @filter-click="handleFilterClick"
               @detail-click="handleDetailClick"
             />
             <!-- 最小化時の展開ヒント -->
@@ -250,12 +257,6 @@ const handleDetailClick = (item: NearbyItem) => {
       </template>
     </div>
 
-    <!-- Create WantToDo Modal -->
-    <CreateWantToDoModal
-      v-model="showCreateModal"
-      @created="showCreateModal = false"
-    />
-
     <!-- Recruitment Detail Modal -->
     <RecruitmentDetailModal
       v-model="showRecruitmentDetailModal"
@@ -275,15 +276,6 @@ const handleDetailClick = (item: NearbyItem) => {
   </div>
 </template>
 
-<script lang="ts">
-import CreateWantToDoModal from '../components/CreateWantToDoModal.vue'
-
-export default {
-  components: {
-    CreateWantToDoModal,
-  },
-}
-</script>
 
 <style scoped>
 .home-page {
@@ -309,6 +301,97 @@ export default {
   padding: 0.5rem 1rem;
   flex-shrink: 0;
   z-index: 20;
+}
+
+/* モバイル版: フローティングボタン（上部） */
+.mobile-floating-buttons-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  pointer-events: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+/* モバイル版: 募集作成FAB（右下） */
+.mobile-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 16px;
+  z-index: 2000;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mobile-fab:hover {
+  background: #4338ca;
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.5);
+}
+
+.mobile-fab:active {
+  transform: scale(0.95);
+}
+
+.floating-btn {
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.floating-btn:active {
+  transform: scale(0.95);
+}
+
+.floating-btn-profile {
+  background: white;
+  padding: 2px;
+  overflow: hidden;
+}
+
+.floating-btn-group-right {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.floating-notification {
+  pointer-events: auto;
+}
+
+/* NotificationBellのスタイル調整 */
+.mobile-floating-buttons-top :deep(.notification-bell) {
+  width: 44px;
+  height: 44px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-floating-buttons-top :deep(.notification-bell:hover) {
+  background: #f9fafb;
 }
 
 .main-content {

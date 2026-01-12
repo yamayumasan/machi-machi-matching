@@ -8,8 +8,9 @@ import { AREA_LABELS, TIMING_LABELS, type Timing } from '@machi/shared'
 import ModalSheet from './ModalSheet.vue'
 import MdiIcon from './MdiIcon.vue'
 import UserAvatar from './UserAvatar.vue'
-import { getIconPath, mdiMapMarker, mdiLogout, mdiClock, mdiAccountGroup, mdiCamera } from '../lib/icons'
+import { getIconPath, mdiMapMarker, mdiLogout, mdiClock, mdiAccountGroup, mdiCamera, mdiPlus } from '../lib/icons'
 import { api } from '../lib/api'
+import CreateWantToDoModal from './CreateWantToDoModal.vue'
 
 interface Props {
   modelValue: boolean
@@ -115,6 +116,15 @@ const goToRecruitmentApplications = async (recruitmentId: string) => {
 
 const closeModal = () => {
   emit('update:modelValue', false)
+}
+
+// 表明作成モーダル
+const showCreateWantToDoModal = ref(false)
+
+const handleWantToDoCreated = async () => {
+  showCreateWantToDoModal.value = false
+  // 表明一覧を再取得
+  await wantToDoStore.fetchMyWantToDos()
 }
 
 // アバターアップロード
@@ -328,6 +338,15 @@ const handleFileSelect = async (event: Event) => {
 
       <!-- WantToDos Tab -->
       <div v-else-if="activeTab === 'wantToDos'" class="space-y-3">
+        <!-- 新規表明ボタン -->
+        <button
+          @click="showCreateWantToDoModal = true"
+          class="w-full flex items-center justify-center gap-2 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+        >
+          <MdiIcon :path="mdiPlus" :size="20" />
+          <span>やりたいことを表明する</span>
+        </button>
+
         <div v-if="myWantToDos.length === 0" class="text-center py-8 text-gray-500">
           <p>まだ表明をしていません</p>
         </div>
@@ -385,4 +404,10 @@ const handleFileSelect = async (event: Event) => {
       </div>
     </template>
   </ModalSheet>
+
+  <!-- Create WantToDo Modal -->
+  <CreateWantToDoModal
+    v-model="showCreateWantToDoModal"
+    @created="handleWantToDoCreated"
+  />
 </template>

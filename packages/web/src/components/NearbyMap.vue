@@ -11,7 +11,7 @@ import { useNearbyStore } from '../stores/nearby'
 import { useAuthStore } from '../stores/auth'
 import { useGeolocation } from '../composables/useGeolocation'
 import MdiIcon from './MdiIcon.vue'
-import { mdiCrosshairsGps, mdiFilterVariant } from '../lib/icons'
+import { mdiCrosshairsGps } from '../lib/icons'
 
 import 'leaflet/dist/leaflet.css'
 // NOTE: クラスタリング用CSS（将来再実装時に有効化）
@@ -28,7 +28,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   itemSelect: [item: NearbyItem]
-  filterClick: []
   detailClick: [item: NearbyItem]
 }>()
 
@@ -375,37 +374,32 @@ onBeforeUnmount(() => {
   // タイムアウトをクリア
   if (updateMarkersTimeout) {
     clearTimeout(updateMarkersTimeout)
+    updateMarkersTimeout = null
   }
   if (fetchBoundsTimeout) {
     clearTimeout(fetchBoundsTimeout)
+    fetchBoundsTimeout = null
   }
 
   // 更新中フラグを設定して、進行中の更新を止める
   isUpdatingMarkers = true
   pendingUpdate = false
 
-  const map = mapRef.value?.leafletObject
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const map = mapRef.value?.leafletObject as any
+
+  // vue-leafletのcleanup（map.remove()）をスキップするため、
+  // mapの内部レイヤー参照を空にする
+  // これにより map.remove() が呼ばれてもマーカーのonRemoveが走らない
   if (map) {
-    map.off('moveend', handleMoveEnd)
-  }
-
-  // 各マーカーのイベントリスナーを解除
-  markersMap.forEach((marker) => {
     try {
-      marker.off()
-      if (marker.getPopup()) {
-        marker.closePopup()
-        marker.unbindPopup()
+      // イベントリスナーを解除
+      map.off('moveend', handleMoveEnd)
+
+      // map._layersを空にしてcleanup時のエラーを防ぐ
+      if (map._layers) {
+        map._layers = {}
       }
-    } catch {
-      // エラーを無視
-    }
-  })
-
-  // マーカーレイヤーをクリア
-  if (markerLayer) {
-    try {
-      markerLayer.clearLayers()
     } catch {
       // エラーを無視
     }
@@ -429,6 +423,7 @@ defineExpose({
       v-model:zoom="zoom"
       v-model:center="center"
       :use-global-leaflet="false"
+      :zoom-control="false"
       class="w-full h-full"
     >
       <LTileLayer
@@ -437,25 +432,17 @@ defineExpose({
       />
     </LMap>
 
-    <!-- GPS Button -->
+    <!-- GPS Button (左下) -->
     <button
       @click="moveToCurrentLocation"
       :disabled="gpsLoading"
-      class="absolute z-[1000] bottom-4 right-4 p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+      class="absolute z-[1000] bottom-4 left-4 p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
     >
       <MdiIcon
         :path="mdiCrosshairsGps"
         :size="22"
         :class="gpsLoading ? 'animate-pulse text-primary-600' : 'text-gray-700'"
       />
-    </button>
-
-    <!-- Filter Button -->
-    <button
-      @click="emit('filterClick')"
-      class="absolute z-[1000] bottom-4 left-4 p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
-    >
-      <MdiIcon :path="mdiFilterVariant" :size="22" class="text-gray-700" />
     </button>
 
     <!-- Loading Overlay -->
