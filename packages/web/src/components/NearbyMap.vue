@@ -49,6 +49,9 @@ const markersMap = new Map<string, L.Marker>()
 let updateMarkersTimeout: ReturnType<typeof setTimeout> | null = null
 let fetchBoundsTimeout: ReturnType<typeof setTimeout> | null = null
 
+// 前回の取得範囲（重複取得防止用）
+let lastFetchedBounds: { north: number; south: number; east: number; west: number } | null = null
+
 // 更新中フラグ（競合状態を防ぐ）
 let isUpdatingMarkers = false
 let pendingUpdate = false
@@ -264,16 +267,34 @@ const focusOnItem = (item: NearbyItem) => {
   }
 }
 
+// 範囲が大きく変化したかチェック（閾値: 30%以上の変化）
+const shouldFetchNewBounds = (newBounds: { north: number; south: number; east: number; west: number }) => {
+  if (!lastFetchedBounds) return true
+
+  const oldLatRange = lastFetchedBounds.north - lastFetchedBounds.south
+  const oldLngRange = lastFetchedBounds.east - lastFetchedBounds.west
+  const newLatRange = newBounds.north - newBounds.south
+  const newLngRange = newBounds.east - newBounds.west
+
+  // ズームレベルが大きく変化した場合は再取得
+  const latRangeChange = Math.abs(newLatRange - oldLatRange) / oldLatRange
+  const lngRangeChange = Math.abs(newLngRange - oldLngRange) / oldLngRange
+  if (latRangeChange > 0.3 || lngRangeChange > 0.3) return true
+
+  // 現在の範囲が前回の範囲外にはみ出している場合は再取得
+  const isOutOfBounds =
+    newBounds.north > lastFetchedBounds.north ||
+    newBounds.south < lastFetchedBounds.south ||
+    newBounds.east > lastFetchedBounds.east ||
+    newBounds.west < lastFetchedBounds.west
+
+  return isOutOfBounds
+}
+
 // 地図移動終了時のハンドラ（デバウンス付き）
 const handleMoveEnd = () => {
   // フォーカス中は何もしない
   if (isFocusing) return
-
-  // デバッグ: 現在のズームレベルを出力
-  const map = mapRef.value?.leafletObject
-  if (map) {
-    console.log('[NearbyMap] Current zoom level:', map.getZoom(), '| Max zoom:', map.getMaxZoom())
-  }
 
   // ユーザー操作による移動なので、選択を解除
   nearbyStore.selectItem(null)
@@ -288,13 +309,30 @@ const handleMoveEnd = () => {
     if (!map || isFocusing) return
 
     const bounds = map.getBounds()
-    await nearbyStore.fetchByBounds({
+    const newBounds = {
       north: bounds.getNorth(),
       south: bounds.getSouth(),
       east: bounds.getEast(),
       west: bounds.getWest(),
-    })
-  }, 500)
+    }
+
+    // 範囲が大きく変化していない場合はスキップ
+    if (!shouldFetchNewBounds(newBounds)) {
+      return
+    }
+
+    // 前回の範囲を保存（少し広めに保存して、小さなパンでの再取得を防ぐ）
+    const latPadding = (newBounds.north - newBounds.south) * 0.2
+    const lngPadding = (newBounds.east - newBounds.west) * 0.2
+    lastFetchedBounds = {
+      north: newBounds.north + latPadding,
+      south: newBounds.south - latPadding,
+      east: newBounds.east + lngPadding,
+      west: newBounds.west - lngPadding,
+    }
+
+    await nearbyStore.fetchByBounds(newBounds)
+  }, 800)
 }
 
 // 現在地に移動
@@ -326,6 +364,17 @@ const initializeMap = async (map: any) => {
 
   // 初期データを取得
   await nearbyStore.fetchNearby(userLocation.value.lat, userLocation.value.lng)
+
+  // 初期範囲を保存（パン時の不要な再取得を防ぐ）
+  const initialBounds = map.getBounds()
+  const latPadding = (initialBounds.getNorth() - initialBounds.getSouth()) * 0.2
+  const lngPadding = (initialBounds.getEast() - initialBounds.getWest()) * 0.2
+  lastFetchedBounds = {
+    north: initialBounds.getNorth() + latPadding,
+    south: initialBounds.getSouth() - latPadding,
+    east: initialBounds.getEast() + lngPadding,
+    west: initialBounds.getWest() - lngPadding,
+  }
 
   // マップ準備完了
   isMapReady.value = true
@@ -464,9 +513,21 @@ defineExpose({
       />
     </button>
 
-    <!-- Loading Overlay -->
+    <!-- Loading Indicator (右下に小さく表示、マーカーがある場合) -->
     <div
-      v-if="nearbyStore.isLoading"
+      v-if="nearbyStore.isLoading && nearbyStore.items.length > 0"
+      class="absolute bottom-4 right-4 z-[1000] bg-white rounded-full shadow-md px-3 py-1.5 text-xs text-gray-600 flex items-center gap-2"
+    >
+      <svg class="animate-spin h-3 w-3 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      更新中
+    </div>
+
+    <!-- Initial Loading Overlay (マーカーがない場合のみ全画面) -->
+    <div
+      v-if="nearbyStore.isLoading && nearbyStore.items.length === 0"
       class="absolute inset-0 z-[999] bg-white/50 flex items-center justify-center pointer-events-none"
     >
       <div class="bg-white rounded-lg shadow-lg px-4 py-2 text-sm text-gray-600">

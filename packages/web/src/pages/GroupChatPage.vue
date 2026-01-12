@@ -236,7 +236,7 @@ const goBack = () => {
           v-model="messageInput"
           type="text"
           placeholder="メッセージを入力..."
-          class="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          class="flex-1 px-4 py-2 text-base border border-gray-300 rounded-full focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           @input="handleInput"
         />
         <button
