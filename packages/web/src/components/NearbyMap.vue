@@ -84,11 +84,11 @@ const createMarkerIcon = (item: NearbyItem, isSelected = false) => {
   const isRecruitment = item.type === 'recruitment'
   const color = isRecruitment ? '#f97316' : '#22c55e' // オレンジ or 緑
 
-  // 選択時のスタイル
+  // 選択時のスタイル（サイズのみ変更、ボーダーは白のまま）
   const size = isSelected ? 44 : 36
   const iconSize = isSelected ? 22 : 18
-  const borderWidth = isSelected ? 4 : 3
-  const borderColor = isSelected ? '#171717' : 'white'
+  const borderWidth = 3
+  const borderColor = 'white'
   const zIndexStyle = isSelected ? 'z-index: 1000;' : ''
   const transformStyle = isSelected ? 'transform: scale(1.1);' : ''
 
@@ -136,7 +136,7 @@ const createMarkerIcon = (item: NearbyItem, isSelected = false) => {
             width: ${size}px;
             height: ${size}px;
             border-radius: 50%;
-            border: ${borderWidth}px solid ${isSelected ? borderColor : color};
+            border: ${borderWidth}px solid ${color};
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             cursor: pointer;
             transition: transform 0.2s;
@@ -360,11 +360,15 @@ const focusOnItem = (item: NearbyItem) => {
       const prevMarker = markersMap.get(previousSelectedItem.id)
       if (prevMarker) {
         prevMarker.setIcon(createMarkerIcon(previousSelectedItem, false))
+        // z-indexを通常に戻す
+        prevMarker.setZIndexOffset(0)
       }
     }
 
     // 選択されたマーカーのアイコンをハイライト状態に更新
     marker.setIcon(createMarkerIcon(item, true))
+    // 選択されたマーカーを最前面に表示
+    marker.setZIndexOffset(1000)
     previousSelectedItem = item
 
     // アニメーションなしでビューを設定（競合を避けるため）
@@ -384,6 +388,8 @@ const clearSelectedMarker = () => {
     const prevMarker = markersMap.get(previousSelectedItem.id)
     if (prevMarker) {
       prevMarker.setIcon(createMarkerIcon(previousSelectedItem, false))
+      // z-indexを通常に戻す
+      prevMarker.setZIndexOffset(0)
     }
     previousSelectedItem = null
   }
