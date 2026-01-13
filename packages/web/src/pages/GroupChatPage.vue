@@ -123,7 +123,7 @@ const goBack = () => {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col bg-primary-100">
+  <div class="h-screen flex flex-col bg-primary-50">
     <!-- Header -->
     <header class="bg-white border-b border-primary-200 flex-shrink-0">
       <div class="container mx-auto px-4 py-3 flex items-center gap-4">
@@ -134,7 +134,7 @@ const goBack = () => {
         </button>
 
         <div class="flex-1 min-w-0" @click="showGroupInfo = true">
-          <h1 class="font-semibold text-primary-900 truncate">{{ group?.name || 'グループチャット' }}</h1>
+          <h1 class="font-semibold text-primary-800 truncate">{{ group?.name || 'グループチャット' }}</h1>
           <p class="text-xs text-primary-500">{{ group?.members.length || 0 }}人のメンバー</p>
         </div>
 
@@ -236,13 +236,13 @@ const goBack = () => {
           v-model="messageInput"
           type="text"
           placeholder="メッセージを入力..."
-          class="flex-1 px-4 py-2 text-base border border-primary-200 rounded-full focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
+          class="flex-1 px-4 py-2.5 text-base border border-primary-200 rounded-full focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600"
           @input="handleInput"
         />
         <button
           type="submit"
           :disabled="!messageInput.trim()"
-          class="p-2 bg-primary-900 text-white rounded-full hover:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="p-2.5 bg-accent-600 text-white rounded-full hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

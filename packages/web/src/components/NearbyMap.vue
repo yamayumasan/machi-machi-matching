@@ -11,7 +11,7 @@ import { useNearbyStore } from '../stores/nearby'
 import { useAuthStore } from '../stores/auth'
 import { useGeolocation } from '../composables/useGeolocation'
 import MdiIcon from './MdiIcon.vue'
-import { mdiCrosshairsGps } from '../lib/icons'
+import { mdiCrosshairsGps, getIconPath } from '../lib/icons'
 
 import 'leaflet/dist/leaflet.css'
 // NOTE: クラスタリング用CSS（将来再実装時に有効化）
@@ -73,36 +73,133 @@ const userLocation = computed(() => {
   return { lat: 35.6812, lng: 139.7671 } // 東京駅
 })
 
-// カスタムアイコンを作成
-const createMarkerIcon = (item: NearbyItem) => {
+// ユーザー名からイニシャルを取得
+const getInitials = (name?: string | null): string => {
+  if (!name) return '?'
+  return name.charAt(0).toUpperCase()
+}
+
+// カスタムアイコンを作成（isSelected: 選択状態でハイライト表示）
+const createMarkerIcon = (item: NearbyItem, isSelected = false) => {
   const isRecruitment = item.type === 'recruitment'
   const color = isRecruitment ? '#f97316' : '#22c55e' // オレンジ or 緑
-  const icon = isRecruitment ? '📢' : '👋'
 
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `
-      <div class="marker-container" style="
-        background-color: ${color};
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 3px solid white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        font-size: 16px;
-        cursor: pointer;
-        transition: transform 0.2s;
-      ">
-        ${icon}
-      </div>
-    `,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-    popupAnchor: [0, -20],
-  })
+  // 選択時のスタイル
+  const size = isSelected ? 44 : 36
+  const iconSize = isSelected ? 22 : 18
+  const borderWidth = isSelected ? 4 : 3
+  const borderColor = isSelected ? '#171717' : 'white'
+  const zIndexStyle = isSelected ? 'z-index: 1000;' : ''
+  const transformStyle = isSelected ? 'transform: scale(1.1);' : ''
+
+  if (isRecruitment) {
+    // 募集: カテゴリアイコンを表示
+    const iconPath = getIconPath(item.category.icon)
+    return L.divIcon({
+      className: `custom-marker${isSelected ? ' selected' : ''}`,
+      html: `
+        <div class="marker-container" style="
+          background-color: ${color};
+          width: ${size}px;
+          height: ${size}px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: ${borderWidth}px solid ${borderColor};
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          cursor: pointer;
+          transition: transform 0.2s;
+          ${zIndexStyle}
+          ${transformStyle}
+        ">
+          <svg viewBox="0 0 24 24" width="${iconSize}" height="${iconSize}" fill="white">
+            <path d="${iconPath}" />
+          </svg>
+        </div>
+      `,
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
+      popupAnchor: [0, -20],
+    })
+  } else {
+    // やりたいこと: ユーザーアバターを表示
+    const avatarUrl = item.user?.avatarUrl
+    const initials = getInitials(item.user?.nickname)
+
+    if (avatarUrl) {
+      // 画像がある場合
+      return L.divIcon({
+        className: `custom-marker${isSelected ? ' selected' : ''}`,
+        html: `
+          <div class="marker-container" style="
+            width: ${size}px;
+            height: ${size}px;
+            border-radius: 50%;
+            border: ${borderWidth}px solid ${isSelected ? borderColor : color};
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+            overflow: hidden;
+            background-color: white;
+            ${zIndexStyle}
+            ${transformStyle}
+          ">
+            <img
+              src="${avatarUrl}"
+              alt=""
+              style="width: 100%; height: 100%; object-fit: cover;"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            />
+            <div style="
+              display: none;
+              width: 100%;
+              height: 100%;
+              align-items: center;
+              justify-content: center;
+              background-color: ${color};
+              color: white;
+              font-weight: 600;
+              font-size: 14px;
+            ">${initials}</div>
+          </div>
+        `,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+        popupAnchor: [0, -20],
+      })
+    } else {
+      // 画像がない場合: イニシャルを表示
+      return L.divIcon({
+        className: `custom-marker${isSelected ? ' selected' : ''}`,
+        html: `
+          <div class="marker-container" style="
+            background-color: ${color};
+            width: ${size}px;
+            height: ${size}px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: ${borderWidth}px solid ${borderColor};
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            ${zIndexStyle}
+            ${transformStyle}
+          ">
+            ${initials}
+          </div>
+        `,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+        popupAnchor: [0, -20],
+      })
+    }
+  }
 }
 
 // ポップアップコンテンツを作成
@@ -246,6 +343,8 @@ const doUpdateMarkers = () => {
 let isFocusing = false
 // 最後にフォーカスしたアイテムID（重複フォーカス防止）
 let lastFocusedItemId: string | null = null
+// 前回選択されていたアイテム（アイコンを元に戻すため）
+let previousSelectedItem: NearbyItem | null = null
 
 // 選択されたアイテムにフォーカス
 const focusOnItem = (item: NearbyItem) => {
@@ -256,6 +355,18 @@ const focusOnItem = (item: NearbyItem) => {
     isFocusing = true
     lastFocusedItemId = item.id
 
+    // 前回選択されていたマーカーのアイコンを通常状態に戻す
+    if (previousSelectedItem && previousSelectedItem.id !== item.id) {
+      const prevMarker = markersMap.get(previousSelectedItem.id)
+      if (prevMarker) {
+        prevMarker.setIcon(createMarkerIcon(previousSelectedItem, false))
+      }
+    }
+
+    // 選択されたマーカーのアイコンをハイライト状態に更新
+    marker.setIcon(createMarkerIcon(item, true))
+    previousSelectedItem = item
+
     // アニメーションなしでビューを設定（競合を避けるため）
     map.setView([item.latitude, item.longitude], Math.max(map.getZoom(), 15), { animate: false })
 
@@ -264,6 +375,17 @@ const focusOnItem = (item: NearbyItem) => {
       marker.openPopup()
       isFocusing = false
     }, 50)
+  }
+}
+
+// 選択解除時にマーカーを通常状態に戻す
+const clearSelectedMarker = () => {
+  if (previousSelectedItem) {
+    const prevMarker = markersMap.get(previousSelectedItem.id)
+    if (prevMarker) {
+      prevMarker.setIcon(createMarkerIcon(previousSelectedItem, false))
+    }
+    previousSelectedItem = null
   }
 }
 
@@ -425,8 +547,9 @@ watch(
         focusOnItem(item)
       }
     } else {
-      // 選択解除時はlastFocusedItemIdをリセット
+      // 選択解除時はlastFocusedItemIdをリセットし、マーカーを通常状態に戻す
       lastFocusedItemId = null
+      clearSelectedMarker()
     }
   }
 )

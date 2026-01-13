@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // プライマリ: ニュートラルグレー（高級感・ミニマル）
+        // プライマリ: ニュートラルグレー（白基調）
         primary: {
           50: '#fafafa',
           100: '#f5f5f5',
@@ -16,9 +16,8 @@ export default {
           700: '#404040',
           800: '#262626',
           900: '#171717',
-          950: '#0a0a0a',
         },
-        // アクセント: 深めの緑（差し色）
+        // アクセント: 緑（CTAボタン、アクション）
         accent: {
           50: '#f0fdf4',
           100: '#dcfce7',
@@ -30,7 +29,6 @@ export default {
           700: '#15803d',
           800: '#166534',
           900: '#14532d',
-          950: '#052e16',
         },
       },
       fontFamily: {
@@ -45,17 +43,16 @@ export default {
         ],
       },
       boxShadow: {
-        'subtle': '0 1px 2px 0 rgb(0 0 0 / 0.03)',
-        'soft': '0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05)',
-        'card': '0 2px 8px -2px rgb(0 0 0 / 0.08)',
-        'elevated': '0 4px 12px -4px rgb(0 0 0 / 0.1)',
+        'subtle': '0 1px 2px rgb(0 0 0 / 0.04)',
+        'soft': '0 2px 8px rgb(0 0 0 / 0.06)',
+        'card': '0 4px 16px rgb(0 0 0 / 0.08)',
+        'elevated': '0 8px 32px rgb(0 0 0 / 0.12)',
       },
       borderRadius: {
-        'sm': '4px',
         'DEFAULT': '6px',
         'md': '8px',
-        'lg': '10px',
-        'xl': '12px',
+        'lg': '12px',
+        'xl': '16px',
       },
     },
   },

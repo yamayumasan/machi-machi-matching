@@ -341,7 +341,7 @@ const handleFileSelect = async (event: Event) => {
         <!-- 新規表明ボタン -->
         <button
           @click="showCreateWantToDoModal = true"
-          class="w-full flex items-center justify-center gap-2 py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 transition-colors"
+          class="w-full flex items-center justify-center gap-2 py-3 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 transition-colors"
         >
           <MdiIcon :path="mdiPlus" :size="20" />
           <span>やりたいことを表明する</span>
@@ -390,14 +390,14 @@ const handleFileSelect = async (event: Event) => {
       <div class="p-4 space-y-3">
         <button
           @click="handleLogout"
-          class="w-full flex items-center justify-center gap-2 py-3 border border-red-300 text-red-600 rounded font-medium hover:bg-red-50 transition-colors"
+          class="w-full flex items-center justify-center gap-2 py-3 border border-red-300 text-red-600 rounded-lg font-medium hover:bg-red-50 transition-colors"
         >
           <MdiIcon :path="mdiLogout" :size="20" />
           <span>ログアウト</span>
         </button>
         <button
           @click="closeModal"
-          class="w-full py-3 border border-primary-200 text-primary-700 rounded font-medium hover:bg-primary-50 transition-colors"
+          class="w-full py-3 border border-primary-200 text-primary-700 rounded-lg font-medium hover:bg-primary-50 transition-colors"
         >
           閉じる
         </button>

@@ -66,6 +66,9 @@ export const createWantToDoSchema = z.object({
   categoryId: z.string().min(1, 'カテゴリを選択してください'),
   timing: z.enum([TIMINGS.THIS_WEEK, TIMINGS.NEXT_WEEK, TIMINGS.THIS_MONTH, TIMINGS.ANYTIME]),
   comment: z.string().max(200).optional().nullable(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  locationName: z.string().max(100).optional().nullable(),
 })
 
 export const updateWantToDoSchema = z.object({

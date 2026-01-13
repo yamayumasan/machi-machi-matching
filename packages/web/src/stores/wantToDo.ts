@@ -144,6 +144,9 @@ export const useWantToDoStore = defineStore('wantToDo', () => {
     categoryId: string
     timing: string
     comment?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    locationName?: string | null
   }) => {
     isLoading.value = true
     error.value = null

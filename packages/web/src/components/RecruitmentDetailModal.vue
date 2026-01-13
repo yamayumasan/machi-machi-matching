@@ -335,7 +335,7 @@ const goToApplications = async () => {
         <template v-if="recruitment?.isOwner">
           <button
             @click="goToApplications"
-            class="w-full py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 transition-colors"
+            class="w-full py-3 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 transition-colors"
           >
             申請を管理
           </button>
@@ -352,7 +352,7 @@ const goToApplications = async () => {
           <button
             v-else-if="recruitment.status === 'OPEN'"
             @click="showApplyModal = true"
-            class="w-full py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 transition-colors"
+            class="w-full py-3 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 transition-colors"
           >
             参加を申請する
           </button>
@@ -365,7 +365,7 @@ const goToApplications = async () => {
       <div v-else-if="recruitment?.isOwner" class="p-4 border-t border-primary-200">
         <button
           @click="goToApplications"
-          class="w-full py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 transition-colors"
+          class="w-full py-3 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 transition-colors"
         >
           申請を管理
         </button>
@@ -385,7 +385,7 @@ const goToApplications = async () => {
         v-model="applyMessage"
         placeholder="自己紹介やコメントを入力できます"
         rows="3"
-        class="w-full px-4 py-3 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400 resize-none"
+        class="w-full px-4 py-3 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600 resize-none"
       ></textarea>
     </div>
 
@@ -393,14 +393,14 @@ const goToApplications = async () => {
       <div class="flex gap-3 p-4">
         <button
           @click="showApplyModal = false"
-          class="flex-1 py-3 border border-primary-200 text-primary-700 rounded font-medium hover:bg-primary-50 transition-colors"
+          class="flex-1 py-3 border border-primary-200 text-primary-700 rounded-lg font-medium hover:bg-primary-50 transition-colors"
         >
           キャンセル
         </button>
         <button
           @click="handleApply"
           :disabled="isLoading"
-          class="flex-1 py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 disabled:opacity-50 transition-colors"
+          class="flex-1 py-3 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 disabled:opacity-50 transition-colors"
         >
           申請する
         </button>

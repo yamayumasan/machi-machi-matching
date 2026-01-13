@@ -139,7 +139,7 @@ const goBack = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-primary-50">
+  <div class="min-h-screen bg-white">
     <!-- Header -->
     <header class="bg-white border-b border-primary-200 sticky top-0 z-10">
       <div class="container mx-auto px-4 py-4 flex items-center gap-4">
@@ -161,7 +161,7 @@ const goBack = () => {
             v-model="title"
             type="text"
             placeholder="例：週末にカフェでコーヒー飲みませんか？"
-            class="w-full px-4 py-3 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
+            class="w-full px-4 py-3 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600"
             :class="{ 'border-red-500': errors.title }"
           />
           <p v-if="errors.title" class="mt-1 text-sm text-red-500">{{ errors.title }}</p>
@@ -179,14 +179,14 @@ const goBack = () => {
               type="button"
               @click="categoryId = cat.id"
               :class="[
-                'p-3 rounded border-2 text-center transition-colors',
+                'p-3 rounded-lg border-2 text-center transition-colors',
                 categoryId === cat.id
-                  ? 'border-primary-900 bg-primary-50'
+                  ? 'border-accent-600 bg-accent-50'
                   : 'border-primary-200 hover:border-primary-300',
               ]"
             >
-              <MdiIcon :path="getIconPath(cat.icon)" :size="28" class="text-primary-700 mb-1" />
-              <div class="text-xs font-medium text-primary-900">{{ cat.name }}</div>
+              <MdiIcon :path="getIconPath(cat.icon)" :size="28" :class="categoryId === cat.id ? 'text-accent-600' : 'text-primary-600'" class="mb-1" />
+              <div class="text-xs font-medium text-primary-700">{{ cat.name }}</div>
             </button>
           </div>
           <p v-if="errors.categoryId" class="mt-2 text-sm text-red-500">{{ errors.categoryId }}</p>
@@ -201,7 +201,7 @@ const goBack = () => {
             v-model="description"
             placeholder="募集の詳細を入力してください（任意）"
             rows="4"
-            class="w-full px-4 py-3 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400 resize-none"
+            class="w-full px-4 py-3 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600 resize-none"
           ></textarea>
         </div>
 
@@ -216,7 +216,7 @@ const goBack = () => {
                 type="radio"
                 v-model="useDatetime"
                 :value="true"
-                class="text-primary-900 focus:ring-primary-700"
+                class="text-accent-600 focus:ring-accent-500"
               />
               <span class="text-sm text-primary-700">日時を指定</span>
             </label>
@@ -225,7 +225,7 @@ const goBack = () => {
                 type="radio"
                 v-model="useDatetime"
                 :value="false"
-                class="text-primary-900 focus:ring-primary-700"
+                class="text-accent-600 focus:ring-accent-500"
               />
               <span class="text-sm text-primary-700">柔軟に調整</span>
             </label>
@@ -235,7 +235,7 @@ const goBack = () => {
             <input
               v-model="datetime"
               type="datetime-local"
-              class="w-full px-4 py-3 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
+              class="w-full px-4 py-3 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600"
             />
           </div>
           <div v-else>
@@ -243,7 +243,7 @@ const goBack = () => {
               v-model="datetimeFlex"
               type="text"
               placeholder="例：今週末の午後、平日の夜など"
-              class="w-full px-4 py-3 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
+              class="w-full px-4 py-3 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600"
               :class="{ 'border-red-500': errors.datetimeFlex }"
             />
             <p v-if="errors.datetimeFlex" class="mt-1 text-sm text-red-500">{{ errors.datetimeFlex }}</p>
@@ -268,9 +268,9 @@ const goBack = () => {
                 class="sr-only peer"
               />
               <div
-                class="p-4 text-center rounded border-2 cursor-pointer transition-colors peer-checked:border-primary-900 peer-checked:bg-primary-50 border-primary-200 hover:border-primary-300"
+                class="p-4 text-center rounded-lg border-2 cursor-pointer transition-colors peer-checked:border-accent-600 peer-checked:bg-accent-50 border-primary-200 hover:border-primary-300"
               >
-                <span class="font-medium text-primary-900">{{ label }}</span>
+                <span class="font-medium text-primary-700">{{ label }}</span>
               </div>
             </label>
           </div>
@@ -290,7 +290,7 @@ const goBack = () => {
               v-model="locationText"
               type="text"
               placeholder="例：仙台駅周辺、渋谷のカフェなど"
-              class="w-full px-4 py-3 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
+              class="w-full px-4 py-3 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600"
             />
           </div>
         </div>
@@ -305,7 +305,7 @@ const goBack = () => {
               <label class="block text-xs text-primary-500 mb-1">最少人数</label>
               <select
                 v-model="minPeople"
-                class="w-full px-4 py-3 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
+                class="w-full px-4 py-3 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600"
               >
                 <option v-for="n in 10" :key="n" :value="n">{{ n }}人</option>
               </select>
@@ -315,7 +315,7 @@ const goBack = () => {
               <label class="block text-xs text-primary-500 mb-1">最大人数</label>
               <select
                 v-model="maxPeople"
-                class="w-full px-4 py-3 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
+                class="w-full px-4 py-3 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600"
               >
                 <option v-for="n in 20" :key="n" :value="n">{{ n }}人</option>
               </select>
@@ -327,7 +327,7 @@ const goBack = () => {
         </div>
 
         <!-- Error message -->
-        <div v-if="recruitmentStore.error" class="bg-red-50 border border-red-200 rounded p-4">
+        <div v-if="recruitmentStore.error" class="bg-red-50 border border-red-200 rounded-md p-4">
           <p class="text-red-600 text-sm">{{ recruitmentStore.error }}</p>
         </div>
 
@@ -335,7 +335,7 @@ const goBack = () => {
         <button
           type="submit"
           :disabled="isLoading"
-          class="w-full py-4 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="w-full py-4 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <span v-if="isLoading">作成中...</span>
           <span v-else>募集を作成する</span>

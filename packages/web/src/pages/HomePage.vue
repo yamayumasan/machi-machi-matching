@@ -172,7 +172,7 @@ const handleDetailClick = (item: NearbyItem) => {
     <div v-if="!isMobile" class="quick-actions">
       <button
         @click="goToCreateRecruitment"
-        class="flex items-center justify-center gap-2 px-4 py-2 bg-primary-900 text-white rounded-md text-sm font-medium hover:bg-primary-800 transition-colors"
+        class="flex items-center justify-center gap-2 px-4 py-2.5 bg-accent-600 text-white rounded-lg text-sm font-medium hover:bg-accent-700 transition-colors"
       >
         <MdiIcon :path="mdiBullhorn" :size="16" />
         <span>募集する</span>
@@ -292,7 +292,7 @@ const handleDetailClick = (item: NearbyItem) => {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background-color: #fafafa;
+  background-color: #ffffff;
 }
 
 .header {
@@ -335,18 +335,18 @@ const handleDetailClick = (item: NearbyItem) => {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #171717;
+  background: #16a34a;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.3);
   transition: all 0.2s ease;
 }
 
 .mobile-fab:hover {
-  background: #262626;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  background: #15803d;
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.4);
 }
 
 .mobile-fab:active {

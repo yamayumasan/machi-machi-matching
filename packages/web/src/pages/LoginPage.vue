@@ -30,14 +30,14 @@ const handleGoogleLogin = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4 bg-primary-50">
+  <div class="min-h-screen flex items-center justify-center px-4 bg-white">
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
         <h1 class="text-3xl font-semibold text-primary-900 mb-2">マチマチマッチング</h1>
         <p class="text-primary-500">ログイン</p>
       </div>
 
-      <div class="bg-white rounded-lg border border-primary-200 p-8">
+      <div class="bg-white rounded-xl border border-primary-200 p-8">
         <form @submit.prevent="handleLogin" class="space-y-6">
           <div>
             <label for="email" class="block text-sm font-medium text-primary-700 mb-1">
@@ -48,7 +48,7 @@ const handleGoogleLogin = async () => {
               v-model="email"
               type="email"
               required
-              class="w-full px-4 py-2 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
+              class="w-full px-4 py-2.5 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600"
               placeholder="email@example.com"
             />
           </div>
@@ -63,19 +63,19 @@ const handleGoogleLogin = async () => {
               type="password"
               required
               minlength="8"
-              class="w-full px-4 py-2 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
+              class="w-full px-4 py-2.5 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600"
               placeholder="********"
             />
           </div>
 
-          <div v-if="error" class="p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+          <div v-if="error" class="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
             {{ error }}
           </div>
 
           <button
             type="submit"
             :disabled="isLoading"
-            class="w-full py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="w-full py-3 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span v-if="isLoading" class="flex items-center justify-center gap-2">
               <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -101,7 +101,7 @@ const handleGoogleLogin = async () => {
           <button
             @click="handleGoogleLogin"
             :disabled="isLoading"
-            class="mt-4 w-full py-3 border border-primary-200 rounded font-medium hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            class="mt-4 w-full py-3 bg-white border border-primary-200 rounded-lg font-medium text-primary-700 hover:bg-primary-50 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             <svg class="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -127,7 +127,7 @@ const handleGoogleLogin = async () => {
 
         <p class="mt-6 text-center text-sm text-primary-500">
           アカウントをお持ちでない方
-          <router-link to="/register" class="text-primary-900 font-medium hover:underline">
+          <router-link to="/register" class="text-accent-600 font-medium hover:text-accent-700">
             新規登録
           </router-link>
         </p>

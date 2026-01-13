@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useWantToDoStore } from '../stores/wantToDo'
-import { CATEGORIES, TIMING_LABELS } from '@machi/shared'
+import { useAuthStore } from '../stores/auth'
+import { CATEGORIES, TIMING_LABELS, type Area } from '@machi/shared'
 import ModalSheet from './ModalSheet.vue'
 import MdiIcon from './MdiIcon.vue'
+import LocationPicker from './LocationPicker.vue'
 import { getIconPath } from '../lib/icons'
 
 interface Props {
@@ -18,10 +20,22 @@ const emit = defineEmits<{
 }>()
 
 const wantToDoStore = useWantToDoStore()
+const authStore = useAuthStore()
 
 const selectedCategoryId = ref('')
 const selectedTiming = ref('ANYTIME')
 const comment = ref('')
+const locationData = ref<{
+  latitude: number | null
+  longitude: number | null
+  locationName: string | null
+}>({
+  latitude: null,
+  longitude: null,
+  locationName: null,
+})
+
+const userArea = computed(() => (authStore.user?.area as Area) || 'TOKYO')
 
 const isLoading = computed(() => wantToDoStore.isLoading)
 const error = computed(() => wantToDoStore.error)
@@ -38,6 +52,11 @@ watch(
       selectedCategoryId.value = ''
       selectedTiming.value = 'ANYTIME'
       comment.value = ''
+      locationData.value = {
+        latitude: null,
+        longitude: null,
+        locationName: null,
+      }
     }
   }
 )
@@ -49,6 +68,9 @@ const handleSubmit = async () => {
     categoryId: selectedCategoryId.value,
     timing: selectedTiming.value,
     comment: comment.value || null,
+    latitude: locationData.value.latitude,
+    longitude: locationData.value.longitude,
+    locationName: locationData.value.locationName,
   })
 
   if (result) {
@@ -78,13 +100,13 @@ const handleSubmit = async () => {
             type="button"
             @click="selectedCategoryId = category.id"
             :class="[
-              'flex flex-col items-center p-3 rounded border-2 transition-all',
+              'flex flex-col items-center p-3 rounded-lg border-2 transition-all',
               selectedCategoryId === category.id
-                ? 'border-primary-900 bg-primary-50'
+                ? 'border-accent-600 bg-accent-50'
                 : 'border-primary-200 hover:border-primary-300',
             ]"
           >
-            <MdiIcon :path="getIconPath(category.icon)" :size="24" class="text-primary-700" />
+            <MdiIcon :path="getIconPath(category.icon)" :size="24" :class="selectedCategoryId === category.id ? 'text-accent-600' : 'text-primary-600'" />
             <span class="text-xs text-primary-700 mt-1">{{ category.name }}</span>
           </button>
         </div>
@@ -102,15 +124,29 @@ const handleSubmit = async () => {
             type="button"
             @click="selectedTiming = key"
             :class="[
-              'py-2 px-4 rounded border-2 text-sm transition-all',
+              'py-2.5 px-4 rounded-lg border-2 text-sm transition-all',
               selectedTiming === key
-                ? 'border-primary-900 bg-primary-50 text-primary-900'
+                ? 'border-accent-600 bg-accent-50 text-accent-700'
                 : 'border-primary-200 hover:border-primary-300 text-primary-700',
             ]"
           >
             {{ label }}
           </button>
         </div>
+      </div>
+
+      <!-- Location (optional) -->
+      <div>
+        <LocationPicker
+          v-model="locationData"
+          :area="userArea"
+          :show-map-option="true"
+          label="場所（任意）"
+          :required="false"
+        />
+        <p class="text-xs text-primary-400 mt-2">
+          ※ 場所を設定するとマップ上に表示されます
+        </p>
       </div>
 
       <!-- Comment -->
@@ -122,14 +158,14 @@ const handleSubmit = async () => {
           v-model="comment"
           rows="3"
           maxlength="200"
-          class="w-full px-4 py-2 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400 resize-none"
+          class="w-full px-4 py-2.5 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600 resize-none"
           placeholder="例：初心者ですが一緒に楽しみたいです！"
         ></textarea>
         <p class="text-xs text-primary-400 text-right mt-1">{{ comment.length }}/200</p>
       </div>
 
       <!-- Error -->
-      <div v-if="error" class="p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+      <div v-if="error" class="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
         {{ error }}
       </div>
     </form>
@@ -139,7 +175,7 @@ const handleSubmit = async () => {
         <button
           type="button"
           @click="emit('update:modelValue', false)"
-          class="flex-1 py-3 border border-primary-200 rounded font-medium hover:bg-primary-50 transition-colors text-primary-700"
+          class="flex-1 py-3 border border-primary-200 rounded-lg font-medium hover:bg-primary-50 transition-colors text-primary-700"
         >
           キャンセル
         </button>
@@ -147,7 +183,7 @@ const handleSubmit = async () => {
           type="button"
           @click="handleSubmit"
           :disabled="!canSubmit"
-          class="flex-1 py-3 bg-primary-900 text-white rounded font-medium hover:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="flex-1 py-3 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <span v-if="isLoading" class="flex items-center justify-center gap-2">
             <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

@@ -71,9 +71,9 @@ onMounted(async () => {
         <button
           @click="toggleUnreadOnly"
           :class="[
-            'px-3 py-1.5 rounded text-sm font-medium transition-colors',
+            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
             showUnreadOnly
-              ? 'bg-primary-900 text-white'
+              ? 'bg-accent-600 text-white'
               : 'bg-primary-100 text-primary-700 hover:bg-primary-200'
           ]"
         >
@@ -115,7 +115,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #fafafa;
+  background-color: #ffffff;
 }
 
 .header {

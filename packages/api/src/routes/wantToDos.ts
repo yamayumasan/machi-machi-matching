@@ -158,7 +158,7 @@ router.post(
   validateRequest(createWantToDoSchema),
   async (req, res, next) => {
     try {
-      const { categoryId, timing, comment } = req.body
+      const { categoryId, timing, comment, latitude, longitude, locationName } = req.body
 
       // カテゴリ存在チェック
       const category = await prisma.category.findUnique({
@@ -203,6 +203,9 @@ router.post(
           categoryId,
           timing,
           comment,
+          latitude,
+          longitude,
+          locationName,
           expiresAt,
         },
         include: {

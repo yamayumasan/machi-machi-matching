@@ -95,7 +95,7 @@ const handleComplete = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4 py-8 bg-primary-50">
+  <div class="min-h-screen flex items-center justify-center px-4 py-8 bg-white">
     <div class="w-full max-w-lg">
       <!-- Progress -->
       <div class="mb-8">
@@ -113,20 +113,20 @@ const handleComplete = async () => {
             }}
           </span>
         </div>
-        <div class="h-2 bg-primary-200 rounded-full">
+        <div class="h-2 bg-primary-100 rounded-full">
           <div
-            class="h-2 bg-primary-900 rounded-full transition-all"
+            class="h-2 bg-accent-600 rounded-full transition-all"
             :style="{ width: `${(currentStep / totalSteps) * 100}%` }"
           ></div>
         </div>
       </div>
 
-      <div class="bg-white rounded-lg border border-primary-200 p-8">
+      <div class="bg-white rounded-xl border border-primary-200 p-8">
         <!-- Step 1: プロフィール -->
         <div v-if="currentStep === 1" class="space-y-6">
           <div class="text-center mb-6">
             <div
-              class="w-24 h-24 mx-auto bg-primary-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-200 transition-colors"
+              class="w-24 h-24 mx-auto bg-primary-50 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-100 transition-colors"
             >
               <MdiIcon :path="mdiCamera" :size="32" class="text-primary-400" />
             </div>
@@ -143,7 +143,7 @@ const handleComplete = async () => {
               type="text"
               required
               maxlength="50"
-              class="w-full px-4 py-2 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400"
+              class="w-full px-4 py-2.5 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600"
               placeholder="ニックネームを入力"
             />
           </div>
@@ -157,7 +157,7 @@ const handleComplete = async () => {
               v-model="bio"
               rows="3"
               maxlength="500"
-              class="w-full px-4 py-2 text-base border border-primary-200 rounded focus:ring-1 focus:ring-primary-700 focus:border-primary-400 resize-none"
+              class="w-full px-4 py-2.5 text-base border border-primary-200 rounded-md focus:ring-2 focus:ring-accent-500/20 focus:border-accent-600 resize-none"
               placeholder="自己紹介を入力"
             ></textarea>
             <p class="text-xs text-primary-400 text-right mt-1">{{ bio.length }}/500</p>
@@ -173,13 +173,13 @@ const handleComplete = async () => {
               :key="category.id"
               @click="toggleCategory(category.id)"
               :class="[
-                'flex flex-col items-center p-4 rounded border-2 transition-all',
+                'flex flex-col items-center p-4 rounded-lg border-2 transition-all',
                 selectedCategories.includes(category.id)
-                  ? 'border-primary-900 bg-primary-50'
+                  ? 'border-accent-600 bg-accent-50'
                   : 'border-primary-200 hover:border-primary-300',
               ]"
             >
-              <MdiIcon :path="getIconPath(category.icon)" :size="28" class="text-primary-700 mb-1" />
+              <MdiIcon :path="getIconPath(category.icon)" :size="28" :class="selectedCategories.includes(category.id) ? 'text-accent-600' : 'text-primary-600'" class="mb-1" />
               <span class="text-xs text-primary-700">{{ category.name }}</span>
             </button>
           </div>
@@ -197,14 +197,14 @@ const handleComplete = async () => {
               :key="key"
               @click="selectedArea = key"
               :class="[
-                'w-full py-4 px-6 rounded border-2 text-left transition-all flex items-center',
+                'w-full py-4 px-6 rounded-lg border-2 text-left transition-all flex items-center',
                 selectedArea === key
-                  ? 'border-primary-900 bg-primary-50'
+                  ? 'border-accent-600 bg-accent-50'
                   : 'border-primary-200 hover:border-primary-300',
               ]"
             >
-              <MdiIcon :path="key === 'TOKYO' ? mdiCity : mdiCastle" :size="28" class="text-primary-700 mr-3" />
-              <span class="font-medium text-primary-900">{{ label }}</span>
+              <MdiIcon :path="key === 'TOKYO' ? mdiCity : mdiCastle" :size="28" :class="selectedArea === key ? 'text-accent-600' : 'text-primary-600'" class="mr-3" />
+              <span class="font-medium text-primary-800">{{ label }}</span>
             </button>
           </div>
         </div>
@@ -225,7 +225,7 @@ const handleComplete = async () => {
         </div>
 
         <!-- Error message -->
-        <div v-if="error" class="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+        <div v-if="error" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
           {{ error }}
         </div>
 
@@ -235,7 +235,7 @@ const handleComplete = async () => {
             v-if="currentStep > 1"
             @click="prevStep"
             :disabled="isLoading"
-            class="px-6 py-2 border border-primary-200 rounded hover:bg-primary-50 disabled:opacity-50 transition-colors text-primary-700"
+            class="px-6 py-2.5 bg-white border border-primary-200 rounded-lg text-primary-700 hover:bg-primary-50 hover:border-primary-300 disabled:opacity-50 transition-colors"
           >
             戻る
           </button>
@@ -245,7 +245,7 @@ const handleComplete = async () => {
             v-if="currentStep < totalSteps"
             @click="nextStep"
             :disabled="(currentStep === 1 && !nickname) || (currentStep === 2 && selectedCategories.length === 0) || (currentStep === 3 && !selectedArea)"
-            class="px-6 py-2 bg-primary-900 text-white rounded hover:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="px-6 py-2.5 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             次へ
           </button>
@@ -253,7 +253,7 @@ const handleComplete = async () => {
             v-else
             @click="handleComplete"
             :disabled="isLoading"
-            class="px-6 py-2 bg-primary-900 text-white rounded hover:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="px-6 py-2.5 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span v-if="isLoading" class="flex items-center gap-2">
               <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
