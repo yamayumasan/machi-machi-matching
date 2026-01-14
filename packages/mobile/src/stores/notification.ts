@@ -31,11 +31,16 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchNotifications: async (page = 1) => {
     set({ isLoading: true, error: null })
     try {
-      const { notifications, total } = await getNotifications({ page, limit: 20 })
+      const result = await getNotifications({ page, limit: 20 })
+      const notifications = result?.notifications || []
+      const total = result?.total || 0
       const unreadCount = notifications.filter((n) => !n.isRead).length
       set({ notifications, total, unreadCount, isLoading: false })
     } catch (error: any) {
+      console.log('fetchNotifications error:', error)
       set({
+        notifications: [],
+        unreadCount: 0,
         error: error.message || '通知の取得に失敗しました',
         isLoading: false,
       })
@@ -43,12 +48,16 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   markAsRead: async (id: string) => {
-    await markAsRead(id)
-    const notifications = get().notifications.map((n) =>
-      n.id === id ? { ...n, isRead: true } : n
-    )
-    const unreadCount = notifications.filter((n) => !n.isRead).length
-    set({ notifications, unreadCount })
+    try {
+      await markAsRead(id)
+      const notifications = get().notifications.map((n) =>
+        n.id === id ? { ...n, isRead: true } : n
+      )
+      const unreadCount = notifications.filter((n) => !n.isRead).length
+      set({ notifications, unreadCount })
+    } catch (error) {
+      console.log('markAsRead error:', error)
+    }
   },
 
   markAllAsRead: async () => {

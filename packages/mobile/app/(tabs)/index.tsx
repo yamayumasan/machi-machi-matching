@@ -1,63 +1,203 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  Dimensions,
   TouchableOpacity,
-  Modal,
-  RefreshControl,
   ActivityIndicator,
+  ScrollView,
+  Animated,
+  PanResponder,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
+
 import { useAuthStore } from '@/stores/auth'
-import { useWantToDoStore } from '@/stores/wantToDo'
+import { useNearbyStore } from '@/stores/nearby'
 import { useNotificationStore } from '@/stores/notification'
 import { useCategoryStore } from '@/stores/category'
-import { colors, spacing } from '@/constants/theme'
-import { WantToDo, WantToDoTiming } from '@/services/wantToDo'
+import { NearbyItem, NearbyFilterType } from '@/services/nearby'
 
-const TIMING_LABELS: Record<WantToDoTiming, string> = {
-  THIS_WEEK: '今週',
-  NEXT_WEEK: '来週',
-  THIS_MONTH: '今月中',
-  ANYTIME: 'いつでも',
+import { NearbyMap, NearbyMapRef } from '@/components/NearbyMap'
+import { NearbyItemCard } from '@/components/NearbyItemCard'
+import { FilterTabs } from '@/components/FilterTabs'
+import type { FilterType } from '@/components/FilterTabs'
+import { RecruitmentDetailModal } from '@/components/RecruitmentDetailModal'
+import { WantToDoDetailModal } from '@/components/WantToDoDetailModal'
+import { NearbyWantToDo, NearbyRecruitment } from '@/services/nearby'
+import { colors, spacing } from '@/constants/theme'
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window')
+const MIN_LIST_HEIGHT = 220
+const MAX_LIST_HEIGHT = SCREEN_HEIGHT * 0.6
+const ITEM_HEIGHT = 80 // NearbyItemCardの高さ（概算）
+
+// FilterType から NearbyFilterType への変換
+const filterTypeToNearbyFilterType = (filterType: FilterType): NearbyFilterType => {
+  if (filterType === 'participating') return 'all'
+  return filterType as NearbyFilterType
 }
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets()
   const { user } = useAuthStore()
-  const { wantToDos, isLoading, fetchWantToDos } = useWantToDoStore()
+  const {
+    selectedItem,
+    isLoading,
+    selectItem,
+    setFilterType: setStoreFilterType,
+    getFilteredItems,
+  } = useNearbyStore()
   const { unreadCount, fetchNotifications } = useNotificationStore()
-  const { categories, fetchCategories } = useCategoryStore()
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
+  const { fetchCategories } = useCategoryStore()
+
+  const [filterType, setFilterType] = useState<FilterType>('all')
+
+  // モーダル用状態
+  const [selectedRecruitment, setSelectedRecruitment] = useState<NearbyRecruitment | null>(null)
+  const [selectedWantToDo, setSelectedWantToDo] = useState<NearbyWantToDo | null>(null)
+
+  // マップへの参照
+  const mapRef = useRef<NearbyMapRef>(null)
+
+  // リストへの参照（スクロール用）
+  const scrollViewRef = useRef<ScrollView>(null)
+
+  // リスト高さのアニメーション（React Native標準Animated API）
+  const listHeightAnim = useRef(new Animated.Value(MIN_LIST_HEIGHT)).current
+  const listHeightRef = useRef(MIN_LIST_HEIGHT)
+
+  // FABの位置をリスト高さに連動
+  const fabBottomAnim = Animated.add(listHeightAnim, spacing.md)
 
   useEffect(() => {
-    fetchWantToDos()
     fetchNotifications()
     fetchCategories()
   }, [])
 
-  const onRefresh = async () => {
-    setRefreshing(true)
-    await Promise.all([fetchWantToDos(), fetchNotifications()])
-    setRefreshing(false)
+  // フィルタータイプが変わったらストアも更新
+  const handleFilterChange = useCallback((newFilterType: FilterType) => {
+    setFilterType(newFilterType)
+    setStoreFilterType(filterTypeToNearbyFilterType(newFilterType))
+  }, [setStoreFilterType])
+
+  // フィルタリングされたアイテム（ストアから取得）
+  const filteredItems = getFilteredItems().filter((item) => {
+    // 「参加中」フィルター
+    if (filterType === 'participating') {
+      return item.type === 'recruitment' && item.isParticipating
+    }
+    return true
+  })
+
+  // マップからアイテム選択時（マーカークリック）→ リストをスクロール
+  const handleMapItemSelect = useCallback((item: NearbyItem | null) => {
+    selectItem(item)
+
+    if (item) {
+      // 該当アイテムのインデックスを探してスクロール
+      const index = filteredItems.findIndex(
+        (i) => i.id === item.id && i.type === item.type
+      )
+      if (index >= 0 && scrollViewRef.current) {
+        // 少し遅延してスクロール（レンダリング完了後）
+        setTimeout(() => {
+          scrollViewRef.current?.scrollTo({
+            y: index * ITEM_HEIGHT,
+            animated: true,
+          })
+        }, 100)
+      }
+    }
+  }, [selectItem, filteredItems])
+
+  // リストからカードをタップ時 → マップをフォーカス
+  const handleListItemPress = useCallback((item: NearbyItem) => {
+    // マップにフォーカス
+    mapRef.current?.focusOnItem(item)
+    selectItem(item)
+  }, [selectItem])
+
+  // カード長押し時 → 詳細モーダル表示
+  const handleCardLongPress = useCallback((item: NearbyItem) => {
+    if (item.type === 'recruitment') {
+      setSelectedRecruitment(item as NearbyRecruitment)
+    } else if (item.type === 'wantToDo') {
+      setSelectedWantToDo(item as NearbyWantToDo)
+    }
+  }, [])
+
+  // カードダブルタップまたは詳細ボタン押下時 → 詳細モーダル表示
+  const handleOpenDetail = useCallback((item: NearbyItem) => {
+    if (item.type === 'recruitment') {
+      setSelectedRecruitment(item as NearbyRecruitment)
+    } else if (item.type === 'wantToDo') {
+      setSelectedWantToDo(item as NearbyWantToDo)
+    }
+  }, [])
+
+  // PanResponderでドラッグを処理
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gestureState) => {
+        const newHeight = listHeightRef.current - gestureState.dy
+        const clampedHeight = Math.max(MIN_LIST_HEIGHT, Math.min(MAX_LIST_HEIGHT, newHeight))
+        listHeightAnim.setValue(clampedHeight)
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const newHeight = listHeightRef.current - gestureState.dy
+        const clampedHeight = Math.max(MIN_LIST_HEIGHT, Math.min(MAX_LIST_HEIGHT, newHeight))
+
+        // スナップポイント
+        const velocity = gestureState.vy
+        let targetHeight: number
+
+        if (Math.abs(velocity) > 0.5) {
+          // 速度が高い場合
+          targetHeight = velocity > 0 ? MIN_LIST_HEIGHT : MAX_LIST_HEIGHT
+        } else {
+          // 中間位置へスナップ
+          const mid = (MIN_LIST_HEIGHT + MAX_LIST_HEIGHT) / 2
+          targetHeight = clampedHeight > mid ? MAX_LIST_HEIGHT : MIN_LIST_HEIGHT
+        }
+
+        listHeightRef.current = targetHeight
+        Animated.spring(listHeightAnim, {
+          toValue: targetHeight,
+          useNativeDriver: false,
+          friction: 8,
+        }).start()
+      },
+    })
+  ).current
+
+  // FAB押下時 → 募集作成画面へ直接遷移
+  const handleFABPress = () => {
+    router.push('/recruitment/create')
   }
 
-  const activeWantToDos = wantToDos.filter((w) => w.status === 'ACTIVE')
-
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>マチマチマッチング</Text>
-        </View>
+    <View style={styles.container}>
+      {/* マップ */}
+      <View style={styles.mapContainer}>
+        <NearbyMap
+          ref={mapRef}
+          onItemSelect={handleMapItemSelect}
+          topOffset={insets.top + spacing.sm}
+        />
+      </View>
+
+      {/* フローティングヘッダー（右上のみ） */}
+      <View style={[styles.floatingHeader, { top: insets.top + spacing.sm }]}>
         <TouchableOpacity
-          style={styles.notificationButton}
+          style={styles.headerButton}
           onPress={() => router.push('/notifications')}
         >
-          <Text style={styles.notificationIcon}>🔔</Text>
+          <MaterialCommunityIcons name="bell-outline" size={22} color={colors.primary[700]} />
           {unreadCount > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>
@@ -66,251 +206,134 @@ export default function HomeScreen() {
             </View>
           )}
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => router.push('/(tabs)/profile')}
+        >
+          <View style={styles.avatarPlaceholder}>
+            {user?.nickname ? (
+              <Text style={styles.avatarText}>
+                {user.nickname.charAt(0)}
+              </Text>
+            ) : (
+              <MaterialCommunityIcons name="account" size={20} color={colors.primary[600]} />
+            )}
+          </View>
+        </TouchableOpacity>
       </View>
 
-      <ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {/* やりたいことセクション */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>今やりたいこと</Text>
-            <TouchableOpacity onPress={() => setShowCreateModal(true)}>
-              <Text style={styles.addButton}>+ 追加</Text>
-            </TouchableOpacity>
-          </View>
+      {/* ボトムリスト */}
+      <Animated.View style={[styles.bottomList, { height: listHeightAnim }]}>
+        {/* ドラッグハンドル */}
+        <View {...panResponder.panHandlers} style={styles.handleContainer}>
+          <View style={styles.handle} />
+        </View>
 
-          {isLoading && activeWantToDos.length === 0 ? (
+        {/* フィルタータブ */}
+        <FilterTabs
+          value={filterType}
+          onChange={handleFilterChange}
+        />
+
+        {/* リスト */}
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {isLoading && filteredItems.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator color={colors.primary[500]} />
             </View>
-          ) : activeWantToDos.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.wantToDoScroll}
-            >
-              {activeWantToDos.map((wantToDo) => (
-                <WantToDoCard key={wantToDo.id} wantToDo={wantToDo} />
-              ))}
-            </ScrollView>
-          ) : (
-            <View style={styles.wantToDoContainer}>
+          ) : filteredItems.length === 0 ? (
+            <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>
-                やりたいことを表明してみましょう
+                {filterType === 'participating'
+                  ? '参加中の募集がありません'
+                  : 'この周辺には募集がありません'}
               </Text>
-              <TouchableOpacity
-                style={styles.addWantToDoButton}
-                onPress={() => setShowCreateModal(true)}
-              >
-                <Text style={styles.addWantToDoButtonText}>+ 表明する</Text>
-              </TouchableOpacity>
+              <Text style={styles.emptySubText}>
+                マップを移動して探してみてください
+              </Text>
             </View>
+          ) : (
+            filteredItems.slice(0, 20).map((item, index) => (
+              <NearbyItemCard
+                key={`${item.type}-${item.id}`}
+                item={item}
+                onPress={() => handleListItemPress(item)}
+                onLongPress={() => handleOpenDetail(item)}
+                isSelected={selectedItem?.id === item.id && selectedItem?.type === item.type}
+                compact
+                showDistance
+              />
+            ))
           )}
-        </View>
+        </ScrollView>
+      </Animated.View>
 
-        {/* アクションボタン */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push('/recruitment/create')}
-          >
-            <Text style={styles.actionButtonText}>募集を作成</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.actionButtonSecondary]}
-            onPress={() => router.push('/(tabs)/explore')}
-          >
-            <Text style={styles.actionButtonTextSecondary}>募集を探す</Text>
-          </TouchableOpacity>
-        </View>
+      {/* FAB */}
+      <Animated.View style={[styles.fab, { bottom: fabBottomAnim }]}>
+        <TouchableOpacity
+          style={styles.fabTouchable}
+          onPress={handleFABPress}
+        >
+          <MaterialCommunityIcons name="plus" size={28} color={colors.white} />
+        </TouchableOpacity>
+      </Animated.View>
 
-        {/* オファーセクション */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>あなたへのオファー</Text>
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>オファーはありません</Text>
-          </View>
-        </View>
-
-        {/* おすすめの募集セクション */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>おすすめの募集</Text>
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>
-              近くの募集を見つけるには「探す」タブへ
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
-
-      {/* やりたいこと作成モーダル */}
-      <CreateWantToDoModal
-        visible={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        categories={categories}
+      {/* 募集詳細モーダル */}
+      <RecruitmentDetailModal
+        visible={!!selectedRecruitment}
+        recruitmentId={selectedRecruitment?.id || null}
+        onClose={() => setSelectedRecruitment(null)}
       />
-    </SafeAreaView>
-  )
-}
 
-// やりたいことカード
-function WantToDoCard({ wantToDo }: { wantToDo: WantToDo }) {
-  const daysLeft = Math.ceil(
-    (new Date(wantToDo.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-  )
-
-  return (
-    <View style={styles.wantToDoCard}>
-      <Text style={styles.wantToDoIcon}>{wantToDo.category.icon}</Text>
-      <Text style={styles.wantToDoName}>{wantToDo.category.name}</Text>
-      <Text style={styles.wantToDoTiming}>
-        {TIMING_LABELS[wantToDo.timing]}
-      </Text>
-      <Text style={styles.wantToDoExpiry}>あと{daysLeft}日</Text>
+      {/* やりたいこと詳細モーダル */}
+      <WantToDoDetailModal
+        visible={!!selectedWantToDo}
+        wantToDo={selectedWantToDo}
+        onClose={() => setSelectedWantToDo(null)}
+      />
     </View>
-  )
-}
-
-// やりたいこと作成モーダル
-function CreateWantToDoModal({
-  visible,
-  onClose,
-  categories,
-}: {
-  visible: boolean
-  onClose: () => void
-  categories: { id: string; name: string; icon: string }[]
-}) {
-  const { addWantToDo } = useWantToDoStore()
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [selectedTiming, setSelectedTiming] = useState<WantToDoTiming>('THIS_WEEK')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const handleSubmit = async () => {
-    if (!selectedCategory) return
-
-    setIsSubmitting(true)
-    try {
-      await addWantToDo({
-        categoryId: selectedCategory,
-        timing: selectedTiming,
-      })
-      onClose()
-      setSelectedCategory(null)
-      setSelectedTiming('THIS_WEEK')
-    } catch (error) {
-      console.error('Failed to create want to do:', error)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>やりたいことを表明</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Text style={styles.modalClose}>✕</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.modalLabel}>何がしたい?</Text>
-          <View style={styles.categoryGrid}>
-            {categories.slice(0, 9).map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.categoryItem,
-                  selectedCategory === category.id && styles.categoryItemSelected,
-                ]}
-                onPress={() => setSelectedCategory(category.id)}
-              >
-                <Text style={styles.categoryIcon}>{category.icon}</Text>
-                <Text style={styles.categoryName}>{category.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Text style={styles.modalLabel}>いつ頃?</Text>
-          <View style={styles.timingGrid}>
-            {(Object.keys(TIMING_LABELS) as WantToDoTiming[]).map((timing) => (
-              <TouchableOpacity
-                key={timing}
-                style={[
-                  styles.timingItem,
-                  selectedTiming === timing && styles.timingItemSelected,
-                ]}
-                onPress={() => setSelectedTiming(timing)}
-              >
-                <Text
-                  style={[
-                    styles.timingText,
-                    selectedTiming === timing && styles.timingTextSelected,
-                  ]}
-                >
-                  {TIMING_LABELS[timing]}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <TouchableOpacity
-            style={[
-              styles.submitButton,
-              (!selectedCategory || isSubmitting) && styles.submitButtonDisabled,
-            ]}
-            onPress={handleSubmit}
-            disabled={!selectedCategory || isSubmitting}
-          >
-            <Text style={styles.submitButtonText}>
-              {isSubmitting ? '送信中...' : '表明する'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[100],
   },
-  header: {
+  mapContainer: {
+    flex: 1,
+  },
+
+  // Floating Header
+  floatingHeader: {
+    position: 'absolute',
+    right: spacing.md,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    gap: spacing.sm,
+    zIndex: 100,
+  },
+  headerButton: {
     backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.gray[900],
-  },
-  notificationButton: {
-    padding: spacing.xs,
-    position: 'relative',
-  },
-  notificationIcon: {
-    fontSize: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   badge: {
     position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: colors.primary[500],
+    top: -2,
+    right: -2,
+    backgroundColor: colors.accent[600],
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -322,220 +345,87 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
-  content: {
-    flex: 1,
-    padding: spacing.md,
-  },
-  section: {
-    marginBottom: spacing.lg,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  avatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primary[200],
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.sm,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.gray[900],
-  },
-  addButton: {
+  avatarText: {
     fontSize: 14,
-    color: colors.primary[500],
-    fontWeight: '600',
+    color: colors.primary[600],
   },
-  loadingContainer: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: spacing.lg,
-    alignItems: 'center',
-  },
-  wantToDoScroll: {
-    marginHorizontal: -spacing.md,
-    paddingHorizontal: spacing.md,
-  },
-  wantToDoCard: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginRight: spacing.sm,
-    width: 100,
-    alignItems: 'center',
-  },
-  wantToDoIcon: {
-    fontSize: 28,
-    marginBottom: spacing.xs,
-  },
-  wantToDoName: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.gray[900],
-    marginBottom: 2,
-  },
-  wantToDoTiming: {
-    fontSize: 10,
-    color: colors.gray[500],
-  },
-  wantToDoExpiry: {
-    fontSize: 10,
-    color: colors.primary[500],
-    marginTop: 4,
-  },
-  wantToDoContainer: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: spacing.lg,
-    alignItems: 'center',
-  },
-  addWantToDoButton: {
-    marginTop: spacing.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    backgroundColor: colors.primary[50],
-    borderRadius: 8,
-  },
-  addWantToDoButtonText: {
-    color: colors.primary[500],
-    fontWeight: '600',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: colors.primary[500],
-    borderRadius: 12,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-  actionButtonSecondary: {
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.primary[500],
-  },
-  actionButtonText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  actionButtonTextSecondary: {
-    color: colors.primary[500],
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  emptyCard: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: spacing.lg,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: colors.gray[400],
-    fontSize: 14,
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
+
+  // Bottom List
+  bottomList: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: colors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: spacing.lg,
-    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 10,
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  handleContainer: {
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    paddingVertical: spacing.sm,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.gray[900],
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.primary[300],
+    borderRadius: 2,
   },
-  modalClose: {
-    fontSize: 20,
-    color: colors.gray[500],
+  listContent: {
+    flex: 1,
   },
-  modalLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.gray[700],
-    marginBottom: spacing.sm,
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  categoryItem: {
-    width: '30%',
-    aspectRatio: 1,
-    backgroundColor: colors.gray[50],
-    borderRadius: 12,
+  loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    paddingVertical: spacing.xl,
   },
-  categoryItemSelected: {
-    borderColor: colors.primary[500],
-    backgroundColor: colors.primary[50],
-  },
-  categoryIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  categoryName: {
-    fontSize: 11,
-    color: colors.gray[700],
-  },
-  timingGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  timingItem: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.gray[50],
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  timingItemSelected: {
-    borderColor: colors.primary[500],
-    backgroundColor: colors.primary[50],
-  },
-  timingText: {
-    fontSize: 14,
-    color: colors.gray[700],
-  },
-  timingTextSelected: {
-    color: colors.primary[700],
-    fontWeight: '600',
-  },
-  submitButton: {
-    backgroundColor: colors.primary[500],
-    borderRadius: 12,
-    paddingVertical: spacing.md,
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    padding: spacing.lg,
   },
-  submitButtonDisabled: {
-    opacity: 0.5,
+  emptyText: {
+    fontSize: 14,
+    color: colors.primary[500],
+    marginBottom: spacing.xs,
   },
-  submitButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+  emptySubText: {
+    fontSize: 12,
+    color: colors.primary[400],
+  },
+
+  // FAB
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.accent[600],
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  fabTouchable: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 })

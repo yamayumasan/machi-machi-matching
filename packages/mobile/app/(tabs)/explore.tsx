@@ -13,17 +13,28 @@ import { router } from 'expo-router'
 import { useRecruitmentStore } from '@/stores/recruitment'
 import { useAuthStore } from '@/stores/auth'
 import { useCategoryStore } from '@/stores/category'
+import { useNearbyStore } from '@/stores/nearby'
 import { Recruitment } from '@/services/recruitment'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { NearbyMap } from '@/components/NearbyMap'
 import { colors, spacing } from '@/constants/theme'
+import { CategoryIcon } from '@/components/CategoryIcon'
 
 type AreaFilter = 'ALL' | 'TOKYO' | 'SENDAI'
+type ViewMode = 'list' | 'map'
 
 export default function ExploreScreen() {
   const { user } = useAuthStore()
-  const { recruitments, isLoading, fetchRecruitments } = useRecruitmentStore()
-  const { categories, fetchCategories } = useCategoryStore()
+  const { recruitments: rawRecruitments, isLoading, fetchRecruitments } = useRecruitmentStore()
+  const { categories: rawCategories, fetchCategories } = useCategoryStore()
+  const { setFilterType, setSelectedCategories } = useNearbyStore()
+
+  // 防御的に配列を保証
+  const recruitments = rawRecruitments || []
+  const categories = rawCategories || []
   const [areaFilter, setAreaFilter] = useState<AreaFilter>('ALL')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
 
   useEffect(() => {
     fetchCategories()
@@ -49,6 +60,8 @@ export default function ExploreScreen() {
   const handleCategoryChange = (categoryId: string | null) => {
     setCategoryFilter(categoryId)
     loadRecruitments(areaFilter, categoryId)
+    // マップ用のカテゴリフィルターも更新
+    setSelectedCategories(categoryId ? [categoryId] : [])
   }
 
   const formatDate = (datetime: string | null, datetimeFlex: string | null) => {
@@ -73,7 +86,7 @@ export default function ExploreScreen() {
     >
       <View style={styles.cardHeader}>
         <View style={styles.categoryBadge}>
-          <Text style={styles.categoryIcon}>{item.category.icon}</Text>
+          <CategoryIcon name={item.category.icon} size={12} color={colors.primary[700]} />
           <Text style={styles.categoryName}>{item.category.name}</Text>
         </View>
         <Text style={styles.area}>
@@ -87,17 +100,17 @@ export default function ExploreScreen() {
 
       <View style={styles.cardMeta}>
         <View style={styles.metaRow}>
-          <Text style={styles.metaIcon}>👤</Text>
+          <MaterialCommunityIcons name="account" size={14} color={colors.primary[500]} />
           <Text style={styles.metaText}>{item.creator.nickname}</Text>
         </View>
         <View style={styles.metaRow}>
-          <Text style={styles.metaIcon}>📅</Text>
+          <MaterialCommunityIcons name="calendar" size={14} color={colors.primary[500]} />
           <Text style={styles.metaText}>
             {formatDate(item.datetime, item.datetimeFlex)}
           </Text>
         </View>
         <View style={styles.metaRow}>
-          <Text style={styles.metaIcon}>👥</Text>
+          <MaterialCommunityIcons name="account-group" size={14} color={colors.primary[500]} />
           <Text style={styles.metaText}>
             {item.currentPeople}/{item.maxPeople}人
           </Text>
@@ -105,9 +118,12 @@ export default function ExploreScreen() {
       </View>
 
       {item.landmarkName && (
-        <Text style={styles.location} numberOfLines={1}>
-          📍 {item.landmarkName}
-        </Text>
+        <View style={styles.locationRow}>
+          <MaterialCommunityIcons name="map-marker" size={14} color={colors.primary[500]} />
+          <Text style={styles.location} numberOfLines={1}>
+            {item.landmarkName}
+          </Text>
+        </View>
       )}
     </TouchableOpacity>
   )
@@ -116,89 +132,130 @@ export default function ExploreScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>募集を探す</Text>
+
+        {/* 表示切り替えボタン */}
+        <View style={styles.viewToggle}>
+          <TouchableOpacity
+            style={[
+              styles.viewToggleButton,
+              viewMode === 'list' && styles.viewToggleButtonActive,
+            ]}
+            onPress={() => setViewMode('list')}
+          >
+            <Text style={[
+              styles.viewToggleText,
+              viewMode === 'list' && styles.viewToggleTextActive,
+            ]}>
+              リスト
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.viewToggleButton,
+              viewMode === 'map' && styles.viewToggleButtonActive,
+            ]}
+            onPress={() => setViewMode('map')}
+          >
+            <Text style={[
+              styles.viewToggleText,
+              viewMode === 'map' && styles.viewToggleTextActive,
+            ]}>
+              マップ
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* フィルター */}
-      <View style={styles.filters}>
-        {/* エリアフィルター */}
-        <View style={styles.filterRow}>
-          {(['ALL', 'TOKYO', 'SENDAI'] as AreaFilter[]).map((area) => (
-            <TouchableOpacity
-              key={area}
-              style={[
-                styles.filterChip,
-                areaFilter === area && styles.filterChipActive,
-              ]}
-              onPress={() => handleAreaChange(area)}
-            >
-              <Text
+      {/* フィルター（リストモード時のみ表示） */}
+      {viewMode === 'list' && (
+        <View style={styles.filters}>
+          {/* エリアフィルター */}
+          <View style={styles.filterRow}>
+            {(['ALL', 'TOKYO', 'SENDAI'] as AreaFilter[]).map((area) => (
+              <TouchableOpacity
+                key={area}
                 style={[
-                  styles.filterChipText,
-                  areaFilter === area && styles.filterChipTextActive,
+                  styles.filterChip,
+                  areaFilter === area && styles.filterChipActive,
                 ]}
+                onPress={() => handleAreaChange(area)}
               >
-                {area === 'ALL' ? '全て' : area === 'TOKYO' ? '東京' : '仙台'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    areaFilter === area && styles.filterChipTextActive,
+                  ]}
+                >
+                  {area === 'ALL' ? '全て' : area === 'TOKYO' ? '東京' : '仙台'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-        {/* カテゴリフィルター */}
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={[{ id: null, name: '全て', icon: '🔍' }, ...categories]}
-          keyExtractor={(item) => item.id || 'all'}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.categoryChip,
-                categoryFilter === item.id && styles.categoryChipActive,
-              ]}
-              onPress={() => handleCategoryChange(item.id)}
-            >
-              <Text style={styles.categoryChipIcon}>{item.icon}</Text>
-              <Text
+          {/* カテゴリフィルター */}
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={[{ id: null, name: '全て', icon: '🔍' }, ...categories]}
+            keyExtractor={(item) => item.id || 'all'}
+            renderItem={({ item }) => (
+              <TouchableOpacity
                 style={[
-                  styles.categoryChipText,
-                  categoryFilter === item.id && styles.categoryChipTextActive,
+                  styles.categoryChip,
+                  categoryFilter === item.id && styles.categoryChipActive,
                 ]}
+                onPress={() => handleCategoryChange(item.id)}
               >
-                {item.name}
-              </Text>
-            </TouchableOpacity>
-          )}
-          contentContainerStyle={styles.categoryList}
-        />
-      </View>
+                <Text style={styles.categoryChipIcon}>{item.icon}</Text>
+                <Text
+                  style={[
+                    styles.categoryChipText,
+                    categoryFilter === item.id && styles.categoryChipTextActive,
+                  ]}
+                >
+                  {item.name}
+                </Text>
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={styles.categoryList}
+          />
+        </View>
+      )}
 
-      {/* 募集一覧 */}
-      {isLoading && recruitments.length === 0 ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator color={colors.primary[500]} />
-        </View>
-      ) : recruitments.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🔍</Text>
-          <Text style={styles.emptyText}>募集が見つかりませんでした</Text>
-          <Text style={styles.emptySubText}>
-            フィルターを変更してみてください
-          </Text>
-        </View>
+      {/* コンテンツ */}
+      {viewMode === 'map' ? (
+        <NearbyMap />
       ) : (
-        <FlatList
-          data={recruitments}
-          renderItem={renderRecruitment}
-          keyExtractor={(item) => item.id}
-          refreshControl={
-            <RefreshControl
-              refreshing={isLoading}
-              onRefresh={() => loadRecruitments(areaFilter, categoryFilter)}
+        <>
+          {/* 募集一覧 */}
+          {isLoading && recruitments.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color={colors.primary[500]} />
+            </View>
+          ) : recruitments.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>🔍</Text>
+              <Text style={styles.emptyText}>募集が見つかりませんでした</Text>
+              <Text style={styles.emptySubText}>
+                フィルターを変更してみてください
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={recruitments}
+              renderItem={renderRecruitment}
+              keyExtractor={(item) => item.id}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isLoading}
+                  onRefresh={() => loadRecruitments(areaFilter, categoryFilter)}
+                />
+              }
+              contentContainerStyle={styles.listContent}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
             />
-          }
-          contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-        />
+          )}
+        </>
       )}
     </SafeAreaView>
   )
@@ -210,6 +267,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray[50],
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     backgroundColor: colors.white,
@@ -220,6 +280,33 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.gray[900],
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    backgroundColor: colors.gray[100],
+    borderRadius: 8,
+    padding: 2,
+  },
+  viewToggleButton: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: 6,
+  },
+  viewToggleButtonActive: {
+    backgroundColor: colors.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  viewToggleText: {
+    fontSize: 13,
+    color: colors.gray[500],
+  },
+  viewToggleTextActive: {
+    color: colors.gray[900],
+    fontWeight: '600',
   },
   filters: {
     backgroundColor: colors.white,
@@ -361,10 +448,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.gray[600],
   },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: spacing.xs,
+  },
   location: {
     fontSize: 12,
     color: colors.gray[500],
-    marginTop: spacing.xs,
+    flex: 1,
   },
   separator: {
     height: spacing.sm,

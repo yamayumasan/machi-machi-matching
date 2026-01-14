@@ -18,6 +18,7 @@ import { useCategoryStore } from '@/stores/category'
 import { useAuthStore } from '@/stores/auth'
 import { CreateRecruitmentData } from '@/services/recruitment'
 import { colors, spacing } from '@/constants/theme'
+import { CategoryIcon } from '@/components/CategoryIcon'
 import { useEffect } from 'react'
 
 type AreaType = 'TOKYO' | 'SENDAI'
@@ -138,7 +139,11 @@ export default function CreateRecruitmentScreen() {
                     ]}
                     onPress={() => updateForm('categoryId', category.id)}
                   >
-                    <Text style={styles.categoryIcon}>{category.icon}</Text>
+                    <CategoryIcon
+                      name={category.icon}
+                      size={16}
+                      color={form.categoryId === category.id ? colors.white : colors.primary[600]}
+                    />
                     <Text
                       style={[
                         styles.categoryName,

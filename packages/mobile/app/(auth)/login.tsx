@@ -19,7 +19,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
-  const { signIn, signInWithGoogle } = useAuthStore()
+  const { signIn, signInWithGoogle, isOnboarded } = useAuthStore()
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -30,6 +30,13 @@ export default function LoginScreen() {
     setIsLoading(true)
     try {
       await signIn(email, password)
+      // ログイン成功後、適切な画面へ遷移
+      const { isOnboarded: onboarded } = useAuthStore.getState()
+      if (onboarded) {
+        router.replace('/(tabs)')
+      } else {
+        router.replace('/onboarding')
+      }
     } catch (error: any) {
       Alert.alert('ログインエラー', error.message || 'ログインに失敗しました')
     } finally {
@@ -41,6 +48,13 @@ export default function LoginScreen() {
     setIsGoogleLoading(true)
     try {
       await signInWithGoogle()
+      // ログイン成功後、適切な画面へ遷移
+      const { isOnboarded: onboarded } = useAuthStore.getState()
+      if (onboarded) {
+        router.replace('/(tabs)')
+      } else {
+        router.replace('/onboarding')
+      }
     } catch (error: any) {
       if (error.message !== 'ログインがキャンセルされました') {
         Alert.alert('Googleログインエラー', error.message || 'ログインに失敗しました')

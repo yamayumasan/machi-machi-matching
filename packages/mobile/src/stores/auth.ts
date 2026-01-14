@@ -59,17 +59,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isOnboarded: false,
 
   signIn: async (email: string, password: string) => {
+    console.log('[AUTH] signIn: starting...')
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
     if (error) {
+      console.log('[AUTH] signIn: Supabase error:', error.message)
       throw error
     }
 
+    console.log('[AUTH] signIn: Supabase success, user id:', data.user?.id)
+    console.log('[AUTH] signIn: session exists:', !!data.session)
     set({ session: data.session })
     await get().fetchUser()
+    console.log('[AUTH] signIn: completed, state:', {
+      user: get().user?.id,
+      isOnboarded: get().isOnboarded,
+    })
   },
 
   signUp: async (email: string, password: string) => {
@@ -90,18 +98,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInWithGoogle: async () => {
-    // リダイレクトURLを作成
-    // preferLocalhost: falseでexp://スキームを優先
-    // Expo Goでの開発中はproxyを使用することで、Supabase Site URLの制約を回避
+    // Expo Go用のリダイレクトURLを作成
     const redirectUrl = AuthSession.makeRedirectUri({
-      scheme: 'machi-machi',
+      // Expo Goでは scheme を指定しない（exp:// が自動的に使われる）
       path: 'auth/callback',
-      preferLocalhost: false,
     })
 
-    // デバッグ用：実際のリダイレクトURLを確認
     console.log('Redirect URL:', redirectUrl)
-    console.log('Platform:', require('react-native').Platform.OS)
 
     // SupabaseのGoogle OAuth URLを取得
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -120,19 +123,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       throw new Error('OAuth URLの取得に失敗しました')
     }
 
-    // デバッグ用：OAuth URLを確認（redirect_toパラメータが正しいか）
     console.log('OAuth URL:', data.url)
 
-    // URLからredirect_toパラメータを抽出して確認
-    const oauthUrl = new URL(data.url)
-    console.log('redirect_to in OAuth URL:', oauthUrl.searchParams.get('redirect_to'))
-
     // ブラウザでOAuth認証を開始
+    // dismissButtonStyle: 'close' でiOSのSafariViewControllerを使用
     const result = await WebBrowser.openAuthSessionAsync(
       data.url,
       redirectUrl,
       {
-        showInRecents: true,
+        preferEphemeralSession: true, // Cookieを保持しない（毎回ログイン選択画面を表示）
       }
     )
 
@@ -186,7 +185,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true })
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session }, error } = await supabase.auth.getSession()
+
+      if (error) {
+        // トークンが無効な場合はセッションをクリア
+        console.log('Session error, clearing session:', error.message)
+        await supabase.auth.signOut()
+        set({ session: null, user: null, isOnboarded: false })
+        return
+      }
 
       if (session) {
         set({ session })
@@ -194,24 +201,76 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     } catch (error) {
       console.error('Session check error:', error)
+      // エラー時はセッションをクリア
+      await supabase.auth.signOut()
+      set({ session: null, user: null, isOnboarded: false })
     } finally {
       set({ isLoading: false })
     }
   },
 
   fetchUser: async () => {
+    console.log('[AUTH] fetchUser: starting...')
     const { session } = get()
-    if (!session) return
+    if (!session) {
+      console.log('[AUTH] fetchUser: no session, returning early')
+      return
+    }
+    console.log('[AUTH] fetchUser: session exists, access_token prefix:', session.access_token?.substring(0, 20))
 
     try {
+      console.log('[AUTH] fetchUser: calling getCurrentUser API...')
       const user = await getCurrentUser()
+      console.log('[AUTH] fetchUser: API success, user:', {
+        id: user.id,
+        email: user.email,
+        isOnboarded: user.isOnboarded,
+      })
       set({
         user,
         isOnboarded: user.isOnboarded,
       })
-    } catch (error) {
-      console.error('Fetch user error:', error)
-      // ユーザーがまだ作成されていない場合（初回ログイン）
+      console.log('[AUTH] fetchUser: state updated')
+    } catch (error: any) {
+      console.error('[AUTH] fetchUser: API error:', error?.response?.status, error?.response?.data || error.message)
+
+      // 404の場合、DBにユーザーが存在しない → OAuth callback APIでユーザーを作成
+      if (error?.response?.status === 404) {
+        console.log('[AUTH] fetchUser: User not found in DB, creating via OAuth callback...')
+        try {
+          const user = await registerOAuthUser(
+            session.access_token,
+            session.refresh_token
+          )
+          console.log('[AUTH] fetchUser: User created via OAuth callback:', {
+            id: user.id,
+            email: user.email,
+            isOnboarded: user.isOnboarded,
+          })
+          set({
+            user,
+            isOnboarded: user.isOnboarded,
+          })
+          return
+        } catch (createError: any) {
+          console.error('[AUTH] fetchUser: Failed to create user:', createError?.response?.data || createError.message)
+          // ユーザー作成も失敗した場合、セッションをクリアして再ログインを促す
+          console.log('[AUTH] fetchUser: Clearing invalid session...')
+          await supabase.auth.signOut()
+          set({ session: null, user: null, isOnboarded: false })
+          return
+        }
+      }
+
+      // 401の場合、トークンが無効 → セッションをクリア
+      if (error?.response?.status === 401) {
+        console.log('[AUTH] fetchUser: Token invalid, clearing session...')
+        await supabase.auth.signOut()
+        set({ session: null, user: null, isOnboarded: false })
+        return
+      }
+
+      // その他のエラー
       set({ isOnboarded: false })
     }
   },

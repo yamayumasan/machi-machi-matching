@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import * as SecureStore from 'expo-secure-store'
-import { API_URL } from '@/constants'
+import { API_URL, SUPABASE_URL } from '@/constants'
 
 // Axios インスタンス
 export const api = axios.create({
@@ -11,16 +11,26 @@ export const api = axios.create({
   },
 })
 
+// Supabaseのストレージキーを生成
+const getSupabaseStorageKey = () => {
+  // Supabase URLからproject refを抽出: https://xxx.supabase.co -> xxx
+  const match = SUPABASE_URL.match(/https:\/\/([^.]+)\.supabase\.co/)
+  const projectRef = match ? match[1] : 'default'
+  return `sb-${projectRef}-auth-token`
+}
+
 // トークン取得
 const getAccessToken = async (): Promise<string | null> => {
   try {
-    const session = await SecureStore.getItemAsync('supabase-session')
+    const storageKey = getSupabaseStorageKey()
+    const session = await SecureStore.getItemAsync(storageKey)
     if (session) {
       const parsed = JSON.parse(session)
       return parsed.access_token || null
     }
     return null
-  } catch {
+  } catch (error) {
+    console.log('getAccessToken error:', error)
     return null
   }
 }
@@ -29,6 +39,8 @@ const getAccessToken = async (): Promise<string | null> => {
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const token = await getAccessToken()
+    console.log('[API] Request:', config.method?.toUpperCase(), config.url)
+    console.log('[API] Token exists:', !!token, token ? `(${token.substring(0, 20)}...)` : '')
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -41,12 +53,16 @@ api.interceptors.request.use(
 
 // レスポンスインターセプター: エラーハンドリング
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('[API] Response:', response.status, response.config.url)
+    return response
+  },
   async (error: AxiosError) => {
+    console.log('[API] Error:', error.response?.status, error.config?.url, error.response?.data)
     if (error.response?.status === 401) {
       // トークン期限切れの場合、セッションをクリア
       // 認証ストアで再ログインを促す
-      console.log('Unauthorized - session may be expired')
+      console.log('[API] Unauthorized - session may be expired')
     }
     return Promise.reject(error)
   }

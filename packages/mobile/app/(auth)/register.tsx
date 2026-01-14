@@ -53,6 +53,13 @@ export default function RegisterScreen() {
     setIsGoogleLoading(true)
     try {
       await signInWithGoogle()
+      // ログイン成功後、適切な画面へ遷移
+      const { isOnboarded: onboarded } = useAuthStore.getState()
+      if (onboarded) {
+        router.replace('/(tabs)')
+      } else {
+        router.replace('/onboarding')
+      }
     } catch (error: any) {
       if (error.message !== 'ログインがキャンセルされました') {
         Alert.alert('Googleログインエラー', error.message || 'ログインに失敗しました')

@@ -12,10 +12,12 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, Stack } from 'expo-router'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useGroupStore } from '@/stores/group'
 import { useAuthStore } from '@/stores/auth'
 import { Message } from '@/services/group'
 import { colors, spacing } from '@/constants/theme'
+import { CategoryIcon } from '@/components/CategoryIcon'
 
 export default function GroupChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -182,7 +184,7 @@ export default function GroupChatScreen() {
         {/* メンバー表示 */}
         {group && (
           <View style={styles.membersBar}>
-            <Text style={styles.membersIcon}>{group.recruitment.category.icon}</Text>
+            <CategoryIcon name={group.recruitment.category.icon} size={16} color={colors.accent[600]} />
             <Text style={styles.membersText}>
               {group.members.map((m) => m.user.nickname).join(', ')}
             </Text>
@@ -193,7 +195,7 @@ export default function GroupChatScreen() {
         {/* メッセージ一覧 */}
         {messages.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>💬</Text>
+            <MaterialCommunityIcons name="chat-outline" size={48} color={colors.primary[400]} />
             <Text style={styles.emptyText}>メッセージはまだありません</Text>
             <Text style={styles.emptySubText}>
               最初のメッセージを送ってみましょう
@@ -352,7 +354,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   ownBubble: {
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.accent[600],
     borderBottomRightRadius: 4,
   },
   otherBubble: {
@@ -401,7 +403,7 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     marginLeft: spacing.sm,
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[900],
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
     borderRadius: 20,

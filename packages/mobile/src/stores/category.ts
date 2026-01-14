@@ -23,9 +23,11 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const categories = await getCategories()
-      set({ categories, isLoading: false })
+      set({ categories: categories || [], isLoading: false })
     } catch (error: any) {
+      console.log('fetchCategories error:', error)
       set({
+        categories: [],
         error: error.message || 'カテゴリの取得に失敗しました',
         isLoading: false,
       })

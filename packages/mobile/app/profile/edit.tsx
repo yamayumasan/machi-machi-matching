@@ -186,7 +186,8 @@ const styles = StyleSheet.create({
   },
   avatarSection: {
     alignItems: 'center',
-    paddingVertical: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
     backgroundColor: colors.white,
     marginBottom: spacing.sm,
   },

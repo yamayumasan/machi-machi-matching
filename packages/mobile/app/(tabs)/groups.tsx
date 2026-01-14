@@ -10,9 +10,11 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useGroupStore } from '@/stores/group'
 import { Group } from '@/services/group'
 import { colors, spacing } from '@/constants/theme'
+import { CategoryIcon } from '@/components/CategoryIcon'
 
 export default function GroupsScreen() {
   const { groups, isLoading, fetchGroups } = useGroupStore()
@@ -37,21 +39,25 @@ export default function GroupsScreen() {
       onPress={() => router.push(`/group/${item.id}`)}
     >
       <View style={styles.groupIcon}>
-        <Text style={styles.groupIconText}>
-          {item.recruitment.category.icon}
-        </Text>
+        <CategoryIcon
+          name={item.recruitment.category.icon}
+          size={20}
+          color={colors.accent[600]}
+        />
       </View>
       <View style={styles.groupContent}>
         <Text style={styles.groupTitle} numberOfLines={1}>
           {item.recruitment.title}
         </Text>
         <View style={styles.groupMeta}>
-          <Text style={styles.groupMetaText}>
-            👥 {item.members.length}人
-          </Text>
-          <Text style={styles.groupMetaText}>
-            📅 {formatDate(item.recruitment.datetime || item.recruitment.datetimeFlex)}
-          </Text>
+          <View style={styles.metaItem}>
+            <MaterialCommunityIcons name="account-group" size={14} color={colors.primary[500]} />
+            <Text style={styles.groupMetaText}>{item.members.length}人</Text>
+          </View>
+          <View style={styles.metaItem}>
+            <MaterialCommunityIcons name="calendar" size={14} color={colors.primary[500]} />
+            <Text style={styles.groupMetaText}>{formatDate(item.recruitment.datetime || item.recruitment.datetimeFlex)}</Text>
+          </View>
         </View>
       </View>
       <Text style={styles.arrow}>›</Text>
@@ -70,7 +76,7 @@ export default function GroupsScreen() {
         </View>
       ) : groups.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>👥</Text>
+          <MaterialCommunityIcons name="account-group-outline" size={48} color={colors.primary[400]} />
           <Text style={styles.emptyText}>参加中のグループはありません</Text>
           <Text style={styles.subText}>
             募集に参加するとグループが作成されます
@@ -167,6 +173,11 @@ const styles = StyleSheet.create({
   groupMeta: {
     flexDirection: 'row',
     gap: spacing.md,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   groupMetaText: {
     fontSize: 13,

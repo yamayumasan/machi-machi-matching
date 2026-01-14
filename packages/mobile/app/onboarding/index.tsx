@@ -12,23 +12,24 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { useAuthStore } from '@/stores/auth'
 import { colors, spacing } from '@/constants/theme'
+import { CategoryIcon } from '@/components/CategoryIcon'
 
 const CATEGORIES = [
-  { id: '1', name: 'ボドゲ', icon: '🎲' },
-  { id: '2', name: 'カフェ', icon: '☕' },
-  { id: '3', name: '飲み会', icon: '🍺' },
-  { id: '4', name: 'スポーツ', icon: '⚽' },
-  { id: '5', name: 'ゲーム', icon: '🎮' },
-  { id: '6', name: '映画', icon: '🎬' },
-  { id: '7', name: '読書', icon: '📚' },
-  { id: '8', name: '音楽', icon: '🎵' },
-  { id: '9', name: 'ランニング', icon: '🏃' },
-  { id: '10', name: 'ジム', icon: '💪' },
-  { id: '11', name: 'ヨガ', icon: '🧘' },
-  { id: '12', name: '写真', icon: '📷' },
-  { id: '13', name: 'アート', icon: '🎨' },
-  { id: '14', name: 'プログラミング', icon: '💻' },
-  { id: '15', name: '勉強会', icon: '📖' },
+  { id: '1', name: 'ボドゲ', icon: 'mdiDice6' },
+  { id: '2', name: 'カフェ', icon: 'mdiCoffee' },
+  { id: '3', name: '飲み会', icon: 'mdiGlassMugVariant' },
+  { id: '4', name: 'スポーツ', icon: 'mdiSoccer' },
+  { id: '5', name: 'ゲーム', icon: 'mdiGamepadVariant' },
+  { id: '6', name: '映画', icon: 'mdiMovie' },
+  { id: '7', name: '読書', icon: 'mdiBookOpenPageVariant' },
+  { id: '8', name: '音楽', icon: 'mdiMusic' },
+  { id: '9', name: 'ランニング', icon: 'mdiRun' },
+  { id: '10', name: 'ジム', icon: 'mdiWeightLifter' },
+  { id: '11', name: 'ヨガ', icon: 'mdiYoga' },
+  { id: '12', name: '写真', icon: 'mdiCamera' },
+  { id: '13', name: 'アート', icon: 'mdiPalette' },
+  { id: '14', name: 'プログラミング', icon: 'mdiLaptop' },
+  { id: '15', name: '勉強会', icon: 'mdiForum' },
 ]
 
 const AREAS = [
@@ -160,7 +161,11 @@ export default function OnboardingScreen() {
                 ]}
                 onPress={() => toggleCategory(category.id)}
               >
-                <Text style={styles.categoryIcon}>{category.icon}</Text>
+                <CategoryIcon
+                  name={category.icon}
+                  size={24}
+                  color={selectedCategories.includes(category.id) ? colors.white : colors.primary[600]}
+                />
                 <Text
                   style={[
                     styles.categoryName,

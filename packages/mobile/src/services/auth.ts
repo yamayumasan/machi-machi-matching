@@ -39,6 +39,9 @@ export const registerOAuthUser = async (
   accessToken: string,
   refreshToken: string
 ): Promise<User> => {
+  console.log('[AUTH SERVICE] registerOAuthUser: calling /auth/oauth/callback')
+  console.log('[AUTH SERVICE] accessToken prefix:', accessToken?.substring(0, 20))
+  console.log('[AUTH SERVICE] refreshToken exists:', !!refreshToken)
   const response = await api.post<ApiResponse<{ user: User }>>(
     '/auth/oauth/callback',
     {
@@ -46,6 +49,7 @@ export const registerOAuthUser = async (
       refreshToken,
     }
   )
+  console.log('[AUTH SERVICE] registerOAuthUser: response:', response.data)
   return response.data.data.user
 }
 

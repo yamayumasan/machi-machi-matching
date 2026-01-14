@@ -1,5 +1,10 @@
 import { api } from './api'
 
+interface ApiResponse<T> {
+  success: boolean
+  data: T
+}
+
 export type NotificationType =
   | 'APPLICATION_RECEIVED'
   | 'APPLICATION_APPROVED'
@@ -23,19 +28,32 @@ export interface Notification {
   createdAt: string
 }
 
+interface NotificationsResponse {
+  success: boolean
+  data: Notification[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
 // 通知一覧取得
 export const getNotifications = async (params?: {
   page?: number
   limit?: number
 }): Promise<{ notifications: Notification[]; total: number }> => {
-  const response = await api.get('/notifications', { params })
-  return response.data
+  const response = await api.get<NotificationsResponse>('/notifications', { params })
+  return {
+    notifications: response.data.data || [],
+    total: response.data.pagination?.total || 0,
+  }
 }
 
 // 通知を既読にする
-export const markAsRead = async (id: string): Promise<Notification> => {
-  const response = await api.put<Notification>(`/notifications/${id}/read`)
-  return response.data
+export const markAsRead = async (id: string): Promise<void> => {
+  await api.post(`/notifications/${id}/read`)
 }
 
 // 全て既読にする

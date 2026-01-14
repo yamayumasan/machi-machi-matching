@@ -40,18 +40,21 @@ export const useRecruitmentStore = create<RecruitmentState>((set, get) => ({
   fetchRecruitments: async (params) => {
     set({ isLoading: true, error: null })
     try {
-      const { recruitments, total } = await getRecruitments({
+      const result = await getRecruitments({
         ...params,
         limit: 20,
       })
       set({
-        recruitments,
-        total,
+        recruitments: result?.recruitments || [],
+        total: result?.total || 0,
         page: params?.page || 1,
         isLoading: false,
       })
     } catch (error: any) {
+      console.log('fetchRecruitments error:', error)
       set({
+        recruitments: [],
+        total: 0,
         error: error.message || '募集の取得に失敗しました',
         isLoading: false,
       })

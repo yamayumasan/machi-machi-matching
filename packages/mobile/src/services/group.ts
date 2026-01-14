@@ -1,5 +1,10 @@
 import { api } from './api'
 
+interface ApiResponse<T> {
+  success: boolean
+  data: T
+}
+
 export interface Group {
   id: string
   recruitmentId: string
@@ -49,24 +54,24 @@ export interface Message {
 
 // グループ一覧取得
 export const getGroups = async (): Promise<Group[]> => {
-  const response = await api.get<Group[]>('/groups')
-  return response.data
+  const response = await api.get<ApiResponse<Group[]>>('/groups')
+  return response.data.data || []
 }
 
 // グループ詳細取得
 export const getGroup = async (id: string): Promise<Group> => {
-  const response = await api.get<Group>(`/groups/${id}`)
-  return response.data
+  const response = await api.get<ApiResponse<Group>>(`/groups/${id}`)
+  return response.data.data
 }
 
 // メッセージ一覧取得
 export const getMessages = async (groupId: string): Promise<Message[]> => {
-  const response = await api.get<Message[]>(`/groups/${groupId}/messages`)
-  return response.data
+  const response = await api.get<ApiResponse<Message[]>>(`/groups/${groupId}/messages`)
+  return response.data.data || []
 }
 
 // メッセージ送信
 export const sendMessage = async (groupId: string, content: string): Promise<Message> => {
-  const response = await api.post<Message>(`/groups/${groupId}/messages`, { content })
-  return response.data
+  const response = await api.post<ApiResponse<Message>>(`/groups/${groupId}/messages`, { content })
+  return response.data.data
 }

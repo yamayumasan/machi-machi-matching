@@ -17,6 +17,7 @@ import { useLocalSearchParams, router, Stack } from 'expo-router'
 import { useRecruitmentStore } from '@/stores/recruitment'
 import { useAuthStore } from '@/stores/auth'
 import { colors, spacing } from '@/constants/theme'
+import { CategoryIcon } from '@/components/CategoryIcon'
 
 export default function RecruitmentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -73,9 +74,13 @@ export default function RecruitmentDetailScreen() {
     }
   }
 
-  const isCreator = user?.id === recruitment?.creatorId
+  const isCreator = recruitment?.isOwner ?? user?.id === recruitment?.creatorId
   const isFull = recruitment && recruitment.currentPeople >= recruitment.maxPeople
   const isClosed = recruitment?.status !== 'OPEN'
+  const isParticipating = recruitment?.isParticipating
+  const hasApplied = recruitment?.hasApplied
+  const applicationStatus = recruitment?.applicationStatus
+  const groupId = recruitment?.groupId
 
   if (isLoading || !recruitment) {
     return (
@@ -128,7 +133,7 @@ export default function RecruitmentDetailScreen() {
         {/* ヘッダー情報 */}
         <View style={styles.header}>
           <View style={styles.categoryBadge}>
-            <Text style={styles.categoryIcon}>{recruitment.category.icon}</Text>
+            <CategoryIcon name={recruitment.category.icon} size={14} color={colors.primary[700]} />
             <Text style={styles.categoryName}>{recruitment.category.name}</Text>
           </View>
           <View style={styles.statusBadge}>
@@ -207,13 +212,69 @@ export default function RecruitmentDetailScreen() {
           </View>
         )}
 
+        {/* 参加メンバー */}
+        {recruitment.members && recruitment.members.length > 0 && (
+          <View style={styles.membersCard}>
+            <Text style={styles.membersTitle}>参加者</Text>
+            <View style={styles.membersList}>
+              {recruitment.members.map((member) => (
+                <View key={member.id} style={styles.memberItem}>
+                  <View style={styles.memberAvatar}>
+                    <Text style={styles.memberAvatarText}>
+                      {member.nickname.charAt(0)}
+                    </Text>
+                  </View>
+                  <Text style={styles.memberName}>{member.nickname}</Text>
+                  {member.role === 'OWNER' && (
+                    <View style={styles.ownerBadge}>
+                      <Text style={styles.ownerBadgeText}>主催</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* 下部余白 */}
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* 応募ボタン */}
-      {!isCreator && (
-        <View style={styles.footer}>
+      {/* フッターボタン */}
+      <View style={styles.footer}>
+        {/* 参加中の場合: グループチャットへ */}
+        {isParticipating && groupId ? (
+          <TouchableOpacity
+            style={styles.groupButton}
+            onPress={() => router.push(`/group/${groupId}`)}
+          >
+            <Text style={styles.groupButtonText}>グループチャットを開く</Text>
+          </TouchableOpacity>
+        ) : isCreator ? (
+          /* 主催者の場合: 応募確認/編集 */
+          <View style={styles.footerButtons}>
+            <TouchableOpacity
+              style={styles.applicationsButton}
+              onPress={() => router.push(`/recruitment/${id}/applications`)}
+            >
+              <Text style={styles.applicationsButtonText}>応募を確認</Text>
+            </TouchableOpacity>
+          </View>
+        ) : hasApplied ? (
+          /* 応募済みの場合 */
+          <View style={styles.statusContainer}>
+            <Text style={styles.footerStatusText}>
+              {applicationStatus === 'PENDING'
+                ? '📩 応募中 - 返答をお待ちください'
+                : applicationStatus === 'APPROVED'
+                ? '✅ 承認されました'
+                : applicationStatus === 'REJECTED'
+                ? '応募は承認されませんでした'
+                : '応募済み'}
+            </Text>
+          </View>
+        ) : (
+          /* 未応募の場合 */
           <TouchableOpacity
             style={[
               styles.applyButton,
@@ -230,20 +291,8 @@ export default function RecruitmentDetailScreen() {
                 : 'この募集に応募する'}
             </Text>
           </TouchableOpacity>
-        </View>
-      )}
-
-      {/* 主催者の場合は編集ボタン */}
-      {isCreator && (
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => Alert.alert('実装予定', '編集機能は今後実装されます')}
-          >
-            <Text style={styles.editButtonText}>募集を編集</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        )}
+      </View>
 
       {/* 応募モーダル */}
       <Modal
@@ -489,18 +538,99 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  editButton: {
+  membersCard: {
     backgroundColor: colors.white,
+    marginHorizontal: spacing.md,
+    padding: spacing.md,
+    borderRadius: 12,
+    marginBottom: spacing.md,
+  },
+  membersTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.gray[900],
+    marginBottom: spacing.sm,
+  },
+  membersList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  memberItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.gray[50],
+    paddingVertical: 6,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 16,
+  },
+  memberAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primary[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 6,
+  },
+  memberAvatarText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary[600],
+  },
+  memberName: {
+    fontSize: 13,
+    color: colors.gray[700],
+  },
+  ownerBadge: {
+    marginLeft: 6,
+    backgroundColor: colors.primary[100],
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 8,
+  },
+  ownerBadgeText: {
+    fontSize: 10,
+    color: colors.primary[700],
+    fontWeight: '600',
+  },
+  groupButton: {
+    backgroundColor: colors.primary[500],
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.primary[500],
   },
-  editButtonText: {
-    color: colors.primary[500],
+  groupButtonText: {
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  footerButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  applicationsButton: {
+    flex: 1,
+    backgroundColor: colors.primary[500],
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  applicationsButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  statusContainer: {
+    backgroundColor: colors.gray[100],
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  footerStatusText: {
+    fontSize: 14,
+    color: colors.gray[700],
+    fontWeight: '500',
   },
   // Modal styles
   modalOverlay: {

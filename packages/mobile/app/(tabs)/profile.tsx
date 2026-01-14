@@ -1,11 +1,52 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native'
+import { useState, useEffect, useCallback } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, RefreshControl } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAuthStore } from '@/stores/auth'
+import { useWantToDoStore } from '@/stores/wantToDo'
 import { colors, spacing } from '@/constants/theme'
+import { CategoryIcon } from '@/components/CategoryIcon'
+import { WantToDoCreateModal } from '@/components/WantToDoCreateModal'
+import { WantToDoEditModal } from '@/components/WantToDoEditModal'
+import { WantToDo } from '@/services/wantToDo'
+
+const TIMING_LABELS: Record<string, string> = {
+  THIS_WEEK: '今週まで',
+  NEXT_WEEK: '来週まで',
+  THIS_MONTH: '今月まで',
+  ANYTIME: 'いつでも',
+}
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuthStore()
+  const { wantToDos, isLoading, fetchWantToDos } = useWantToDoStore()
+
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [selectedWantToDo, setSelectedWantToDo] = useState<WantToDo | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+
+  // 初期読み込み
+  useEffect(() => {
+    fetchWantToDos()
+  }, [fetchWantToDos])
+
+  // プルダウンリフレッシュ
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true)
+    await fetchWantToDos()
+    setRefreshing(false)
+  }, [fetchWantToDos])
+
+  // 編集モーダルを開く
+  const handleEditWantToDo = (wantToDo: WantToDo) => {
+    setSelectedWantToDo(wantToDo)
+    setShowEditModal(true)
+  }
+
+  // 登録済みカテゴリIDリスト
+  const registeredCategoryIds = wantToDos.map((w) => w.categoryId)
 
   const handleLogout = () => {
     Alert.alert(
@@ -28,7 +69,12 @@ export default function ProfileScreen() {
         <Text style={styles.title}>プロフィール</Text>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* アバター */}
         <View style={styles.avatarSection}>
           <View style={styles.avatar}>
@@ -40,6 +86,15 @@ export default function ProfileScreen() {
             {user?.nickname || 'ニックネーム未設定'}
           </Text>
           <Text style={styles.email}>{user?.email}</Text>
+
+          {/* プロフィール編集ボタン */}
+          <TouchableOpacity
+            style={styles.editProfileButton}
+            onPress={() => router.push('/profile/edit')}
+          >
+            <MaterialCommunityIcons name="pencil-outline" size={16} color={colors.primary[600]} />
+            <Text style={styles.editProfileButtonText}>プロフィールを編集</Text>
+          </TouchableOpacity>
         </View>
 
         {/* プロフィール情報 */}
@@ -65,7 +120,7 @@ export default function ProfileScreen() {
             <View style={styles.interestsList}>
               {user.interests.map((interest) => (
                 <View key={interest.id} style={styles.interestChip}>
-                  <Text style={styles.interestIcon}>{interest.icon}</Text>
+                  <CategoryIcon name={interest.icon} size={14} color={colors.primary[700]} />
                   <Text style={styles.interestName}>{interest.name}</Text>
                 </View>
               ))}
@@ -73,14 +128,66 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* アクション */}
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => router.push('/profile/edit')}
-          >
-            <Text style={styles.editButtonText}>プロフィールを編集</Text>
-          </TouchableOpacity>
+        {/* 誘われ待ちステータス */}
+        <View style={styles.wantToDoSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>誘われ待ちステータス</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => setShowCreateModal(true)}
+            >
+              <MaterialCommunityIcons name="plus" size={18} color={colors.accent[600]} />
+              <Text style={styles.addButtonText}>追加</Text>
+            </TouchableOpacity>
+          </View>
+
+          {wantToDos.length === 0 ? (
+            <View style={styles.emptyWantToDo}>
+              <MaterialCommunityIcons
+                name="hand-wave-outline"
+                size={32}
+                color={colors.primary[300]}
+              />
+              <Text style={styles.emptyWantToDoText}>
+                誘われ待ちを登録すると{'\n'}周辺のユーザーに表示されます
+              </Text>
+              <TouchableOpacity
+                style={styles.emptyWantToDoButton}
+                onPress={() => setShowCreateModal(true)}
+              >
+                <Text style={styles.emptyWantToDoButtonText}>誘われ待ちを追加</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.wantToDoList}>
+              {wantToDos.map((wantToDo) => (
+                <TouchableOpacity
+                  key={wantToDo.id}
+                  style={styles.wantToDoItem}
+                  onPress={() => handleEditWantToDo(wantToDo)}
+                >
+                  <View style={styles.wantToDoIcon}>
+                    <CategoryIcon
+                      name={wantToDo.category.icon}
+                      size={20}
+                      color={colors.accent[600]}
+                    />
+                  </View>
+                  <View style={styles.wantToDoInfo}>
+                    <Text style={styles.wantToDoCategory}>{wantToDo.category.name}</Text>
+                    <Text style={styles.wantToDoTiming}>
+                      {TIMING_LABELS[wantToDo.timing] || wantToDo.timing}
+                    </Text>
+                  </View>
+                  <MaterialCommunityIcons
+                    name="pencil-outline"
+                    size={18}
+                    color={colors.primary[400]}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* 設定メニュー */}
@@ -89,36 +196,36 @@ export default function ProfileScreen() {
             style={styles.menuItem}
             onPress={() => Alert.alert('実装予定', '通知設定は今後実装されます')}
           >
-            <Text style={styles.menuIcon}>🔔</Text>
+            <MaterialCommunityIcons name="bell-outline" size={20} color={colors.gray[600]} style={styles.menuIcon} />
             <Text style={styles.menuText}>通知設定</Text>
-            <Text style={styles.menuArrow}>›</Text>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={colors.gray[400]} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => Alert.alert('実装予定', 'ヘルプは今後実装されます')}
           >
-            <Text style={styles.menuIcon}>❓</Text>
+            <MaterialCommunityIcons name="help-circle-outline" size={20} color={colors.gray[600]} style={styles.menuIcon} />
             <Text style={styles.menuText}>ヘルプ</Text>
-            <Text style={styles.menuArrow}>›</Text>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={colors.gray[400]} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => Alert.alert('実装予定', '利用規約は今後実装されます')}
           >
-            <Text style={styles.menuIcon}>📄</Text>
+            <MaterialCommunityIcons name="file-document-outline" size={20} color={colors.gray[600]} style={styles.menuIcon} />
             <Text style={styles.menuText}>利用規約</Text>
-            <Text style={styles.menuArrow}>›</Text>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={colors.gray[400]} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.menuItem, styles.lastMenuItem]}
             onPress={() => Alert.alert('実装予定', 'プライバシーポリシーは今後実装されます')}
           >
-            <Text style={styles.menuIcon}>🔒</Text>
+            <MaterialCommunityIcons name="shield-lock-outline" size={20} color={colors.gray[600]} style={styles.menuIcon} />
             <Text style={styles.menuText}>プライバシーポリシー</Text>
-            <Text style={styles.menuArrow}>›</Text>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={colors.gray[400]} />
           </TouchableOpacity>
         </View>
 
@@ -131,6 +238,26 @@ export default function ProfileScreen() {
 
         <View style={{ height: spacing.xl }} />
       </ScrollView>
+
+      {/* 作成モーダル */}
+      <WantToDoCreateModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={() => fetchWantToDos()}
+        excludeCategoryIds={registeredCategoryIds}
+      />
+
+      {/* 編集モーダル */}
+      <WantToDoEditModal
+        visible={showEditModal}
+        wantToDo={selectedWantToDo}
+        onClose={() => {
+          setShowEditModal(false)
+          setSelectedWantToDo(null)
+        }}
+        onSuccess={() => fetchWantToDos()}
+        onDelete={() => fetchWantToDos()}
+      />
     </SafeAreaView>
   )
 }
@@ -184,6 +311,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.gray[500],
   },
+  editProfileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.primary[50],
+    borderRadius: 20,
+    gap: 6,
+  },
+  editProfileButtonText: {
+    fontSize: 14,
+    color: colors.primary[600],
+    fontWeight: '500',
+  },
   infoSection: {
     backgroundColor: colors.white,
     marginTop: spacing.sm,
@@ -229,28 +371,92 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
     borderRadius: 16,
-  },
-  interestIcon: {
-    fontSize: 14,
-    marginRight: 4,
+    gap: 4,
   },
   interestName: {
     fontSize: 13,
     color: colors.primary[700],
   },
-  actions: {
+  // 誘われ待ちセクション
+  wantToDoSection: {
+    backgroundColor: colors.white,
+    marginTop: spacing.sm,
     padding: spacing.md,
   },
-  editButton: {
-    backgroundColor: colors.primary[500],
-    borderRadius: 12,
-    paddingVertical: spacing.md,
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: spacing.md,
   },
-  editButtonText: {
-    color: colors.white,
-    fontSize: 16,
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.accent[50],
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 16,
+    gap: 4,
+  },
+  addButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.accent[600],
+  },
+  emptyWantToDo: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+  },
+  emptyWantToDoText: {
+    fontSize: 14,
+    color: colors.primary[400],
+    textAlign: 'center',
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
+    lineHeight: 20,
+  },
+  emptyWantToDoButton: {
+    backgroundColor: colors.accent[600],
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: 20,
+  },
+  emptyWantToDoButtonText: {
+    fontSize: 14,
     fontWeight: '600',
+    color: colors.white,
+  },
+  wantToDoList: {
+    gap: spacing.sm,
+  },
+  wantToDoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary[50],
+    padding: spacing.md,
+    borderRadius: 12,
+  },
+  wantToDoIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.accent[50],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.sm,
+  },
+  wantToDoInfo: {
+    flex: 1,
+  },
+  wantToDoCategory: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.primary[900],
+    marginBottom: 2,
+  },
+  wantToDoTiming: {
+    fontSize: 12,
+    color: colors.primary[500],
   },
   menuSection: {
     backgroundColor: colors.white,

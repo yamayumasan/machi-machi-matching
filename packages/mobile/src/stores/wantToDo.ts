@@ -4,6 +4,7 @@ import {
   CreateWantToDoData,
   getWantToDos,
   createWantToDo,
+  updateWantToDo,
   deleteWantToDo,
 } from '@/services/wantToDo'
 
@@ -15,6 +16,7 @@ interface WantToDoState {
   // Actions
   fetchWantToDos: () => Promise<void>
   addWantToDo: (data: CreateWantToDoData) => Promise<WantToDo>
+  editWantToDo: (id: string, data: Partial<CreateWantToDoData>) => Promise<WantToDo>
   removeWantToDo: (id: string) => Promise<void>
   clearError: () => void
 }
@@ -28,9 +30,11 @@ export const useWantToDoStore = create<WantToDoState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const wantToDos = await getWantToDos()
-      set({ wantToDos, isLoading: false })
+      set({ wantToDos: wantToDos || [], isLoading: false })
     } catch (error: any) {
+      console.log('fetchWantToDos error:', error)
       set({
+        wantToDos: [],
         error: error.message || 'やりたいことの取得に失敗しました',
         isLoading: false,
       })
@@ -41,6 +45,14 @@ export const useWantToDoStore = create<WantToDoState>((set, get) => ({
     const wantToDo = await createWantToDo(data)
     set({ wantToDos: [wantToDo, ...get().wantToDos] })
     return wantToDo
+  },
+
+  editWantToDo: async (id: string, data: Partial<CreateWantToDoData>) => {
+    const updated = await updateWantToDo(id, data)
+    set({
+      wantToDos: get().wantToDos.map((w) => (w.id === id ? updated : w)),
+    })
+    return updated
   },
 
   removeWantToDo: async (id: string) => {
