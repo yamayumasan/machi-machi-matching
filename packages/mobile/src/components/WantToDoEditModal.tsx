@@ -9,27 +9,24 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
 } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { colors, spacing } from '@/constants/theme'
 import { CategoryIcon } from './CategoryIcon'
 import { useWantToDoStore } from '@/stores/wantToDo'
 import { WantToDo, WantToDoTiming } from '@/services/wantToDo'
 
-const TIMING_OPTIONS: { value: WantToDoTiming; label: string; description: string }[] = [
-  { value: 'THIS_WEEK', label: '今週', description: '今週の日曜まで' },
-  { value: 'NEXT_WEEK', label: '来週', description: '来週の日曜まで' },
-  { value: 'THIS_MONTH', label: '今月', description: '今月末まで' },
-  { value: 'ANYTIME', label: 'いつでも', description: '3ヶ月間有効' },
-]
+const { height: SCREEN_HEIGHT } = Dimensions.get('window')
 
-const TIMING_LABELS: Record<string, string> = {
-  THIS_WEEK: '今週',
-  NEXT_WEEK: '来週',
-  THIS_MONTH: '今月',
-  ANYTIME: 'いつでも',
-}
+const TIMING_OPTIONS: { value: WantToDoTiming; label: string; description: string }[] = [
+  { value: 'TODAY', label: '今日まで', description: '今日の23:59まで' },
+  { value: 'THIS_WEEK', label: '今週中', description: '今週の日曜まで' },
+  { value: 'THIS_MONTH', label: '今月中', description: '今月末まで' },
+  { value: 'ANYTIME', label: '無期限', description: '削除するまで有効' },
+]
 
 interface WantToDoEditModalProps {
   visible: boolean
@@ -46,7 +43,6 @@ export function WantToDoEditModal({
   onSuccess,
   onDelete,
 }: WantToDoEditModalProps) {
-  const insets = useSafeAreaInsets()
   const { editWantToDo, removeWantToDo } = useWantToDoStore()
 
   const [timing, setTiming] = useState<WantToDoTiming>('ANYTIME')
@@ -124,7 +120,10 @@ export function WantToDoEditModal({
   if (!wantToDo) return null
 
   // 有効期限をフォーマット
-  const formatExpiresAt = (dateStr: string) => {
+  const formatExpiresAt = (dateStr: string, timingValue: WantToDoTiming) => {
+    if (timingValue === 'ANYTIME') {
+      return '無期限'
+    }
     const date = new Date(dateStr)
     const month = date.getMonth() + 1
     const day = date.getDate()
@@ -132,9 +131,19 @@ export function WantToDoEditModal({
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}>
-        <View style={[styles.container, { paddingBottom: insets.bottom + spacing.md }]}>
+    <Modal visible={visible} animationType="fade" transparent>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* 背景タップで閉じる */}
+        <TouchableOpacity
+          style={styles.backdrop}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+
+        <View style={styles.modalContainer}>
           {/* ヘッダー */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -154,7 +163,11 @@ export function WantToDoEditModal({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             {/* カテゴリ表示（編集不可） */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>カテゴリ</Text>
@@ -166,12 +179,12 @@ export function WantToDoEditModal({
                 />
                 <Text style={styles.categoryDisplayName}>{wantToDo.category.name}</Text>
               </View>
-              <Text style={styles.expiresAt}>{formatExpiresAt(wantToDo.expiresAt)}</Text>
+              <Text style={styles.expiresAt}>{formatExpiresAt(wantToDo.expiresAt, wantToDo.timing)}</Text>
             </View>
 
-            {/* タイミング選択 */}
+            {/* 有効期限選択 */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>いつ頃誘われたい？</Text>
+              <Text style={styles.sectionTitle}>有効期限</Text>
               <View style={styles.timingGrid}>
                 {TIMING_OPTIONS.map((option) => (
                   <TouchableOpacity
@@ -239,7 +252,7 @@ export function WantToDoEditModal({
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   )
 }
@@ -247,14 +260,24 @@ export function WantToDoEditModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
   },
-  container: {
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
     backgroundColor: colors.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '90%',
+    borderRadius: 16,
+    width: '100%',
+    maxHeight: SCREEN_HEIGHT * 0.8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
   },
   header: {
     flexDirection: 'row',
@@ -283,7 +306,8 @@ const styles = StyleSheet.create({
     color: colors.primary[900],
   },
   content: {
-    flex: 1,
+    flexGrow: 0,
+    flexShrink: 1,
   },
   section: {
     padding: spacing.md,

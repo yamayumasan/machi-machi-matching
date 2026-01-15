@@ -8,14 +8,16 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "scheme": "machi-machi",
+    "owner": "machimachi",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ef4444"
+      "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.machimachi.matching",
+      "buildNumber": "1",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "近くの募集やユーザーを表示するために位置情報を使用します",
         "NSLocationAlwaysUsageDescription": "近くの募集やユーザーを表示するために位置情報を使用します"
@@ -41,6 +43,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
     }
   }
 }

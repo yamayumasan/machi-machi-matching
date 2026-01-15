@@ -52,10 +52,10 @@ export const LANDMARKS: Record<Area, Array<{ name: string; latitude: number; lon
   ],
 }
 
-// 時期
+// 有効期限
 export const TIMINGS = {
+  TODAY: 'TODAY',
   THIS_WEEK: 'THIS_WEEK',
-  NEXT_WEEK: 'NEXT_WEEK',
   THIS_MONTH: 'THIS_MONTH',
   ANYTIME: 'ANYTIME',
 } as const
@@ -63,10 +63,10 @@ export const TIMINGS = {
 export type Timing = (typeof TIMINGS)[keyof typeof TIMINGS]
 
 export const TIMING_LABELS: Record<Timing, string> = {
-  THIS_WEEK: '今週',
-  NEXT_WEEK: '来週',
+  TODAY: '今日まで',
+  THIS_WEEK: '今週中',
   THIS_MONTH: '今月中',
-  ANYTIME: 'いつでも',
+  ANYTIME: '無期限',
 }
 
 // やりたいこと表明ステータス

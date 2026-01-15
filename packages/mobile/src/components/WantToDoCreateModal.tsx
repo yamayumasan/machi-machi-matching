@@ -19,10 +19,10 @@ import { useWantToDoStore } from '@/stores/wantToDo'
 import { WantToDoTiming } from '@/services/wantToDo'
 
 const TIMING_OPTIONS: { value: WantToDoTiming; label: string; description: string }[] = [
-  { value: 'THIS_WEEK', label: '今週', description: '今週の日曜まで' },
-  { value: 'NEXT_WEEK', label: '来週', description: '来週の日曜まで' },
-  { value: 'THIS_MONTH', label: '今月', description: '今月末まで' },
-  { value: 'ANYTIME', label: 'いつでも', description: '3ヶ月間有効' },
+  { value: 'TODAY', label: '今日まで', description: '今日の23:59まで' },
+  { value: 'THIS_WEEK', label: '今週中', description: '今週の日曜まで' },
+  { value: 'THIS_MONTH', label: '今月中', description: '今月末まで' },
+  { value: 'ANYTIME', label: '無期限', description: '削除するまで有効' },
 ]
 
 interface WantToDoCreateModalProps {
@@ -148,9 +148,9 @@ export function WantToDoCreateModal({
               )}
             </View>
 
-            {/* タイミング選択 */}
+            {/* 有効期限選択 */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>いつ頃誘われたい？</Text>
+              <Text style={styles.sectionTitle}>有効期限</Text>
               <View style={styles.timingGrid}>
                 {TIMING_OPTIONS.map((option) => (
                   <TouchableOpacity

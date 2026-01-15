@@ -248,8 +248,8 @@ enum Area {
 }
 
 enum Timing {
+  TODAY
   THIS_WEEK
-  NEXT_WEEK
   THIS_MONTH
   ANYTIME
 }

@@ -5,7 +5,7 @@ interface ApiResponse<T> {
   data: T
 }
 
-export type WantToDoTiming = 'THIS_WEEK' | 'NEXT_WEEK' | 'THIS_MONTH' | 'ANYTIME'
+export type WantToDoTiming = 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'ANYTIME'
 export type WantToDoStatus = 'ACTIVE' | 'EXPIRED' | 'DELETED'
 
 export interface WantToDo {

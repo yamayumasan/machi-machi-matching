@@ -12,10 +12,10 @@ import { WantToDoEditModal } from '@/components/WantToDoEditModal'
 import { WantToDo } from '@/services/wantToDo'
 
 const TIMING_LABELS: Record<string, string> = {
-  THIS_WEEK: '今週まで',
-  NEXT_WEEK: '来週まで',
-  THIS_MONTH: '今月まで',
-  ANYTIME: 'いつでも',
+  TODAY: '今日まで',
+  THIS_WEEK: '今週中',
+  THIS_MONTH: '今月中',
+  ANYTIME: '無期限',
 }
 
 export default function ProfileScreen() {

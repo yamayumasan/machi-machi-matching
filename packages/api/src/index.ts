@@ -116,8 +116,9 @@ setupSocket(io)
 
 // Start server
 const PORT = process.env.PORT || 3000
-httpServer.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
+const HOST = process.env.HOST || '0.0.0.0' // 外部IPからアクセス可能にする
+httpServer.listen(Number(PORT), HOST, () => {
+  console.log(`🚀 Server running on http://${HOST}:${PORT}`)
 
   // スケジューラーを開始（期限切れ募集の自動締め切りなど）
   // TODO: DB接続が安定したら有効化する

@@ -11,19 +11,18 @@ const router = Router()
 const calculateExpiresAt = (timing: string): Date => {
   const now = new Date()
   switch (timing) {
+    case 'TODAY':
+      // 今日の23:59:59
+      const today = new Date(now)
+      today.setHours(23, 59, 59, 999)
+      return today
     case 'THIS_WEEK':
       // 今週の日曜日23:59:59
       const daysUntilSunday = 7 - now.getDay()
       const sunday = new Date(now)
-      sunday.setDate(now.getDate() + daysUntilSunday)
+      sunday.setDate(now.getDate() + (daysUntilSunday === 0 ? 7 : daysUntilSunday))
       sunday.setHours(23, 59, 59, 999)
       return sunday
-    case 'NEXT_WEEK':
-      // 来週の日曜日23:59:59
-      const nextSunday = new Date(now)
-      nextSunday.setDate(now.getDate() + (14 - now.getDay()))
-      nextSunday.setHours(23, 59, 59, 999)
-      return nextSunday
     case 'THIS_MONTH':
       // 今月の最終日23:59:59
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
@@ -31,10 +30,10 @@ const calculateExpiresAt = (timing: string): Date => {
       return endOfMonth
     case 'ANYTIME':
     default:
-      // 3ヶ月後
-      const threeMonths = new Date(now)
-      threeMonths.setMonth(now.getMonth() + 3)
-      return threeMonths
+      // 無期限（100年後）
+      const farFuture = new Date(now)
+      farFuture.setFullYear(now.getFullYear() + 100)
+      return farFuture
   }
 }
 
