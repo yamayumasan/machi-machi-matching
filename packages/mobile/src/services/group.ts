@@ -28,15 +28,11 @@ export interface Group {
 
 export interface GroupMember {
   id: string
-  groupId: string
-  userId: string
+  nickname: string
+  avatarUrl: string | null
+  bio?: string
   role: 'OWNER' | 'MEMBER'
   joinedAt: string
-  user: {
-    id: string
-    nickname: string
-    avatar: string | null
-  }
 }
 
 export interface Message {

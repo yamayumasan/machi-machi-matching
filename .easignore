@@ -1,0 +1,10 @@
+# Ignore other packages that are not needed for mobile build
+packages/api
+packages/web
+packages/shared/node_modules
+
+# Ignore development files
+.git
+.github
+*.md
+docs

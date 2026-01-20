@@ -30,9 +30,19 @@ import { NearbyWantToDo, NearbyRecruitment } from '@/services/nearby'
 import { colors, spacing } from '@/constants/theme'
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window')
-const MIN_LIST_HEIGHT = 220
-const MAX_LIST_HEIGHT = SCREEN_HEIGHT * 0.6
-const ITEM_HEIGHT = 80 // NearbyItemCardの高さ（概算）
+
+// 3段階スナップポイント
+const SNAP_POINTS = {
+  PEEK: SCREEN_HEIGHT * 0.15,  // 15% - 最小、タブとハンドルのみ
+  HALF: SCREEN_HEIGHT * 0.45,  // 45% - 中間、コンパクトカード
+  FULL: SCREEN_HEIGHT * 0.85,  // 85% - 最大、通常カード
+}
+
+const ITEM_HEIGHT_COMPACT = 56 // コンパクトカードの高さ
+const ITEM_HEIGHT_NORMAL = 120 // 通常カードの高さ
+
+// FULL状態の閾値（この高さ以上で通常カード表示）
+const FULL_THRESHOLD = SCREEN_HEIGHT * 0.6
 
 // FilterType から NearbyFilterType への変換
 const filterTypeToNearbyFilterType = (filterType: FilterType): NearbyFilterType => {
@@ -66,8 +76,15 @@ export default function HomeScreen() {
   const scrollViewRef = useRef<ScrollView>(null)
 
   // リスト高さのアニメーション（React Native標準Animated API）
-  const listHeightAnim = useRef(new Animated.Value(MIN_LIST_HEIGHT)).current
-  const listHeightRef = useRef(MIN_LIST_HEIGHT)
+  const listHeightAnim = useRef(new Animated.Value(SNAP_POINTS.HALF)).current
+  const listHeightRef = useRef(SNAP_POINTS.HALF)
+
+  // リストのスクロール位置を追跡
+  const scrollOffsetRef = useRef(0)
+  const isScrollingRef = useRef(false)
+
+  // 現在のカードサイズモード（高さに応じて変化）
+  const [isFullMode, setIsFullMode] = useState(false)
 
   // FABの位置をリスト高さに連動
   const fabBottomAnim = Animated.add(listHeightAnim, spacing.md)
@@ -102,21 +119,22 @@ export default function HomeScreen() {
         (i) => i.id === item.id && i.type === item.type
       )
       if (index >= 0 && scrollViewRef.current) {
+        const itemHeight = isFullMode ? ITEM_HEIGHT_NORMAL : ITEM_HEIGHT_COMPACT
         // 少し遅延してスクロール（レンダリング完了後）
         setTimeout(() => {
           scrollViewRef.current?.scrollTo({
-            y: index * ITEM_HEIGHT,
+            y: index * itemHeight,
             animated: true,
           })
         }, 100)
       }
     }
-  }, [selectItem, filteredItems])
+  }, [selectItem, filteredItems, isFullMode])
 
   // リストからカードをタップ時 → マップをフォーカス
   const handleListItemPress = useCallback((item: NearbyItem) => {
-    // マップにフォーカス
-    mapRef.current?.focusOnItem(item)
+    // マップにフォーカス（ボトムシートの高さを渡してオフセット計算）
+    mapRef.current?.focusOnItem(item, listHeightRef.current)
     selectItem(item)
   }, [selectItem])
 
@@ -138,42 +156,128 @@ export default function HomeScreen() {
     }
   }, [])
 
-  // PanResponderでドラッグを処理
+  // 最も近いスナップポイントを見つける
+  const findNearestSnapPoint = useCallback((height: number): number => {
+    const snapValues = [SNAP_POINTS.PEEK, SNAP_POINTS.HALF, SNAP_POINTS.FULL]
+    let nearest = snapValues[0]
+    let minDiff = Math.abs(height - nearest)
+
+    for (const snap of snapValues) {
+      const diff = Math.abs(height - snap)
+      if (diff < minDiff) {
+        minDiff = diff
+        nearest = snap
+      }
+    }
+    return nearest
+  }, [])
+
+  // 速度に基づいて次のスナップポイントを決定
+  const getNextSnapPoint = useCallback((currentHeight: number, velocity: number): number => {
+    const snapValues = [SNAP_POINTS.PEEK, SNAP_POINTS.HALF, SNAP_POINTS.FULL]
+
+    // 高速フリックの場合
+    if (Math.abs(velocity) > 1.0) {
+      if (velocity > 0) {
+        // 下方向（縮小）- 現在より小さい最初のスナップポイント
+        for (let i = snapValues.length - 1; i >= 0; i--) {
+          if (snapValues[i] < currentHeight) {
+            return snapValues[i]
+          }
+        }
+        return SNAP_POINTS.PEEK
+      } else {
+        // 上方向（拡大）- 現在より大きい最初のスナップポイント
+        for (const snap of snapValues) {
+          if (snap > currentHeight) {
+            return snap
+          }
+        }
+        return SNAP_POINTS.FULL
+      }
+    }
+
+    // 中速フリックの場合
+    if (Math.abs(velocity) > 0.3) {
+      const nearest = findNearestSnapPoint(currentHeight)
+      const nearestIndex = snapValues.indexOf(nearest)
+
+      if (velocity > 0 && nearestIndex > 0) {
+        return snapValues[nearestIndex - 1]
+      } else if (velocity < 0 && nearestIndex < snapValues.length - 1) {
+        return snapValues[nearestIndex + 1]
+      }
+      return nearest
+    }
+
+    // 低速の場合は最も近いスナップポイント
+    return findNearestSnapPoint(currentHeight)
+  }, [findNearestSnapPoint])
+
+  // 高さに応じてカードモードを更新
+  const updateCardMode = useCallback((height: number) => {
+    const shouldBeFullMode = height >= FULL_THRESHOLD
+    if (shouldBeFullMode !== isFullMode) {
+      setIsFullMode(shouldBeFullMode)
+    }
+  }, [isFullMode])
+
+  // スナップアニメーションを実行
+  const animateToSnapPoint = useCallback((targetHeight: number) => {
+    listHeightRef.current = targetHeight
+    updateCardMode(targetHeight)
+
+    Animated.spring(listHeightAnim, {
+      toValue: targetHeight,
+      useNativeDriver: false,
+      friction: 10,
+      tension: 60,
+    }).start()
+  }, [listHeightAnim, updateCardMode])
+
+  // PanResponderでドラッグを処理（ハンドル用）
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderMove: (_, gestureState) => {
         const newHeight = listHeightRef.current - gestureState.dy
-        const clampedHeight = Math.max(MIN_LIST_HEIGHT, Math.min(MAX_LIST_HEIGHT, newHeight))
+        const clampedHeight = Math.max(SNAP_POINTS.PEEK, Math.min(SNAP_POINTS.FULL, newHeight))
         listHeightAnim.setValue(clampedHeight)
       },
       onPanResponderRelease: (_, gestureState) => {
         const newHeight = listHeightRef.current - gestureState.dy
-        const clampedHeight = Math.max(MIN_LIST_HEIGHT, Math.min(MAX_LIST_HEIGHT, newHeight))
-
-        // スナップポイント
-        const velocity = gestureState.vy
-        let targetHeight: number
-
-        if (Math.abs(velocity) > 0.5) {
-          // 速度が高い場合
-          targetHeight = velocity > 0 ? MIN_LIST_HEIGHT : MAX_LIST_HEIGHT
-        } else {
-          // 中間位置へスナップ
-          const mid = (MIN_LIST_HEIGHT + MAX_LIST_HEIGHT) / 2
-          targetHeight = clampedHeight > mid ? MAX_LIST_HEIGHT : MIN_LIST_HEIGHT
-        }
-
-        listHeightRef.current = targetHeight
-        Animated.spring(listHeightAnim, {
-          toValue: targetHeight,
-          useNativeDriver: false,
-          friction: 8,
-        }).start()
+        const clampedHeight = Math.max(SNAP_POINTS.PEEK, Math.min(SNAP_POINTS.FULL, newHeight))
+        const targetHeight = getNextSnapPoint(clampedHeight, gestureState.vy)
+        animateToSnapPoint(targetHeight)
       },
     })
   ).current
+
+  // リスト先頭での下スワイプでシート縮小するためのハンドラー
+  const handleScrollBeginDrag = useCallback(() => {
+    isScrollingRef.current = true
+  }, [])
+
+  const handleScrollEndDrag = useCallback((event: any) => {
+    isScrollingRef.current = false
+    const offsetY = event.nativeEvent.contentOffset.y
+    scrollOffsetRef.current = offsetY
+
+    // リストが先頭にあり、下に引っ張った場合（overscroll）
+    if (offsetY < -30 && listHeightRef.current > SNAP_POINTS.PEEK) {
+      // 一つ下のスナップポイントへ
+      const snapValues = [SNAP_POINTS.PEEK, SNAP_POINTS.HALF, SNAP_POINTS.FULL]
+      const currentIndex = snapValues.findIndex(s => s >= listHeightRef.current)
+      if (currentIndex > 0) {
+        animateToSnapPoint(snapValues[currentIndex - 1])
+      }
+    }
+  }, [animateToSnapPoint])
+
+  const handleScroll = useCallback((event: any) => {
+    scrollOffsetRef.current = event.nativeEvent.contentOffset.y
+  }, [])
 
   // FAB押下時 → 募集作成画面へ直接遷移
   const handleFABPress = () => {
@@ -240,6 +344,11 @@ export default function HomeScreen() {
           ref={scrollViewRef}
           style={styles.listContent}
           showsVerticalScrollIndicator={false}
+          onScrollBeginDrag={handleScrollBeginDrag}
+          onScrollEndDrag={handleScrollEndDrag}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          bounces={true}
         >
           {isLoading && filteredItems.length === 0 ? (
             <View style={styles.loadingContainer}>
@@ -257,14 +366,14 @@ export default function HomeScreen() {
               </Text>
             </View>
           ) : (
-            filteredItems.slice(0, 20).map((item, index) => (
+            filteredItems.slice(0, 30).map((item) => (
               <NearbyItemCard
                 key={`${item.type}-${item.id}`}
                 item={item}
                 onPress={() => handleListItemPress(item)}
                 onLongPress={() => handleOpenDetail(item)}
                 isSelected={selectedItem?.id === item.id && selectedItem?.type === item.type}
-                compact
+                compact={!isFullMode}
                 showDistance
               />
             ))

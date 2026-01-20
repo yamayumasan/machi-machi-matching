@@ -177,12 +177,9 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginHorizontal: spacing.md,
     marginVertical: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.primary[200],
   },
   selected: {
-    borderColor: colors.accent[500],
-    borderWidth: 2,
+    backgroundColor: colors.accent[50],
   },
   header: {
     flexDirection: 'row',

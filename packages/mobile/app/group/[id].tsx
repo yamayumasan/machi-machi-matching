@@ -152,7 +152,10 @@ export default function GroupChatScreen() {
     )
   }
 
-  if (isLoading && !group) {
+  // 現在のIDと一致しないグループデータは表示しない（チラつき防止）
+  const isCorrectGroup = group?.id === id
+
+  if (isLoading || !isCorrectGroup) {
     return (
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <Stack.Screen
@@ -186,7 +189,7 @@ export default function GroupChatScreen() {
           <View style={styles.membersBar}>
             <CategoryIcon name={group.recruitment.category.icon} size={16} color={colors.accent[600]} />
             <Text style={styles.membersText}>
-              {group.members.map((m) => m.user.nickname).join(', ')}
+              {group.members.map((m) => m.nickname).join(', ')}
             </Text>
             <Text style={styles.membersCount}>{group.members.length}人</Text>
           </View>

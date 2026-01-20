@@ -6,8 +6,11 @@ const workspaceRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
-// Watch shared package
-config.watchFolders = [workspaceRoot];
+// Watch all folders including workspace root for monorepo support
+config.watchFolders = [
+  ...(config.watchFolders || []),
+  workspaceRoot,
+];
 
 // Let Metro know about workspace packages
 config.resolver.nodeModulesPaths = [
@@ -15,7 +18,12 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
-// Disable package exports for workspace packages
-config.resolver.disableHierarchicalLookup = true;
+// Fix duplicate React issue in monorepo
+// Force all React imports to resolve to the same instance
+config.resolver.extraNodeModules = {
+  react: path.resolve(projectRoot, 'node_modules/react'),
+  'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
+  'react-dom': path.resolve(projectRoot, 'node_modules/react-dom'),
+};
 
 module.exports = config;

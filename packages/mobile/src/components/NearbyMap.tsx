@@ -6,8 +6,11 @@ import {
   ActivityIndicator,
   Alert,
   Text,
+  Dimensions,
 } from 'react-native'
 import MapView, { Marker, Region, PROVIDER_DEFAULT } from 'react-native-maps'
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window')
 import * as Location from 'expo-location'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useNearbyStore } from '@/stores/nearby'
@@ -27,7 +30,7 @@ const DEFAULT_REGION: Region = {
 let fetchDebounceTimeout: ReturnType<typeof setTimeout> | null = null
 
 export interface NearbyMapRef {
-  focusOnItem: (item: NearbyItem) => void
+  focusOnItem: (item: NearbyItem, bottomOffset?: number) => void
 }
 
 interface NearbyMapProps {
@@ -53,13 +56,18 @@ export const NearbyMap = forwardRef<NearbyMapRef, NearbyMapProps>(
       getFilteredItems,
     } = useNearbyStore()
 
-    // フィルタリングされたアイテム
-    const filteredItems = getFilteredItems()
+    // フィルタリングされたアイテム（選択中のアイテムは常に含める）
+    const baseFilteredItems = getFilteredItems()
+    const filteredItems = selectedItem && !baseFilteredItems.some(
+      item => item.id === selectedItem.id && item.type === selectedItem.type
+    )
+      ? [...baseFilteredItems, selectedItem]
+      : baseFilteredItems
 
     // 外部から呼び出し可能なメソッドを公開
     useImperativeHandle(ref, () => ({
-      focusOnItem: (item: NearbyItem) => {
-        focusOnItem(item)
+      focusOnItem: (item: NearbyItem, bottomOffset?: number) => {
+        focusOnItem(item, bottomOffset)
       },
     }))
 
@@ -114,13 +122,31 @@ export const NearbyMap = forwardRef<NearbyMapRef, NearbyMapProps>(
     }
 
     // アイテムにフォーカス（リストからの選択時）
-    const focusOnItem = useCallback((item: NearbyItem) => {
+    // bottomOffset: ボトムシートの高さ（ピクセル）
+    const focusOnItem = useCallback((item: NearbyItem, bottomOffset: number = 0) => {
       setIsFocusing(true)
 
+      const latitudeDelta = 0.01
+
+      // ボトムシートの高さを考慮して、マーカーが可視領域の中央に来るようオフセット
+      //
+      // 緯度が大きい = 北 = 画面上部に表示
+      // 緯度が小さい = 南 = 画面下部に表示
+      //
+      // マーカーを画面上部（可視領域の中央）に表示するには、
+      // マップの中央をマーカーより南（緯度が小さい）に設定する
+      // つまり、緯度を減算する
+      //
+      // オフセット距離 = bottomOffset / 2 ピクセル
+      // 緯度オフセット = (オフセット距離 / 画面高さ) * latitudeDelta
+      const latitudeOffset = bottomOffset > 0
+        ? (bottomOffset / 2 / SCREEN_HEIGHT) * latitudeDelta
+        : 0
+
       const targetRegion: Region = {
-        latitude: item.latitude,
+        latitude: item.latitude - latitudeOffset,  // 減算でマーカーを上に表示
         longitude: item.longitude,
-        latitudeDelta: 0.01,
+        latitudeDelta,
         longitudeDelta: 0.01,
       }
 
