@@ -38,6 +38,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build shared package
+        run: pnpm --filter @machi/shared build
+
       - name: Generate Prisma client
         run: pnpm db:generate
 
@@ -80,11 +83,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build shared package
+        run: pnpm --filter @machi/shared build
+
       - name: Generate Prisma client
         run: pnpm db:generate
-
-      - name: TypeScript check (shared)
-        run: pnpm --filter @machi/shared exec tsc --noEmit
 
       - name: TypeScript check (api)
         run: pnpm --filter @machi/api exec tsc --noEmit

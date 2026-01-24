@@ -11,6 +11,9 @@ interface NotificationData {
   messageId?: string
   senderId?: string
   senderNickname?: string
+  newMemberId?: string
+  newMemberNickname?: string
+  type?: string
 }
 
 interface ExpoPushMessage {
