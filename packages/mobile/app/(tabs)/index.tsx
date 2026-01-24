@@ -156,6 +156,15 @@ export default function HomeScreen() {
     }
   }, [])
 
+  // 詳細ボタン押下時 → 専用画面に遷移（募集のみ）、やりたいことはモーダル
+  const handleDetailPress = useCallback((item: NearbyItem) => {
+    if (item.type === 'recruitment') {
+      router.push(`/recruitment/${item.id}`)
+    } else if (item.type === 'wantToDo') {
+      setSelectedWantToDo(item as NearbyWantToDo)
+    }
+  }, [])
+
   // 最も近いスナップポイントを見つける
   const findNearestSnapPoint = useCallback((height: number): number => {
     const snapValues = [SNAP_POINTS.PEEK, SNAP_POINTS.HALF, SNAP_POINTS.FULL]
@@ -372,6 +381,7 @@ export default function HomeScreen() {
                 item={item}
                 onPress={() => handleListItemPress(item)}
                 onLongPress={() => handleOpenDetail(item)}
+                onDetailPress={() => handleDetailPress(item)}
                 isSelected={selectedItem?.id === item.id && selectedItem?.type === item.type}
                 compact={!isFullMode}
                 showDistance

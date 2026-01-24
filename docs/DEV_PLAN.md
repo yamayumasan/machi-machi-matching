@@ -33,7 +33,7 @@ Phase 7: 通知・仕上げ
 |---|--------|------|
 | 1-1 | monorepo構築 | pnpm workspace設定 |
 | 1-2 | 共有パッケージ作成 | `packages/shared`（型定義、定数） |
-| 1-3 | Frontend初期化 | Vue 3 + Vite + TypeScript + Tailwind CSS |
+| 1-3 | Mobile初期化 | React Native (Expo) + TypeScript |
 | 1-4 | Backend初期化 | Express + TypeScript |
 | 1-5 | ESLint/Prettier設定 | 共通の設定ファイル |
 | 1-6 | Supabaseプロジェクト作成 | DB、Auth、Storage設定 |
@@ -65,7 +65,7 @@ Phase 7: 通知・仕上げ
 | 2-3 | 認証ミドルウェア | JWT検証、req.userへの設定 |
 | 2-4 | ログイン画面実装 | メール/Googleログイン |
 | 2-5 | 新規登録画面実装 | メールアドレス登録 |
-| 2-6 | 認証状態管理 | Pinia authStore |
+| 2-6 | 認証状態管理 | Zustand authStore |
 | 2-7 | プロフィール設定画面 | ニックネーム、自己紹介入力 |
 | 2-8 | 画像アップロード | Supabase Storage連携 |
 | 2-9 | カテゴリ選択画面 | 複数選択UI |
@@ -181,7 +181,7 @@ Phase 7: 通知・仕上げ
 | 6-3 | グループ一覧画面 | 参加中グループ |
 | 6-4 | グループ詳細（メンバー表示） | メンバーリスト |
 | 6-5 | Socket.io設定（サーバー） | Express + Socket.io |
-| 6-6 | Socket.io設定（クライアント） | Vue + Socket.io |
+| 6-6 | Socket.io設定（クライアント） | React Native + Socket.io |
 | 6-7 | Message API実装 | 送信・取得 |
 | 6-8 | チャットUI実装 | メッセージ表示 |
 | 6-9 | メッセージ送信 | リアルタイム送信 |
@@ -239,18 +239,16 @@ machi-machi-matching/
 │   └── API_DESIGN.md            # NEW
 │
 ├── packages/
-│   ├── web/                      # フロントエンド（Vue 3）
+│   ├── mobile/                   # モバイルアプリ（React Native + Expo）
+│   │   ├── app/                  # Expo Router（ファイルベースルーティング）
 │   │   ├── src/
 │   │   │   ├── components/       # UIコンポーネント
-│   │   │   ├── composables/      # Composition API
-│   │   │   ├── pages/            # ページコンポーネント
-│   │   │   ├── stores/           # Pinia ストア
-│   │   │   ├── router/           # Vue Router
-│   │   │   ├── api/              # APIクライアント
-│   │   │   ├── utils/            # ユーティリティ
-│   │   │   └── App.vue
+│   │   │   ├── hooks/            # カスタムフック
+│   │   │   ├── stores/           # Zustand ストア
+│   │   │   ├── services/         # APIクライアント
+│   │   │   ├── constants/        # 定数
+│   │   │   └── utils/            # ユーティリティ
 │   │   ├── package.json
-│   │   ├── vite.config.ts
 │   │   └── tsconfig.json
 │   │
 │   ├── api/                      # バックエンド（Express）
@@ -288,25 +286,23 @@ machi-machi-matching/
 
 ## 依存関係
 
-### Frontend (packages/web)
+### Mobile (packages/mobile)
 
 ```json
 {
   "dependencies": {
-    "vue": "^3.4",
-    "vue-router": "^4.2",
-    "pinia": "^2.1",
+    "expo": "~52.0.0",
+    "expo-router": "~4.0.0",
+    "react": "18.3.1",
+    "react-native": "0.76.x",
     "@supabase/supabase-js": "^2.39",
+    "zustand": "^4.5",
     "socket.io-client": "^4.7",
     "axios": "^1.6"
   },
   "devDependencies": {
-    "vite": "^5.0",
     "typescript": "^5.3",
-    "@vitejs/plugin-vue": "^4.5",
-    "tailwindcss": "^3.4",
-    "autoprefixer": "^10.4",
-    "postcss": "^8.4"
+    "@types/react": "~18.3.0"
   }
 }
 ```

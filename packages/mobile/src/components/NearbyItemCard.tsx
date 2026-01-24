@@ -8,6 +8,7 @@ interface NearbyItemCardProps {
   item: NearbyItem
   onPress?: () => void
   onLongPress?: () => void
+  onDetailPress?: () => void
   isSelected?: boolean
   showDistance?: boolean
   compact?: boolean
@@ -17,6 +18,7 @@ export function NearbyItemCard({
   item,
   onPress,
   onLongPress,
+  onDetailPress,
   isSelected = false,
   showDistance = false,
   compact = false,
@@ -59,12 +61,12 @@ export function NearbyItemCard({
         {/* カテゴリアイコン */}
         <View style={[
           styles.compactIcon,
-          { backgroundColor: isRecruitment ? '#FFF3ED' : colors.accent[50] }
+          { backgroundColor: isRecruitment ? colors.warning[50] : colors.primary[50] }
         ]}>
           <CategoryIcon
             name={item.category.icon}
             size={18}
-            color={isRecruitment ? '#FF6B35' : colors.accent[600]}
+            color={isRecruitment ? colors.marker.recruitment : colors.marker.wantToDo}
           />
         </View>
 
@@ -85,6 +87,16 @@ export function NearbyItemCard({
         {showDistance && item.distance && (
           <Text style={styles.distance}>{formatDistance(item.distance)}</Text>
         )}
+
+        {/* 詳細ボタン */}
+        {onDetailPress && (
+          <TouchableOpacity
+            style={styles.detailButton}
+            onPress={onDetailPress}
+          >
+            <Text style={styles.detailButtonText}>詳細</Text>
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
     )
   }
@@ -101,11 +113,11 @@ export function NearbyItemCard({
         <View style={styles.badges}>
           <View style={[
             styles.typeBadge,
-            { backgroundColor: isRecruitment ? '#FFF3ED' : colors.accent[50] }
+            { backgroundColor: isRecruitment ? colors.warning[50] : colors.primary[50] }
           ]}>
             <Text style={[
               styles.typeBadgeText,
-              { color: isRecruitment ? '#FF6B35' : colors.accent[600] }
+              { color: isRecruitment ? colors.marker.recruitment : colors.marker.wantToDo }
             ]}>
               {isRecruitment ? '募集' : '誘われ待ち'}
             </Text>
@@ -158,6 +170,16 @@ export function NearbyItemCard({
             <Text style={styles.timingText}>{item.timing}</Text>
           </View>
         )}
+
+        {/* 詳細ボタン */}
+        {onDetailPress && (
+          <TouchableOpacity
+            style={styles.detailButtonNormal}
+            onPress={onDetailPress}
+          >
+            <Text style={styles.detailButtonText}>詳細</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* 参加中バッジ */}
@@ -179,7 +201,9 @@ const styles = StyleSheet.create({
     marginVertical: spacing.xs,
   },
   selected: {
-    backgroundColor: colors.accent[50],
+    backgroundColor: colors.primary[100],
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary[600],
   },
   header: {
     flexDirection: 'row',
@@ -326,5 +350,26 @@ const styles = StyleSheet.create({
   compactMeta: {
     fontSize: 12,
     color: colors.primary[500],
+  },
+
+  // Detail button styles
+  detailButton: {
+    marginLeft: spacing.sm,
+    backgroundColor: colors.accent[600],
+    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    borderRadius: 8,
+  },
+  detailButtonNormal: {
+    marginLeft: 'auto',
+    backgroundColor: colors.accent[600],
+    paddingVertical: 8,
+    paddingHorizontal: spacing.lg,
+    borderRadius: 8,
+  },
+  detailButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.white,
   },
 })

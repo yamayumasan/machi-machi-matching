@@ -13,8 +13,95 @@ interface NotificationData {
   senderNickname?: string
 }
 
+interface ExpoPushMessage {
+  to: string
+  title: string
+  body: string
+  data?: Record<string, unknown>
+  sound?: 'default' | null
+  badge?: number
+}
+
 /**
- * 通知を作成する
+ * Expo Push APIでプッシュ通知を送信
+ */
+async function sendPushNotification(message: ExpoPushMessage): Promise<void> {
+  try {
+    const response = await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Accept-encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    })
+
+    const result = await response.json()
+    if (result.data?.status === 'error') {
+      console.error('Push notification error:', result.data.message)
+    }
+  } catch (error) {
+    console.error('Failed to send push notification:', error)
+  }
+}
+
+/**
+ * ユーザーにプッシュ通知を送信
+ */
+async function sendPushToUser(
+  userId: string,
+  title: string,
+  body: string,
+  data?: NotificationData
+): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { pushToken: true },
+  })
+
+  if (user?.pushToken) {
+    await sendPushNotification({
+      to: user.pushToken,
+      title,
+      body,
+      data: data as Record<string, unknown> | undefined,
+      sound: 'default',
+    })
+  }
+}
+
+/**
+ * 複数ユーザーにプッシュ通知を送信
+ */
+async function sendPushToUsers(
+  userIds: string[],
+  title: string,
+  body: string,
+  data?: NotificationData
+): Promise<void> {
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: { pushToken: true },
+  })
+
+  const tokens = users.filter((u) => u.pushToken).map((u) => u.pushToken as string)
+
+  await Promise.all(
+    tokens.map((token) =>
+      sendPushNotification({
+        to: token,
+        title,
+        body,
+        data: data as Record<string, unknown> | undefined,
+        sound: 'default',
+      })
+    )
+  )
+}
+
+/**
+ * 通知を作成する（アプリ内通知 + プッシュ通知）
  */
 async function createNotification(
   userId: string,
@@ -23,7 +110,8 @@ async function createNotification(
   body: string,
   data?: NotificationData
 ) {
-  return prisma.notification.create({
+  // アプリ内通知を作成
+  const notification = await prisma.notification.create({
     data: {
       userId,
       type,
@@ -32,6 +120,11 @@ async function createNotification(
       data: data ? (data as object) : undefined,
     },
   })
+
+  // プッシュ通知を送信
+  await sendPushToUser(userId, title, body, { ...data, type })
+
+  return notification
 }
 
 /**
@@ -156,17 +249,25 @@ export async function notifyGroupCreated(
   groupName: string,
   recruitmentId: string
 ) {
+  const title = 'グループが作成されました'
+  const body = `「${groupName}」グループが作成されました。チャットで詳細を話し合いましょう！`
+  const data = { groupId, groupName, recruitmentId }
+
   const notifications = memberIds.map((userId) => ({
     userId,
     type: 'GROUP_CREATED' as NotificationType,
-    title: 'グループが作成されました',
-    body: `「${groupName}」グループが作成されました。チャットで詳細を話し合いましょう！`,
-    data: { groupId, groupName, recruitmentId },
+    title,
+    body,
+    data,
   }))
 
-  return prisma.notification.createMany({
+  // アプリ内通知を作成
+  await prisma.notification.createMany({
     data: notifications,
   })
+
+  // プッシュ通知を送信
+  await sendPushToUsers(memberIds, title, body, { ...data, type: 'GROUP_CREATED' })
 }
 
 /**
@@ -185,17 +286,25 @@ export async function notifyNewMessage(
 
   if (recipientIds.length === 0) return
 
+  const title = `${groupName}に新しいメッセージ`
+  const body = `${senderNickname}: ${messagePreview.slice(0, 50)}${messagePreview.length > 50 ? '...' : ''}`
+  const data = { groupId, groupName, senderId, senderNickname }
+
   const notifications = recipientIds.map((userId) => ({
     userId,
     type: 'NEW_MESSAGE' as NotificationType,
-    title: `${groupName}に新しいメッセージ`,
-    body: `${senderNickname}: ${messagePreview.slice(0, 50)}${messagePreview.length > 50 ? '...' : ''}`,
-    data: { groupId, groupName, senderId, senderNickname },
+    title,
+    body,
+    data,
   }))
 
-  return prisma.notification.createMany({
+  // アプリ内通知を作成
+  await prisma.notification.createMany({
     data: notifications,
   })
+
+  // プッシュ通知を送信
+  await sendPushToUsers(recipientIds, title, body, { ...data, type: 'NEW_MESSAGE' })
 }
 
 /**
@@ -213,17 +322,25 @@ export async function notifyMemberJoined(
 
   if (recipientIds.length === 0) return
 
+  const title = '新しいメンバーが参加しました'
+  const body = `${newMemberNickname}さんが「${groupName}」に参加しました`
+  const data = { groupId, groupName, newMemberId, newMemberNickname }
+
   const notifications = recipientIds.map((userId) => ({
     userId,
     type: 'MEMBER_JOINED' as NotificationType,
-    title: '新しいメンバーが参加しました',
-    body: `${newMemberNickname}さんが「${groupName}」に参加しました`,
-    data: { groupId, groupName, newMemberId, newMemberNickname },
+    title,
+    body,
+    data,
   }))
 
-  return prisma.notification.createMany({
+  // アプリ内通知を作成
+  await prisma.notification.createMany({
     data: notifications,
   })
+
+  // プッシュ通知を送信
+  await sendPushToUsers(recipientIds, title, body, { ...data, type: 'MEMBER_JOINED' })
 }
 
 /**

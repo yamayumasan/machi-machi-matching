@@ -7,8 +7,9 @@ import {
   Alert,
   Text,
   Dimensions,
+  Platform,
 } from 'react-native'
-import MapView, { Marker, Region, PROVIDER_DEFAULT } from 'react-native-maps'
+import MapView, { Marker, Region, PROVIDER_DEFAULT, MapPressEvent, MarkerPressEvent } from 'react-native-maps'
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window')
 import * as Location from 'expo-location'
@@ -185,17 +186,18 @@ export const NearbyMap = forwardRef<NearbyMapRef, NearbyMapProps>(
     }, [fetchByBounds, isFocusing])
 
     // マーカーをタップしたとき
-    const handleMarkerPress = (item: NearbyItem) => {
+    const handleMarkerPress = useCallback((item: NearbyItem, event?: MarkerPressEvent) => {
+      event?.stopPropagation()
       selectItem(item)
       onItemSelect?.(item)
-    }
+    }, [selectItem, onItemSelect])
 
     // マーカーの色を取得
     const getMarkerColor = (item: NearbyItem): string => {
       if (item.type === 'recruitment') {
-        return '#FF6B35' // オレンジ系
+        return colors.marker.recruitment // オレンジ系
       }
-      return colors.accent[600] // 緑系
+      return colors.marker.wantToDo // プライマリ緑
     }
 
     // 選択されたマーカーかどうか
@@ -218,39 +220,48 @@ export const NearbyMap = forwardRef<NearbyMapRef, NearbyMapProps>(
             onItemSelect?.(null)
           }}
         >
-          {filteredItems.map((item) => (
-            <Marker
-              key={`${item.type}-${item.id}`}
-              coordinate={{
-                latitude: item.latitude,
-                longitude: item.longitude,
-              }}
-              onPress={() => handleMarkerPress(item)}
-              zIndex={isSelected(item) ? 1000 : 1}
-            >
-              {/* カスタムマーカー（選択状態で大きくする） */}
-              <View style={[
-                styles.markerContainer,
-                isSelected(item) && styles.markerContainerSelected,
-              ]}>
-                <View style={[
-                  styles.marker,
-                  { backgroundColor: getMarkerColor(item) },
-                  isSelected(item) && styles.markerSelected,
-                ]}>
-                  <CategoryIcon
-                    name={item.category.icon}
-                    size={isSelected(item) ? 20 : 16}
-                    color={colors.white}
-                  />
-                </View>
-                <View style={[
-                  styles.markerArrow,
-                  { borderTopColor: getMarkerColor(item) },
-                ]} />
-              </View>
-            </Marker>
-          ))}
+          {filteredItems.map((item) => {
+            const selected = isSelected(item)
+            return (
+              <Marker
+                key={`${item.type}-${item.id}-${selected ? 'selected' : 'normal'}`}
+                coordinate={{
+                  latitude: item.latitude,
+                  longitude: item.longitude,
+                }}
+                onPress={(e) => handleMarkerPress(item, e)}
+                zIndex={selected ? 1000 : 1}
+                tracksViewChanges={Platform.OS === 'android'}
+                anchor={{ x: 0.5, y: 1 }}
+              >
+                {/* カスタムマーカー（選択状態で大きくする） */}
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => handleMarkerPress(item)}
+                  style={[
+                    styles.markerContainer,
+                    selected && styles.markerContainerSelected,
+                  ]}
+                >
+                  <View style={[
+                    styles.marker,
+                    { backgroundColor: getMarkerColor(item) },
+                    selected && styles.markerSelected,
+                  ]}>
+                    <CategoryIcon
+                      name={item.category.icon}
+                      size={selected ? 20 : 16}
+                      color={colors.white}
+                    />
+                  </View>
+                  <View style={[
+                    styles.markerArrow,
+                    { borderTopColor: getMarkerColor(item) },
+                  ]} />
+                </TouchableOpacity>
+              </Marker>
+            )
+          })}
         </MapView>
 
         {/* ローディング表示 */}
@@ -266,11 +277,11 @@ export const NearbyMap = forwardRef<NearbyMapRef, NearbyMapProps>(
         {/* 凡例（左上） */}
         <View style={[styles.legend, { top: topOffset }]}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#FF6B35' }]} />
+            <View style={[styles.legendDot, { backgroundColor: colors.marker.recruitment }]} />
             <Text style={styles.legendText}>募集</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: colors.accent[600] }]} />
+            <View style={[styles.legendDot, { backgroundColor: colors.marker.wantToDo }]} />
             <Text style={styles.legendText}>誘われ待ち</Text>
           </View>
         </View>

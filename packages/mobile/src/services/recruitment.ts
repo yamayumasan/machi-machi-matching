@@ -167,3 +167,14 @@ export const updateApplicationStatus = async (
   )
   return response.data.data
 }
+
+// 募集をキャンセル（削除）
+export const cancelRecruitment = async (id: string): Promise<void> => {
+  await api.put<ApiResponse<Recruitment>>(`/recruitments/${id}`, { status: 'CANCELLED' })
+}
+
+// 募集をクローズ
+export const closeRecruitment = async (id: string): Promise<Recruitment> => {
+  const response = await api.put<ApiResponse<Recruitment>>(`/recruitments/${id}`, { status: 'CLOSED' })
+  return response.data.data
+}

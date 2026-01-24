@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
   View,
   Text,
@@ -14,10 +14,12 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router, Stack } from 'expo-router'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRecruitmentStore } from '@/stores/recruitment'
 import { useAuthStore } from '@/stores/auth'
 import { colors, spacing } from '@/constants/theme'
 import { CategoryIcon } from '@/components/CategoryIcon'
+import { Application, getApplications, updateApplicationStatus } from '@/services/recruitment'
 
 export default function RecruitmentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -34,11 +36,66 @@ export default function RecruitmentDetailScreen() {
   const [applyMessage, setApplyMessage] = useState('')
   const [isApplying, setIsApplying] = useState(false)
 
+  // 応募一覧用の状態
+  const [applications, setApplications] = useState<Application[]>([])
+  const [isLoadingApplications, setIsLoadingApplications] = useState(false)
+  const [processingApplicationId, setProcessingApplicationId] = useState<string | null>(null)
+
   useEffect(() => {
     if (id) {
       fetchRecruitment(id)
     }
   }, [id])
+
+  // 主催者の場合、応募一覧を取得
+  const fetchApplications = useCallback(async () => {
+    if (!id) return
+    setIsLoadingApplications(true)
+    try {
+      const data = await getApplications(id)
+      setApplications(data)
+    } catch (error) {
+      console.error('Failed to fetch applications:', error)
+    } finally {
+      setIsLoadingApplications(false)
+    }
+  }, [id])
+
+  // 主催者の場合、募集データ取得後に応募一覧を取得
+  useEffect(() => {
+    const isOwner = recruitment?.isOwner ?? user?.id === recruitment?.creatorId
+    if (isOwner && recruitment) {
+      fetchApplications()
+    }
+  }, [recruitment, user?.id, fetchApplications])
+
+  // 応募の承認/拒否
+  const handleApplicationAction = async (applicationId: string, action: 'APPROVED' | 'REJECTED') => {
+    if (!id) return
+    setProcessingApplicationId(applicationId)
+    try {
+      const result = await updateApplicationStatus(id, applicationId, action)
+      // 応募一覧を再取得
+      await fetchApplications()
+      // 募集情報も再取得（人数が変わる可能性）
+      await fetchRecruitment(id)
+
+      if (action === 'APPROVED' && result.groupId) {
+        Alert.alert(
+          '承認完了',
+          'グループチャットが作成されました',
+          [
+            { text: 'あとで', style: 'cancel' },
+            { text: 'チャットを開く', onPress: () => router.push(`/group/${result.groupId}`) }
+          ]
+        )
+      }
+    } catch (error: any) {
+      Alert.alert('エラー', error.message || '処理に失敗しました')
+    } finally {
+      setProcessingApplicationId(null)
+    }
+  }
 
   const formatDate = (datetime: string | null, datetimeFlex: string | null) => {
     if (datetime) {
@@ -108,7 +165,7 @@ export default function RecruitmentDetailScreen() {
           }}
         />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>⚠️</Text>
+          <MaterialCommunityIcons name="alert-circle-outline" size={48} color={colors.primary[400]} />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity
             style={styles.retryButton}
@@ -127,6 +184,14 @@ export default function RecruitmentDetailScreen() {
         options={{
           title: '募集詳細',
           headerBackTitle: '戻る',
+          headerRight: isCreator && recruitment.status === 'OPEN' ? () => (
+            <TouchableOpacity
+              onPress={() => router.push(`/recruitment/${id}/edit`)}
+              style={styles.headerEditButton}
+            >
+              <MaterialCommunityIcons name="pencil" size={20} color={colors.primary[600]} />
+            </TouchableOpacity>
+          ) : undefined,
         }}
       />
       <ScrollView style={styles.scrollView}>
@@ -168,7 +233,9 @@ export default function RecruitmentDetailScreen() {
         {/* 詳細情報 */}
         <View style={styles.detailsCard}>
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>📅</Text>
+            <View style={styles.detailIconContainer}>
+              <MaterialCommunityIcons name="calendar" size={20} color={colors.primary[500]} />
+            </View>
             <View style={styles.detailContent}>
               <Text style={styles.detailLabel}>日時</Text>
               <Text style={styles.detailValue}>
@@ -180,7 +247,9 @@ export default function RecruitmentDetailScreen() {
           <View style={styles.detailDivider} />
 
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>📍</Text>
+            <View style={styles.detailIconContainer}>
+              <MaterialCommunityIcons name="map-marker" size={20} color={colors.primary[500]} />
+            </View>
             <View style={styles.detailContent}>
               <Text style={styles.detailLabel}>場所</Text>
               <Text style={styles.detailValue}>
@@ -193,7 +262,9 @@ export default function RecruitmentDetailScreen() {
           <View style={styles.detailDivider} />
 
           <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>👥</Text>
+            <View style={styles.detailIconContainer}>
+              <MaterialCommunityIcons name="account-group" size={20} color={colors.primary[500]} />
+            </View>
             <View style={styles.detailContent}>
               <Text style={styles.detailLabel}>参加人数</Text>
               <Text style={styles.detailValue}>
@@ -236,63 +307,168 @@ export default function RecruitmentDetailScreen() {
           </View>
         )}
 
+        {/* 応募一覧（主催者のみ表示） */}
+        {isCreator && (
+          <View style={styles.applicationsCard}>
+            <View style={styles.applicationsTitleRow}>
+              <Text style={styles.applicationsTitle}>応募一覧</Text>
+              {applications.filter(a => a.status === 'PENDING').length > 0 && (
+                <View style={styles.pendingBadge}>
+                  <Text style={styles.pendingBadgeText}>
+                    {applications.filter(a => a.status === 'PENDING').length}件
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {isLoadingApplications ? (
+              <ActivityIndicator color={colors.primary[500]} style={{ marginVertical: spacing.md }} />
+            ) : applications.length === 0 ? (
+              <Text style={styles.noApplicationsText}>まだ応募がありません</Text>
+            ) : (
+              <View style={styles.applicationsList}>
+                {applications.map((application) => (
+                  <View key={application.id} style={styles.applicationItem}>
+                    <View style={styles.applicationHeader}>
+                      <View style={styles.applicantAvatar}>
+                        <Text style={styles.applicantAvatarText}>
+                          {application.applicant.nickname.charAt(0)}
+                        </Text>
+                      </View>
+                      <View style={styles.applicantInfo}>
+                        <Text style={styles.applicantName}>{application.applicant.nickname}</Text>
+                        <Text style={styles.applicationDate}>
+                          {new Date(application.createdAt).toLocaleDateString('ja-JP')}
+                        </Text>
+                      </View>
+                      {application.status !== 'PENDING' && (
+                        <View style={[
+                          styles.applicationStatusBadge,
+                          application.status === 'APPROVED' && styles.approvedBadge,
+                          application.status === 'REJECTED' && styles.rejectedBadge,
+                        ]}>
+                          <Text style={[
+                            styles.applicationStatusText,
+                            application.status === 'APPROVED' && styles.approvedText,
+                            application.status === 'REJECTED' && styles.rejectedText,
+                          ]}>
+                            {application.status === 'APPROVED' ? '承認済み' : '拒否'}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {application.message && (
+                      <Text style={styles.applicationMessage}>{application.message}</Text>
+                    )}
+
+                    {application.status === 'PENDING' && (
+                      <View style={styles.applicationActions}>
+                        <TouchableOpacity
+                          style={styles.rejectButton}
+                          onPress={() => handleApplicationAction(application.id, 'REJECTED')}
+                          disabled={processingApplicationId === application.id}
+                        >
+                          {processingApplicationId === application.id ? (
+                            <ActivityIndicator size="small" color={colors.primary[500]} />
+                          ) : (
+                            <>
+                              <MaterialCommunityIcons name="close" size={16} color={colors.primary[600]} />
+                              <Text style={styles.rejectButtonText}>拒否</Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.approveButton}
+                          onPress={() => handleApplicationAction(application.id, 'APPROVED')}
+                          disabled={processingApplicationId === application.id}
+                        >
+                          {processingApplicationId === application.id ? (
+                            <ActivityIndicator size="small" color={colors.white} />
+                          ) : (
+                            <>
+                              <MaterialCommunityIcons name="check" size={16} color={colors.white} />
+                              <Text style={styles.approveButtonText}>承認</Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
         {/* 下部余白 */}
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* フッターボタン */}
-      <View style={styles.footer}>
-        {/* 参加中の場合: グループチャットへ */}
-        {isParticipating && groupId ? (
-          <TouchableOpacity
-            style={styles.groupButton}
-            onPress={() => router.push(`/group/${groupId}`)}
-          >
-            <Text style={styles.groupButtonText}>グループチャットを開く</Text>
-          </TouchableOpacity>
-        ) : isCreator ? (
-          /* 主催者の場合: 応募確認/編集 */
-          <View style={styles.footerButtons}>
+      {/* フッターボタン（主催者でグループがない場合は非表示） */}
+      {!(isCreator && !groupId) && (
+        <View style={styles.footer}>
+          {/* 参加中の場合: グループチャットへ */}
+          {isParticipating && groupId ? (
             <TouchableOpacity
-              style={styles.applicationsButton}
-              onPress={() => router.push(`/recruitment/${id}/applications`)}
+              style={styles.groupButton}
+              onPress={() => router.push(`/group/${groupId}`)}
             >
-              <Text style={styles.applicationsButtonText}>応募を確認</Text>
+              <Text style={styles.groupButtonText}>グループチャットを開く</Text>
             </TouchableOpacity>
-          </View>
-        ) : hasApplied ? (
-          /* 応募済みの場合 */
-          <View style={styles.statusContainer}>
-            <Text style={styles.footerStatusText}>
-              {applicationStatus === 'PENDING'
-                ? '📩 応募中 - 返答をお待ちください'
-                : applicationStatus === 'APPROVED'
-                ? '✅ 承認されました'
-                : applicationStatus === 'REJECTED'
-                ? '応募は承認されませんでした'
-                : '応募済み'}
-            </Text>
-          </View>
-        ) : (
-          /* 未応募の場合 */
-          <TouchableOpacity
-            style={[
-              styles.applyButton,
-              (isFull || isClosed) && styles.applyButtonDisabled,
-            ]}
-            onPress={() => setIsApplyModalVisible(true)}
-            disabled={isFull || isClosed}
-          >
-            <Text style={styles.applyButtonText}>
-              {isClosed
-                ? '募集は終了しました'
-                : isFull
-                ? '定員に達しました'
-                : 'この募集に応募する'}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
+          ) : isCreator && groupId ? (
+            /* 主催者でグループがある場合: チャットへ */
+            <TouchableOpacity
+              style={styles.groupButton}
+              onPress={() => router.push(`/group/${groupId}`)}
+            >
+              <Text style={styles.groupButtonText}>グループチャットを開く</Text>
+            </TouchableOpacity>
+          ) : hasApplied ? (
+            /* 応募済みの場合 */
+            <View style={styles.statusContainer}>
+              <View style={styles.footerStatusWithIcon}>
+                {applicationStatus === 'PENDING' && (
+                  <MaterialCommunityIcons name="email-outline" size={18} color={colors.primary[600]} />
+                )}
+                {applicationStatus === 'APPROVED' && (
+                  <MaterialCommunityIcons name="check-circle" size={18} color={colors.accent[600]} />
+                )}
+                {applicationStatus === 'REJECTED' && (
+                  <MaterialCommunityIcons name="close-circle" size={18} color={colors.primary[400]} />
+                )}
+                <Text style={styles.footerStatusText}>
+                  {applicationStatus === 'PENDING'
+                    ? '応募中 - 返答をお待ちください'
+                    : applicationStatus === 'APPROVED'
+                    ? '承認されました'
+                    : applicationStatus === 'REJECTED'
+                    ? '応募は承認されませんでした'
+                    : '応募済み'}
+                </Text>
+              </View>
+            </View>
+          ) : (
+            /* 未応募の場合 */
+            <TouchableOpacity
+              style={[
+                styles.applyButton,
+                (isFull || isClosed) && styles.applyButtonDisabled,
+              ]}
+              onPress={() => setIsApplyModalVisible(true)}
+              disabled={isFull || isClosed}
+            >
+              <Text style={styles.applyButtonText}>
+                {isClosed
+                  ? '募集は終了しました'
+                  : isFull
+                  ? '定員に達しました'
+                  : 'この募集に応募する'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {/* 応募モーダル */}
       <Modal
@@ -312,7 +488,7 @@ export default function RecruitmentDetailScreen() {
                 onPress={() => setIsApplyModalVisible(false)}
                 style={styles.modalCloseButton}
               >
-                <Text style={styles.modalCloseText}>✕</Text>
+                <MaterialCommunityIcons name="close" size={24} color={colors.primary[400]} />
               </TouchableOpacity>
             </View>
 
@@ -324,7 +500,7 @@ export default function RecruitmentDetailScreen() {
               value={applyMessage}
               onChangeText={setApplyMessage}
               placeholder="自己紹介やひとことメッセージを書いてみましょう"
-              placeholderTextColor={colors.gray[400]}
+              placeholderTextColor={colors.primary[400]}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
@@ -351,7 +527,7 @@ export default function RecruitmentDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[50],
   },
   loadingContainer: {
     flex: 1,
@@ -370,7 +546,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: colors.gray[500],
+    color: colors.primary[500],
     textAlign: 'center',
     marginBottom: spacing.lg,
   },
@@ -408,7 +584,7 @@ const styles = StyleSheet.create({
   },
   categoryName: {
     fontSize: 13,
-    color: colors.gray[700],
+    color: colors.primary[700],
     fontWeight: '500',
   },
   statusBadge: {
@@ -425,7 +601,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: colors.gray[900],
+    color: colors.primary[900],
     padding: spacing.md,
     paddingTop: spacing.sm,
   },
@@ -457,13 +633,13 @@ const styles = StyleSheet.create({
   },
   creatorLabel: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.primary[500],
     marginBottom: 2,
   },
   creatorName: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray[900],
+    color: colors.primary[900],
   },
   detailsCard: {
     backgroundColor: colors.white,
@@ -485,16 +661,16 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.primary[500],
     marginBottom: 2,
   },
   detailValue: {
     fontSize: 15,
-    color: colors.gray[900],
+    color: colors.primary[900],
   },
   detailDivider: {
     height: 1,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
     marginVertical: spacing.sm,
   },
   descriptionCard: {
@@ -506,12 +682,12 @@ const styles = StyleSheet.create({
   descriptionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray[900],
+    color: colors.primary[900],
     marginBottom: spacing.sm,
   },
   descriptionText: {
     fontSize: 15,
-    color: colors.gray[700],
+    color: colors.primary[700],
     lineHeight: 22,
   },
   footer: {
@@ -522,7 +698,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
+    borderTopColor: colors.primary[200],
   },
   applyButton: {
     backgroundColor: colors.primary[500],
@@ -531,7 +707,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   applyButtonDisabled: {
-    backgroundColor: colors.gray[300],
+    backgroundColor: colors.primary[300],
   },
   applyButtonText: {
     color: colors.white,
@@ -548,7 +724,7 @@ const styles = StyleSheet.create({
   membersTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray[900],
+    color: colors.primary[900],
     marginBottom: spacing.sm,
   },
   membersList: {
@@ -559,7 +735,7 @@ const styles = StyleSheet.create({
   memberItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[50],
     paddingVertical: 6,
     paddingHorizontal: spacing.sm,
     borderRadius: 16,
@@ -580,7 +756,7 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 13,
-    color: colors.gray[700],
+    color: colors.primary[700],
   },
   ownerBadge: {
     marginLeft: 6,
@@ -622,14 +798,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   statusContainer: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
   footerStatusText: {
     fontSize: 14,
-    color: colors.gray[700],
+    color: colors.primary[700],
     fontWeight: '500',
   },
   // Modal styles
@@ -654,23 +830,23 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.gray[900],
+    color: colors.primary[900],
   },
   modalCloseButton: {
     padding: spacing.xs,
   },
   modalCloseText: {
     fontSize: 20,
-    color: colors.gray[400],
+    color: colors.primary[400],
   },
   modalLabel: {
     fontSize: 14,
-    color: colors.gray[700],
+    color: colors.primary[700],
     marginBottom: spacing.sm,
   },
   messageInput: {
     borderWidth: 1,
-    borderColor: colors.gray[300],
+    borderColor: colors.primary[300],
     borderRadius: 12,
     padding: spacing.md,
     fontSize: 15,
@@ -690,5 +866,159 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Detail icon container
+  detailIconContainer: {
+    width: 24,
+    marginRight: spacing.sm,
+    alignItems: 'center',
+  },
+  // Footer status with icon
+  footerStatusWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  // Applications styles
+  applicationsCard: {
+    backgroundColor: colors.white,
+    marginHorizontal: spacing.md,
+    padding: spacing.md,
+    borderRadius: 12,
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
+  },
+  applicationsTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  applicationsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary[900],
+  },
+  pendingBadge: {
+    marginLeft: spacing.sm,
+    backgroundColor: colors.accent[100],
+    paddingVertical: 2,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 10,
+  },
+  pendingBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.accent[700],
+  },
+  noApplicationsText: {
+    fontSize: 14,
+    color: colors.primary[400],
+    textAlign: 'center',
+    paddingVertical: spacing.md,
+  },
+  applicationsList: {
+    gap: spacing.md,
+  },
+  applicationItem: {
+    backgroundColor: colors.primary[50],
+    borderRadius: 10,
+    padding: spacing.md,
+  },
+  applicationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  applicantAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary[200],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.sm,
+  },
+  applicantAvatarText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary[600],
+  },
+  applicantInfo: {
+    flex: 1,
+  },
+  applicantName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary[800],
+  },
+  applicationDate: {
+    fontSize: 12,
+    color: colors.primary[500],
+  },
+  applicationStatusBadge: {
+    paddingVertical: 2,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 8,
+  },
+  approvedBadge: {
+    backgroundColor: colors.accent[100],
+  },
+  rejectedBadge: {
+    backgroundColor: colors.primary[100],
+  },
+  applicationStatusText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  approvedText: {
+    color: colors.accent[700],
+  },
+  rejectedText: {
+    color: colors.primary[500],
+  },
+  applicationMessage: {
+    marginTop: spacing.sm,
+    fontSize: 13,
+    color: colors.primary[600],
+    lineHeight: 18,
+  },
+  applicationActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  rejectButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+    gap: 4,
+  },
+  rejectButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary[600],
+  },
+  approveButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.accent[600],
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+    gap: 4,
+  },
+  approveButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.white,
+  },
+  headerEditButton: {
+    padding: spacing.sm,
   },
 })

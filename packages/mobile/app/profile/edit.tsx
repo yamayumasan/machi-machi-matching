@@ -10,11 +10,15 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  ActionSheetIOS,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Stack, router } from 'expo-router'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAuthStore } from '@/stores/auth'
 import { updateUser } from '@/services/auth'
+import { pickImage, uploadAvatar } from '@/services/upload'
 import { colors, spacing } from '@/constants/theme'
 
 type AreaType = 'TOKYO' | 'SENDAI'
@@ -23,6 +27,8 @@ export default function EditProfileScreen() {
   const { user, fetchUser } = useAuthStore()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [avatarUri, setAvatarUri] = useState<string | null>(user?.avatar || null)
   const [form, setForm] = useState({
     nickname: user?.nickname || '',
     bio: user?.bio || '',
@@ -41,6 +47,58 @@ export default function EditProfileScreen() {
       return 'ニックネームは2文字以上で入力してください'
     }
     return null
+  }
+
+  // アバター画像を選択
+  const handleAvatarPress = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['キャンセル', '写真を撮る', 'ライブラリから選択'],
+          cancelButtonIndex: 0,
+        },
+        async (buttonIndex) => {
+          if (buttonIndex === 1) {
+            await selectImage('camera')
+          } else if (buttonIndex === 2) {
+            await selectImage('library')
+          }
+        }
+      )
+    } else {
+      Alert.alert(
+        'プロフィール画像',
+        '画像の取得方法を選択してください',
+        [
+          { text: 'キャンセル', style: 'cancel' },
+          { text: '写真を撮る', onPress: () => selectImage('camera') },
+          { text: 'ライブラリから選択', onPress: () => selectImage('library') },
+        ]
+      )
+    }
+  }
+
+  const selectImage = async (source: 'camera' | 'library') => {
+    try {
+      setIsUploadingAvatar(true)
+      const asset = await pickImage(source)
+      if (asset) {
+        // 選択した画像をプレビュー表示
+        setAvatarUri(asset.uri)
+        // サーバーにアップロード
+        const uploadedUrl = await uploadAvatar(asset.uri)
+        setAvatarUri(uploadedUrl)
+        // ユーザー情報を更新
+        await updateUser({ avatar: uploadedUrl })
+        await fetchUser()
+      }
+    } catch (error: any) {
+      Alert.alert('エラー', error.message || '画像のアップロードに失敗しました')
+      // エラー時は元の画像に戻す
+      setAvatarUri(user?.avatar || null)
+    } finally {
+      setIsUploadingAvatar(false)
+    }
   }
 
   const handleSubmit = async () => {
@@ -86,13 +144,32 @@ export default function EditProfileScreen() {
           <ScrollView style={styles.scrollView}>
             {/* アバター */}
             <View style={styles.avatarSection}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {form.nickname?.[0] || user?.email?.[0]?.toUpperCase() || '?'}
-                </Text>
-              </View>
+              <TouchableOpacity
+                style={styles.avatarTouchable}
+                onPress={handleAvatarPress}
+                disabled={isUploadingAvatar}
+              >
+                {avatarUri ? (
+                  <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+                ) : (
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>
+                      {form.nickname?.[0] || user?.email?.[0]?.toUpperCase() || '?'}
+                    </Text>
+                  </View>
+                )}
+                {isUploadingAvatar ? (
+                  <View style={styles.avatarOverlay}>
+                    <ActivityIndicator color={colors.white} />
+                  </View>
+                ) : (
+                  <View style={styles.avatarEditBadge}>
+                    <MaterialCommunityIcons name="camera" size={14} color={colors.white} />
+                  </View>
+                )}
+              </TouchableOpacity>
               <Text style={styles.avatarHint}>
-                アバター画像は今後対応予定です
+                タップして画像を変更
               </Text>
             </View>
 
@@ -104,7 +181,7 @@ export default function EditProfileScreen() {
                 value={form.nickname}
                 onChangeText={(v) => updateForm('nickname', v)}
                 placeholder="表示名を入力"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={colors.primary[400]}
                 maxLength={20}
               />
               <Text style={styles.charCount}>{form.nickname.length}/20</Text>
@@ -118,7 +195,7 @@ export default function EditProfileScreen() {
                 value={form.bio}
                 onChangeText={(v) => updateForm('bio', v)}
                 placeholder="自己紹介を入力してください"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={colors.primary[400]}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
@@ -179,7 +256,7 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[50],
   },
   scrollView: {
     flex: 1,
@@ -191,23 +268,55 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     marginBottom: spacing.sm,
   },
+  avatarTouchable: {
+    position: 'relative',
+    marginBottom: spacing.sm,
+  },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: colors.primary[500],
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+  },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
   avatarText: {
-    fontSize: 32,
+    fontSize: 40,
     fontWeight: 'bold',
     color: colors.white,
   },
+  avatarOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 50,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.accent[600],
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
   avatarHint: {
     fontSize: 12,
-    color: colors.gray[400],
+    color: colors.primary[400],
   },
   section: {
     backgroundColor: colors.white,
@@ -217,16 +326,16 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray[700],
+    color: colors.primary[700],
     marginBottom: spacing.sm,
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.gray[300],
+    borderColor: colors.primary[300],
     borderRadius: 8,
     padding: spacing.md,
     fontSize: 15,
-    color: colors.gray[900],
+    color: colors.primary[900],
     backgroundColor: colors.white,
   },
   textArea: {
@@ -234,7 +343,7 @@ const styles = StyleSheet.create({
   },
   charCount: {
     fontSize: 12,
-    color: colors.gray[400],
+    color: colors.primary[400],
     textAlign: 'right',
     marginTop: 4,
   },
@@ -246,7 +355,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: spacing.md,
     borderRadius: 8,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
     alignItems: 'center',
   },
   areaChipActive: {
@@ -254,7 +363,7 @@ const styles = StyleSheet.create({
   },
   areaText: {
     fontSize: 15,
-    color: colors.gray[600],
+    color: colors.primary[600],
     fontWeight: '500',
   },
   areaTextActive: {
@@ -264,7 +373,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
+    borderTopColor: colors.primary[200],
   },
   submitButton: {
     backgroundColor: colors.primary[500],

@@ -126,14 +126,14 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[50],
   },
   markAllButton: {
     padding: spacing.md,
     alignItems: 'flex-end',
     backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: colors.primary[200],
   },
   markAllText: {
     color: colors.primary[500],
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: colors.gray[400],
+    color: colors.primary[400],
   },
   listContent: {
     paddingBottom: spacing.lg,
@@ -180,17 +180,17 @@ const styles = StyleSheet.create({
   notificationTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray[900],
+    color: colors.primary[900],
     marginBottom: 4,
   },
   notificationBody: {
     fontSize: 13,
-    color: colors.gray[600],
+    color: colors.primary[600],
     marginBottom: 4,
   },
   notificationTime: {
     fontSize: 12,
-    color: colors.gray[400],
+    color: colors.primary[400],
   },
   unreadDot: {
     width: 8,
@@ -202,6 +202,6 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
   },
 })

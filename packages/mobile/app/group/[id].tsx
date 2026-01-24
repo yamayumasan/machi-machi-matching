@@ -16,6 +16,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useGroupStore } from '@/stores/group'
 import { useAuthStore } from '@/stores/auth'
 import { Message } from '@/services/group'
+import { joinGroup, leaveGroup } from '@/services/socket'
 import { colors, spacing } from '@/constants/theme'
 import { CategoryIcon } from '@/components/CategoryIcon'
 
@@ -39,6 +40,15 @@ export default function GroupChatScreen() {
     if (id) {
       fetchGroup(id)
       fetchMessages(id)
+      // ソケットのグループルームに参加
+      joinGroup(id)
+    }
+
+    return () => {
+      if (id) {
+        // ソケットのグループルームを退出
+        leaveGroup(id)
+      }
     }
   }, [id])
 
@@ -224,7 +234,7 @@ export default function GroupChatScreen() {
             value={messageText}
             onChangeText={setMessageText}
             placeholder="メッセージを入力..."
-            placeholderTextColor={colors.gray[400]}
+            placeholderTextColor={colors.primary[400]}
             multiline
             maxLength={500}
           />
@@ -251,7 +261,7 @@ export default function GroupChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[50],
   },
   loadingContainer: {
     flex: 1,
@@ -265,7 +275,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: colors.primary[200],
   },
   membersIcon: {
     fontSize: 18,
@@ -274,11 +284,11 @@ const styles = StyleSheet.create({
   membersText: {
     flex: 1,
     fontSize: 13,
-    color: colors.gray[600],
+    color: colors.primary[600],
   },
   membersCount: {
     fontSize: 12,
-    color: colors.gray[400],
+    color: colors.primary[400],
     marginLeft: spacing.sm,
   },
   emptyContainer: {
@@ -293,12 +303,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: colors.gray[500],
+    color: colors.primary[500],
     marginBottom: spacing.xs,
   },
   emptySubText: {
     fontSize: 14,
-    color: colors.gray[400],
+    color: colors.primary[400],
   },
   messagesList: {
     padding: spacing.md,
@@ -310,8 +320,8 @@ const styles = StyleSheet.create({
   },
   dateHeaderText: {
     fontSize: 12,
-    color: colors.gray[500],
-    backgroundColor: colors.gray[200],
+    color: colors.primary[500],
+    backgroundColor: colors.primary[200],
     paddingVertical: 4,
     paddingHorizontal: spacing.sm,
     borderRadius: 12,
@@ -347,7 +357,7 @@ const styles = StyleSheet.create({
   },
   senderName: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.primary[500],
     marginBottom: 2,
     marginLeft: 4,
   },
@@ -372,11 +382,11 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   otherMessageText: {
-    color: colors.gray[900],
+    color: colors.primary[900],
   },
   messageTime: {
     fontSize: 11,
-    color: colors.gray[400],
+    color: colors.primary[400],
     marginTop: 4,
     marginLeft: 4,
   },
@@ -391,18 +401,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
+    borderTopColor: colors.primary[200],
   },
   textInput: {
     flex: 1,
     minHeight: 40,
     maxHeight: 100,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
     borderRadius: 20,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     fontSize: 15,
-    color: colors.gray[900],
+    color: colors.primary[900],
   },
   sendButton: {
     marginLeft: spacing.sm,
@@ -415,7 +425,7 @@ const styles = StyleSheet.create({
     minWidth: 60,
   },
   sendButtonDisabled: {
-    backgroundColor: colors.gray[300],
+    backgroundColor: colors.primary[300],
   },
   sendButtonText: {
     color: colors.white,

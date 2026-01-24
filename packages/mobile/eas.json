@@ -20,12 +20,19 @@
       "distribution": "internal",
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk"
       }
     },
     "production": {
       "extends": "base",
+      "autoIncrement": true,
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "app-bundle"
       }
     }
   },
@@ -35,6 +42,10 @@
         "appleId": "yuma2066@gmail.com",
         "ascAppId": "6757920707",
         "appleTeamId": "LCQWNFZZ3R"
+      },
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
       }
     }
   }

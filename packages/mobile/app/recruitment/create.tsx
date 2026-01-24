@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -13,13 +13,14 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Stack, router } from 'expo-router'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRecruitmentStore } from '@/stores/recruitment'
 import { useCategoryStore } from '@/stores/category'
 import { useAuthStore } from '@/stores/auth'
 import { CreateRecruitmentData } from '@/services/recruitment'
 import { colors, spacing } from '@/constants/theme'
 import { CategoryIcon } from '@/components/CategoryIcon'
-import { useEffect } from 'react'
+import { LocationPickerModal, LocationData } from '@/components/LocationPickerModal'
 
 type AreaType = 'TOKYO' | 'SENDAI'
 
@@ -29,12 +30,15 @@ export default function CreateRecruitmentScreen() {
   const { categories, fetchCategories } = useCategoryStore()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showLocationPicker, setShowLocationPicker] = useState(false)
   const [form, setForm] = useState<{
     categoryId: string
     title: string
     description: string
     datetimeFlex: string
     landmarkName: string
+    latitude: number | null
+    longitude: number | null
     minPeople: number
     maxPeople: number
     area: AreaType
@@ -44,6 +48,8 @@ export default function CreateRecruitmentScreen() {
     description: '',
     datetimeFlex: '',
     landmarkName: '',
+    latitude: null,
+    longitude: null,
     minPeople: 2,
     maxPeople: 4,
     area: 'TOKYO',
@@ -88,16 +94,23 @@ export default function CreateRecruitmentScreen() {
         description: form.description.trim() || undefined,
         datetimeFlex: form.datetimeFlex.trim() || undefined,
         landmarkName: form.landmarkName.trim() || undefined,
+        latitude: form.latitude || undefined,
+        longitude: form.longitude || undefined,
         minPeople: form.minPeople,
         maxPeople: form.maxPeople,
         area: form.area,
       }
 
       const recruitment = await addRecruitment(data)
-      Alert.alert('作成完了', '募集を作成しました', [
+      Alert.alert('作成完了', '募集を作成しました。おすすめユーザーにオファーを送りましょう！', [
         {
-          text: 'OK',
+          text: 'あとで',
+          style: 'cancel',
           onPress: () => router.replace(`/recruitment/${recruitment.id}`),
+        },
+        {
+          text: 'オファーを送る',
+          onPress: () => router.replace(`/recruitment/${recruitment.id}/suggestions`),
         },
       ])
     } catch (error: any) {
@@ -106,6 +119,28 @@ export default function CreateRecruitmentScreen() {
       setIsSubmitting(false)
     }
   }
+
+  // 位置選択時のハンドラー
+  const handleLocationSelect = (location: LocationData) => {
+    setForm((prev) => ({
+      ...prev,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      landmarkName: location.address || prev.landmarkName,
+    }))
+  }
+
+  // 位置情報をクリア
+  const handleClearLocation = () => {
+    setForm((prev) => ({
+      ...prev,
+      latitude: null,
+      longitude: null,
+    }))
+  }
+
+  // 位置が選択されているかどうか
+  const hasLocation = form.latitude !== null && form.longitude !== null
 
   return (
     <>
@@ -165,7 +200,7 @@ export default function CreateRecruitmentScreen() {
                 value={form.title}
                 onChangeText={(v) => updateForm('title', v)}
                 placeholder="例：週末にカフェ巡りしませんか？"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={colors.primary[400]}
                 maxLength={50}
               />
               <Text style={styles.charCount}>{form.title.length}/50</Text>
@@ -179,7 +214,7 @@ export default function CreateRecruitmentScreen() {
                 value={form.description}
                 onChangeText={(v) => updateForm('description', v)}
                 placeholder="募集の詳細を記入してください"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={colors.primary[400]}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
@@ -222,7 +257,7 @@ export default function CreateRecruitmentScreen() {
                 value={form.datetimeFlex}
                 onChangeText={(v) => updateForm('datetimeFlex', v)}
                 placeholder="例：週末の午後、平日夜など"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={colors.primary[400]}
                 maxLength={50}
               />
             </View>
@@ -230,14 +265,46 @@ export default function CreateRecruitmentScreen() {
             {/* 場所 */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>場所</Text>
+
+              {/* マップで選択ボタン */}
+              <TouchableOpacity
+                style={[styles.mapSelectButton, hasLocation && styles.mapSelectButtonActive]}
+                onPress={() => setShowLocationPicker(true)}
+              >
+                <MaterialCommunityIcons
+                  name={hasLocation ? 'map-marker-check' : 'map-marker-plus'}
+                  size={20}
+                  color={hasLocation ? colors.accent[600] : colors.primary[500]}
+                />
+                <Text style={[styles.mapSelectButtonText, hasLocation && styles.mapSelectButtonTextActive]}>
+                  {hasLocation ? 'マップで場所を変更' : 'マップで場所を選択'}
+                </Text>
+                {hasLocation && (
+                  <TouchableOpacity
+                    style={styles.clearLocationButton}
+                    onPress={handleClearLocation}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <MaterialCommunityIcons name="close-circle" size={18} color={colors.primary[400]} />
+                  </TouchableOpacity>
+                )}
+              </TouchableOpacity>
+
+              {/* 場所名入力 */}
               <TextInput
-                style={styles.input}
+                style={[styles.input, styles.locationInput]}
                 value={form.landmarkName}
                 onChangeText={(v) => updateForm('landmarkName', v)}
-                placeholder="例：渋谷駅周辺"
-                placeholderTextColor={colors.gray[400]}
+                placeholder="場所名（例：渋谷駅周辺）"
+                placeholderTextColor={colors.primary[400]}
                 maxLength={50}
               />
+
+              {hasLocation && (
+                <Text style={styles.coordinateHint}>
+                  位置情報が設定されています
+                </Text>
+              )}
             </View>
 
             {/* 人数設定 */}
@@ -319,6 +386,15 @@ export default function CreateRecruitmentScreen() {
           </View>
         </SafeAreaView>
       </KeyboardAvoidingView>
+
+      {/* 位置選択モーダル */}
+      <LocationPickerModal
+        visible={showLocationPicker}
+        onClose={() => setShowLocationPicker(false)}
+        onSelect={handleLocationSelect}
+        initialLocation={hasLocation ? { latitude: form.latitude!, longitude: form.longitude! } : null}
+        area={form.area}
+      />
     </>
   )
 }
@@ -326,7 +402,7 @@ export default function CreateRecruitmentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[50],
   },
   scrollView: {
     flex: 1,
@@ -339,7 +415,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray[700],
+    color: colors.primary[700],
     marginBottom: spacing.sm,
   },
   categoryList: {
@@ -353,7 +429,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: 20,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
     marginRight: spacing.sm,
   },
   categoryChipActive: {
@@ -367,7 +443,7 @@ const styles = StyleSheet.create({
   },
   categoryName: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.primary[600],
   },
   categoryNameActive: {
     color: colors.primary[700],
@@ -375,11 +451,11 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.gray[300],
+    borderColor: colors.primary[300],
     borderRadius: 8,
     padding: spacing.md,
     fontSize: 15,
-    color: colors.gray[900],
+    color: colors.primary[900],
     backgroundColor: colors.white,
   },
   textArea: {
@@ -387,7 +463,7 @@ const styles = StyleSheet.create({
   },
   charCount: {
     fontSize: 12,
-    color: colors.gray[400],
+    color: colors.primary[400],
     textAlign: 'right',
     marginTop: 4,
   },
@@ -399,7 +475,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: spacing.md,
     borderRadius: 8,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
     alignItems: 'center',
   },
   areaChipActive: {
@@ -407,11 +483,46 @@ const styles = StyleSheet.create({
   },
   areaText: {
     fontSize: 15,
-    color: colors.gray[600],
+    color: colors.primary[600],
     fontWeight: '500',
   },
   areaTextActive: {
     color: colors.white,
+  },
+  mapSelectButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: 8,
+    backgroundColor: colors.primary[100],
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  mapSelectButtonActive: {
+    backgroundColor: colors.accent[50],
+    borderColor: colors.accent[500],
+  },
+  mapSelectButtonText: {
+    marginLeft: spacing.sm,
+    fontSize: 14,
+    color: colors.primary[600],
+    fontWeight: '500',
+  },
+  mapSelectButtonTextActive: {
+    color: colors.accent[700],
+  },
+  clearLocationButton: {
+    marginLeft: spacing.sm,
+  },
+  locationInput: {
+    marginTop: 0,
+  },
+  coordinateHint: {
+    fontSize: 12,
+    color: colors.accent[600],
+    marginTop: spacing.xs,
   },
   peopleRow: {
     flexDirection: 'row',
@@ -423,13 +534,13 @@ const styles = StyleSheet.create({
   },
   peopleLabel: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.primary[500],
     marginBottom: spacing.xs,
   },
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -449,18 +560,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     fontWeight: '600',
-    color: colors.gray[900],
+    color: colors.primary[900],
   },
   peopleSeparator: {
     fontSize: 20,
-    color: colors.gray[400],
+    color: colors.primary[400],
     marginHorizontal: spacing.lg,
   },
   footer: {
     padding: spacing.md,
     backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
+    borderTopColor: colors.primary[200],
   },
   submitButton: {
     backgroundColor: colors.primary[500],

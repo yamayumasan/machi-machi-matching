@@ -9,14 +9,18 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
 } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { colors, spacing } from '@/constants/theme'
 import { CategoryIcon } from './CategoryIcon'
 import { useCategoryStore } from '@/stores/category'
 import { useWantToDoStore } from '@/stores/wantToDo'
 import { WantToDoTiming } from '@/services/wantToDo'
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window')
 
 const TIMING_OPTIONS: { value: WantToDoTiming; label: string; description: string }[] = [
   { value: 'TODAY', label: '今日まで', description: '今日の23:59まで' },
@@ -38,7 +42,6 @@ export function WantToDoCreateModal({
   onSuccess,
   excludeCategoryIds = [],
 }: WantToDoCreateModalProps) {
-  const insets = useSafeAreaInsets()
   const { categories, fetchCategories } = useCategoryStore()
   const { addWantToDo } = useWantToDoStore()
 
@@ -91,9 +94,19 @@ export function WantToDoCreateModal({
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId)
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}>
-        <View style={[styles.container, { paddingBottom: insets.bottom + spacing.md }]}>
+    <Modal visible={visible} animationType="fade" transparent>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* 背景タップで閉じる */}
+        <TouchableOpacity
+          style={styles.backdrop}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+
+        <View style={styles.modalContainer}>
           {/* ヘッダー */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -103,7 +116,11 @@ export function WantToDoCreateModal({
             <View style={{ width: 40 }} />
           </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             {/* カテゴリ選択 */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>カテゴリを選択</Text>
@@ -124,24 +141,26 @@ export function WantToDoCreateModal({
                       ]}
                       onPress={() => setSelectedCategoryId(category.id)}
                     >
-                      <CategoryIcon
-                        name={category.icon}
-                        size={24}
-                        color={
-                          selectedCategoryId === category.id
-                            ? colors.accent[600]
-                            : colors.primary[500]
-                        }
-                      />
-                      <Text
-                        style={[
-                          styles.categoryName,
-                          selectedCategoryId === category.id && styles.categoryNameSelected,
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {category.name}
-                      </Text>
+                      <View style={styles.categoryItemContent}>
+                        <CategoryIcon
+                          name={category.icon}
+                          size={24}
+                          color={
+                            selectedCategoryId === category.id
+                              ? colors.accent[600]
+                              : colors.primary[500]
+                          }
+                        />
+                        <Text
+                          style={[
+                            styles.categoryName,
+                            selectedCategoryId === category.id && styles.categoryNameSelected,
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {category.name}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -224,7 +243,7 @@ export function WantToDoCreateModal({
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   )
 }
@@ -232,14 +251,24 @@ export function WantToDoCreateModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
   },
-  container: {
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
     backgroundColor: colors.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '90%',
+    borderRadius: 16,
+    width: '100%',
+    maxHeight: SCREEN_HEIGHT * 0.8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
   },
   header: {
     flexDirection: 'row',
@@ -262,7 +291,8 @@ const styles = StyleSheet.create({
     color: colors.primary[900],
   },
   content: {
-    flex: 1,
+    flexGrow: 0,
+    flexShrink: 1,
   },
   section: {
     padding: spacing.md,
@@ -286,6 +316,7 @@ const styles = StyleSheet.create({
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'flex-start',
     gap: spacing.sm,
   },
   categoryItem: {
@@ -293,10 +324,13 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     backgroundColor: colors.primary[50],
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
+  },
+  categoryItemContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   categoryItemSelected: {
     backgroundColor: colors.accent[50],
@@ -307,6 +341,8 @@ const styles = StyleSheet.create({
     color: colors.primary[600],
     marginTop: spacing.xs,
     textAlign: 'center',
+    width: '100%',
+    paddingHorizontal: 4,
   },
   categoryNameSelected: {
     color: colors.accent[700],

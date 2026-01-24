@@ -131,7 +131,7 @@ export default function ApplicationsScreen() {
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <ActivityIndicator color={colors.gray[600]} size="small" />
+                <ActivityIndicator color={colors.primary[600]} size="small" />
               ) : (
                 <Text style={styles.rejectButtonText}>却下</Text>
               )}
@@ -213,7 +213,7 @@ export default function ApplicationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[50],
   },
   loadingContainer: {
     flex: 1,
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: colors.gray[400],
+    color: colors.primary[400],
   },
   listContent: {
     paddingBottom: spacing.lg,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray[500],
+    color: colors.primary[500],
   },
   applicationItem: {
     backgroundColor: colors.white,
@@ -275,32 +275,32 @@ const styles = StyleSheet.create({
   applicantName: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray[900],
+    color: colors.primary[900],
     marginBottom: 2,
   },
   applicantBio: {
     fontSize: 13,
-    color: colors.gray[500],
+    color: colors.primary[500],
     marginBottom: 4,
   },
   applicationTime: {
     fontSize: 12,
-    color: colors.gray[400],
+    color: colors.primary[400],
   },
   messageBox: {
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[50],
     padding: spacing.sm,
     borderRadius: 8,
     marginBottom: spacing.sm,
   },
   messageLabel: {
     fontSize: 11,
-    color: colors.gray[500],
+    color: colors.primary[500],
     marginBottom: 4,
   },
   messageText: {
     fontSize: 14,
-    color: colors.gray[700],
+    color: colors.primary[700],
     lineHeight: 20,
   },
   actionButtons: {
@@ -314,10 +314,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rejectButton: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
   },
   rejectButtonText: {
-    color: colors.gray[700],
+    color: colors.primary[700],
     fontSize: 14,
     fontWeight: '600',
   },
@@ -340,10 +340,10 @@ const styles = StyleSheet.create({
     color: colors.primary[600],
   },
   rejectedStatus: {
-    color: colors.gray[500],
+    color: colors.primary[500],
   },
   separator: {
     height: 1,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
   },
 })

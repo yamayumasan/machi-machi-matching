@@ -8,6 +8,9 @@
     "build": "tsc",
     "start": "tsx src/index.ts",
     "lint": "eslint . --ext .ts --fix",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
+    "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
     "prisma:generate": "prisma generate --schema=../../prisma/schema.prisma",
     "prisma:push": "prisma db push --schema=../../prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev --schema=../../prisma/schema.prisma",
@@ -28,12 +31,18 @@
     "zod": "^3.22.0"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
     "@types/cors": "^2.8.0",
     "@types/express": "^4.17.0",
     "@types/express-serve-static-core": "^5.1.0",
+    "@types/jest": "^30.0.0",
     "@types/multer": "^2.0.0",
     "@types/node": "^20.10.0",
+    "@types/supertest": "^6.0.3",
+    "jest": "^30.2.0",
     "prisma": "^5.8.0",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.6",
     "tsx": "^4.7.0",
     "typescript": "^5.3.0"
   }

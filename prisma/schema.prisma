@@ -23,6 +23,8 @@ model User {
   longitude    Float?
   locationName String?  // 駅名・ランドマーク名
   isOnboarded  Boolean  @default(false)
+  pushToken    String?  // Expo Push Token
+  pushPlatform String?  // ios or android
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

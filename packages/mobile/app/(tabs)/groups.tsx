@@ -101,19 +101,19 @@ export default function GroupsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[50],
   },
   header: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: colors.primary[200],
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.gray[900],
+    color: colors.primary[900],
   },
   loadingContainer: {
     flex: 1,
@@ -132,12 +132,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: colors.gray[500],
+    color: colors.primary[500],
     marginBottom: spacing.sm,
   },
   subText: {
     fontSize: 14,
-    color: colors.gray[400],
+    color: colors.primary[400],
     textAlign: 'center',
   },
   listContent: {
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   groupTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray[900],
+    color: colors.primary[900],
     marginBottom: 4,
   },
   groupMeta: {
@@ -181,14 +181,14 @@ const styles = StyleSheet.create({
   },
   groupMetaText: {
     fontSize: 13,
-    color: colors.gray[500],
+    color: colors.primary[500],
   },
   arrow: {
     fontSize: 20,
-    color: colors.gray[400],
+    color: colors.primary[400],
   },
   separator: {
     height: 1,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
   },
 })

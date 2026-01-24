@@ -115,7 +115,7 @@ export default function OnboardingScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="例: やまだ"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={colors.primary[400]}
                 value={nickname}
                 onChangeText={setNickname}
                 maxLength={20}
@@ -127,7 +127,7 @@ export default function OnboardingScreen() {
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="例: ボドゲとカフェ巡りが好きです"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={colors.primary[400]}
                 value={bio}
                 onChangeText={setBio}
                 multiline
@@ -257,12 +257,12 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 14,
-    color: colors.gray[500],
+    color: colors.primary[500],
     marginBottom: spacing.sm,
   },
   progressBar: {
     height: 4,
-    backgroundColor: colors.gray[200],
+    backgroundColor: colors.primary[200],
     borderRadius: 2,
   },
   progressFill: {
@@ -277,12 +277,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.gray[900],
+    color: colors.primary[900],
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: 14,
-    color: colors.gray[500],
+    color: colors.primary[500],
     marginBottom: spacing.xl,
   },
   form: {
@@ -294,16 +294,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.gray[700],
+    color: colors.primary[700],
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.gray[300],
+    borderColor: colors.primary[300],
     borderRadius: 8,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     fontSize: 16,
-    color: colors.gray[900],
+    color: colors.primary[900],
   },
   textArea: {
     height: 100,
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   buttonSecondary: {
     backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: colors.gray[300],
+    borderColor: colors.primary[300],
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   buttonTextSecondary: {
-    color: colors.gray[700],
+    color: colors.primary[700],
     fontSize: 16,
     fontWeight: '600',
   },
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   categoryItem: {
     width: '30%',
     aspectRatio: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[50],
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   },
   categoryName: {
     fontSize: 12,
-    color: colors.gray[700],
+    color: colors.primary[700],
   },
   categoryNameSelected: {
     color: colors.primary[700],
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   areaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[50],
     borderRadius: 12,
     padding: spacing.lg,
     borderWidth: 2,
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
   },
   areaName: {
     fontSize: 18,
-    color: colors.gray[700],
+    color: colors.primary[700],
   },
   areaNameSelected: {
     color: colors.primary[700],

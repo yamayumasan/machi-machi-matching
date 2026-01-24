@@ -264,7 +264,7 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.primary[50],
   },
   header: {
     flexDirection: 'row',
@@ -274,16 +274,16 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: colors.primary[200],
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.gray[900],
+    color: colors.primary[900],
   },
   viewToggle: {
     flexDirection: 'row',
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
     borderRadius: 8,
     padding: 2,
   },
@@ -302,17 +302,17 @@ const styles = StyleSheet.create({
   },
   viewToggleText: {
     fontSize: 13,
-    color: colors.gray[500],
+    color: colors.primary[500],
   },
   viewToggleTextActive: {
-    color: colors.gray[900],
+    color: colors.primary[900],
     fontWeight: '600',
   },
   filters: {
     backgroundColor: colors.white,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: colors.primary[200],
   },
   filterRow: {
     flexDirection: 'row',
@@ -324,14 +324,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
     borderRadius: 16,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
   },
   filterChipActive: {
     backgroundColor: colors.primary[500],
   },
   filterChipText: {
     fontSize: 13,
-    color: colors.gray[600],
+    color: colors.primary[600],
   },
   filterChipTextActive: {
     color: colors.white,
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     marginRight: spacing.sm,
     borderRadius: 16,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
   },
   categoryChipActive: {
     backgroundColor: colors.primary[100],
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
   },
   categoryChipText: {
     fontSize: 12,
-    color: colors.gray[600],
+    color: colors.primary[600],
   },
   categoryChipTextActive: {
     color: colors.primary[700],
@@ -383,12 +383,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: colors.gray[500],
+    color: colors.primary[500],
     marginBottom: spacing.xs,
   },
   emptySubText: {
     fontSize: 14,
-    color: colors.gray[400],
+    color: colors.primary[400],
   },
   listContent: {
     padding: spacing.md,
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primary[100],
     paddingVertical: 4,
     paddingHorizontal: spacing.sm,
     borderRadius: 12,
@@ -418,16 +418,16 @@ const styles = StyleSheet.create({
   },
   categoryName: {
     fontSize: 12,
-    color: colors.gray[700],
+    color: colors.primary[700],
   },
   area: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.primary[500],
   },
   recruitmentTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.gray[900],
+    color: colors.primary[900],
     marginBottom: spacing.sm,
   },
   cardMeta: {
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 13,
-    color: colors.gray[600],
+    color: colors.primary[600],
   },
   locationRow: {
     flexDirection: 'row',
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   },
   location: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.primary[500],
     flex: 1,
   },
   separator: {

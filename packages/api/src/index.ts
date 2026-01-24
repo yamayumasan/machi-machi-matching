@@ -34,6 +34,7 @@ const httpServer = createServer(app)
 const io = new Server(httpServer, {
   cors: {
     origin: (origin, callback) => {
+      // モバイルアプリやサーバー間通信はoriginがない場合がある
       if (!origin) {
         callback(null, true)
         return
@@ -41,6 +42,7 @@ const io = new Server(httpServer, {
       if (
         origin.includes('vercel.app') ||
         origin.includes('localhost') ||
+        origin.includes('192.168.') ||
         origin === process.env.FRONTEND_URL
       ) {
         callback(null, true)
@@ -51,6 +53,7 @@ const io = new Server(httpServer, {
     methods: ['GET', 'POST'],
     credentials: true,
   },
+  transports: ['websocket', 'polling'],
 })
 
 // CORS設定

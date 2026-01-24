@@ -398,4 +398,53 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
   }
 })
 
+// POST /api/users/push-token - プッシュトークン登録
+router.post('/push-token', requireAuth, async (req, res, next) => {
+  try {
+    const { token, platform } = req.body
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_INPUT',
+          message: 'Push token is required',
+        },
+      })
+    }
+
+    await prisma.user.update({
+      where: { id: req.user!.id },
+      data: {
+        pushToken: token,
+        pushPlatform: platform || 'unknown',
+      },
+    })
+
+    res.json({
+      success: true,
+      data: { message: 'Push token registered' },
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// DELETE /api/users/push-token - プッシュトークン削除
+router.delete('/push-token', requireAuth, async (req, res, next) => {
+  try {
+    await prisma.user.update({
+      where: { id: req.user!.id },
+      data: {
+        pushToken: null,
+        pushPlatform: null,
+      },
+    })
+
+    res.status(204).send()
+  } catch (error) {
+    next(error)
+  }
+})
+
 export { router as usersRouter }

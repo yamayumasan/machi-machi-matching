@@ -80,7 +80,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="メールアドレス"
-            placeholderTextColor={colors.gray[400]}
+            placeholderTextColor={colors.primary[400]}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -91,7 +91,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="パスワード"
-            placeholderTextColor={colors.gray[400]}
+            placeholderTextColor={colors.primary[400]}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -124,7 +124,7 @@ export default function LoginScreen() {
             disabled={isLoading || isGoogleLoading}
           >
             {isGoogleLoading ? (
-              <ActivityIndicator color={colors.gray[700]} />
+              <ActivityIndicator color={colors.primary[700]} />
             ) : (
               <>
                 <Text style={styles.googleIcon}>G</Text>
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: colors.gray[900],
+    color: colors.primary[900],
   },
   titleAccent: {
     fontSize: 32,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: colors.gray[500],
+    color: colors.primary[500],
     marginTop: spacing.sm,
   },
   form: {
@@ -181,12 +181,12 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.gray[300],
+    borderColor: colors.primary[300],
     borderRadius: 8,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     fontSize: 16,
-    color: colors.gray[900],
+    color: colors.primary[900],
   },
   button: {
     backgroundColor: colors.primary[500],
@@ -211,10 +211,10 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.gray[300],
+    backgroundColor: colors.primary[300],
   },
   dividerText: {
-    color: colors.gray[500],
+    color: colors.primary[500],
     fontSize: 14,
     marginHorizontal: spacing.md,
   },
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: colors.gray[300],
+    borderColor: colors.primary[300],
     borderRadius: 8,
     paddingVertical: spacing.md,
   },
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   googleButtonText: {
-    color: colors.gray[700],
+    color: colors.primary[700],
     fontSize: 16,
     fontWeight: '500',
   },
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
   },
   footerText: {
-    color: colors.gray[500],
+    color: colors.primary[500],
     fontSize: 14,
   },
   linkText: {
