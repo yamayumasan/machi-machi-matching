@@ -9,7 +9,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "eas-build-post-install": "cd ../shared && pnpm build"
+    "eas-build-post-install": "cd ../shared && pnpm install && pnpm build"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
