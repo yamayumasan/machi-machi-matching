@@ -8,6 +8,7 @@ cmds = ["pnpm install"]
 cmds = [
   "cd packages/shared && pnpm build",
   "cd packages/api && pnpm prisma:generate",
+  "cd packages/api && pnpm exec prisma migrate deploy --schema=../../prisma/schema.prisma",
   "cd packages/api && pnpm build"
 ]
 
