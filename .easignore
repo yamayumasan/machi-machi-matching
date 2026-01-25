@@ -3,6 +3,9 @@ packages/api
 packages/web
 packages/shared/node_modules
 
+# Include shared dist (needed for build, overrides .gitignore)
+!packages/shared/dist
+
 # Ignore development files
 .git
 .github

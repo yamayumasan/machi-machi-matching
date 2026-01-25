@@ -5,7 +5,11 @@
   },
   "build": {
     "base": {
-      "node": "22.12.0"
+      "node": "22.12.0",
+      "pnpm": "8.15.0",
+      "env": {
+        "EXPO_USE_METRO_WORKSPACE_ROOT": "1"
+      }
     },
     "development": {
       "extends": "base",
