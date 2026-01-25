@@ -35,6 +35,10 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   },
 })
 
+interface SignUpResult {
+  needsEmailConfirmation: boolean
+}
+
 interface AuthState {
   user: User | null
   session: Session | null
@@ -43,7 +47,7 @@ interface AuthState {
 
   // Actions
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string) => Promise<void>
+  signUp: (email: string, password: string) => Promise<SignUpResult>
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   checkSession: () => Promise<void>
@@ -80,21 +84,40 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     })
   },
 
-  signUp: async (email: string, password: string) => {
+  signUp: async (email: string, password: string): Promise<SignUpResult> => {
+    console.log('[AUTH] signUp: starting with email:', email)
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     })
 
+    console.log('[AUTH] signUp: response:', {
+      user: data.user?.id,
+      email: data.user?.email,
+      session: !!data.session,
+      error: error?.message,
+      // ユーザーの確認状態
+      emailConfirmedAt: data.user?.email_confirmed_at,
+      confirmationSentAt: data.user?.confirmation_sent_at,
+    })
+
     if (error) {
+      console.error('[AUTH] signUp: error:', error)
       throw error
     }
 
     // メール確認が必要な場合、session は null
     if (data.session) {
+      console.log('[AUTH] signUp: session exists, no email confirmation needed')
       set({ session: data.session })
       await get().fetchUser()
+      return { needsEmailConfirmation: false }
     }
+
+    // メール確認が必要
+    console.log('[AUTH] signUp: no session, email confirmation required')
+    return { needsEmailConfirmation: true }
   },
 
   signInWithGoogle: async () => {

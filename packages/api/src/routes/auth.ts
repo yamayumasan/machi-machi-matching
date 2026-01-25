@@ -7,15 +7,16 @@ import { prisma } from '../lib/prisma'
 const router = Router()
 
 // POST /api/auth/signup - メール・パスワードで新規登録
+// 注意: モバイルアプリからは直接Supabase Auth APIを使用するため、このエンドポイントは使用しません
+// メール確認フローはSupabase側で処理され、確認後のログイン時にDBユーザーが自動作成されます
 router.post('/signup', validateRequest(signUpSchema), async (req, res, next) => {
   try {
     const { email, password } = req.body
 
-    // Supabase Authで登録
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    // 通常のSupabase signUp APIを使用（メール確認が必要）
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: true, // 開発中は自動確認
     })
 
     if (authError) {
@@ -28,11 +29,26 @@ router.post('/signup', validateRequest(signUpSchema), async (req, res, next) => 
       })
     }
 
-    // ユーザーをDBに保存
+    // メール確認が必要な場合（sessionがnull）
+    if (!authData.session) {
+      return res.status(201).json({
+        success: true,
+        data: {
+          message: 'Confirmation email sent. Please check your email.',
+          needsEmailConfirmation: true,
+          user: {
+            id: authData.user?.id,
+            email: authData.user?.email,
+          },
+        },
+      })
+    }
+
+    // セッションがある場合（メール確認不要の設定の場合）、DBにユーザーを作成
     const user = await prisma.user.create({
       data: {
-        id: authData.user.id,
-        email: authData.user.email!,
+        id: authData.user!.id,
+        email: authData.user!.email!,
         isOnboarded: false,
       },
     })
@@ -74,8 +90,8 @@ router.post('/signin', validateRequest(signInSchema), async (req, res, next) => 
       })
     }
 
-    // DBからユーザー情報を取得
-    const user = await prisma.user.findUnique({
+    // DBからユーザー情報を取得、なければ自動作成
+    let user = await prisma.user.findUnique({
       where: { id: authData.user.id },
       include: {
         interests: {
@@ -86,12 +102,20 @@ router.post('/signin', validateRequest(signInSchema), async (req, res, next) => 
       },
     })
 
+    // DBにユーザーがない場合は自動作成（メール確認後の初回ログイン時）
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'USER_NOT_FOUND',
-          message: 'User not found in database',
+      user = await prisma.user.create({
+        data: {
+          id: authData.user.id,
+          email: authData.user.email!,
+          isOnboarded: false,
+        },
+        include: {
+          interests: {
+            include: {
+              category: true,
+            },
+          },
         },
       })
     }

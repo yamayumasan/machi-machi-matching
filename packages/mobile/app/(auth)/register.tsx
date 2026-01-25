@@ -20,6 +20,7 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false)
   const { signUp, signInWithGoogle } = useAuthStore()
 
   const handleRegister = async () => {
@@ -40,8 +41,10 @@ export default function RegisterScreen() {
 
     setIsLoading(true)
     try {
-      await signUp(email, password)
-      Alert.alert('登録完了', '確認メールを送信しました。メールを確認してください。')
+      const result = await signUp(email, password)
+      if (result.needsEmailConfirmation) {
+        setShowEmailConfirmation(true)
+      }
     } catch (error: any) {
       Alert.alert('登録エラー', error.message || '登録に失敗しました')
     } finally {
@@ -67,6 +70,37 @@ export default function RegisterScreen() {
     } finally {
       setIsGoogleLoading(false)
     }
+  }
+
+  // メール確認待ち画面
+  if (showEmailConfirmation) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.confirmationContainer}>
+            <Text style={styles.confirmationIcon}>✉️</Text>
+            <Text style={styles.confirmationTitle}>確認メールを送信しました</Text>
+            <Text style={styles.confirmationText}>
+              {email} に確認メールを送信しました。{'\n'}
+              メール内のリンクをクリックして{'\n'}
+              登録を完了してください。
+            </Text>
+            <TouchableOpacity
+              style={styles.confirmationButton}
+              onPress={() => router.replace('/login')}
+            >
+              <Text style={styles.buttonText}>ログイン画面へ</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.resendButton}
+              onPress={() => setShowEmailConfirmation(false)}
+            >
+              <Text style={styles.resendButtonText}>別のメールアドレスで登録</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    )
   }
 
   return (
@@ -263,5 +297,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginTop: spacing.xs,
+  },
+  confirmationContainer: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  confirmationIcon: {
+    fontSize: 64,
+    marginBottom: spacing.lg,
+  },
+  confirmationTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.primary[900],
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  confirmationText: {
+    fontSize: 16,
+    color: colors.primary[600],
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: spacing.xl,
+  },
+  confirmationButton: {
+    backgroundColor: colors.primary[500],
+    borderRadius: 8,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl * 2,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  resendButton: {
+    paddingVertical: spacing.sm,
+  },
+  resendButtonText: {
+    color: colors.primary[500],
+    fontSize: 14,
+    fontWeight: '500',
   },
 })
