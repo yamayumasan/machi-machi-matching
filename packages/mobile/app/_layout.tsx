@@ -113,6 +113,12 @@ function RootLayoutNav() {
             title: '利用規約',
           }}
         />
+        <Stack.Screen
+          name="auth/callback"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
     </View>
   )
