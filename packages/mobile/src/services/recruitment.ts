@@ -144,7 +144,7 @@ export const applyToRecruitment = async (
   id: string,
   message?: string
 ): Promise<Application> => {
-  const response = await api.post<ApiResponse<Application>>(`/recruitments/${id}/applications`, { message })
+  const response = await api.post<ApiResponse<Application>>(`/recruitments/${id}/apply`, { message })
   return response.data.data
 }
 

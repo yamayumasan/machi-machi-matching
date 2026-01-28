@@ -9,7 +9,8 @@
       "pnpm": "8.15.0",
       "env": {
         "EXPO_USE_METRO_WORKSPACE_ROOT": "1"
-      }
+      },
+      "channel": "base"
     },
     "development": {
       "extends": "base",
@@ -17,7 +18,8 @@
       "distribution": "internal",
       "ios": {
         "resourceClass": "m-medium"
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "extends": "base",
@@ -27,7 +29,8 @@
       },
       "android": {
         "buildType": "apk"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "extends": "base",
@@ -37,7 +40,8 @@
       },
       "android": {
         "buildType": "app-bundle"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {
