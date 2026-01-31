@@ -12,7 +12,7 @@ export default function TermsOfServiceScreen() {
       />
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={styles.title}>利用規約</Text>
-        <Text style={styles.lastUpdated}>最終更新日: 2024年1月23日</Text>
+        <Text style={styles.lastUpdated}>最終更新日: 2026年1月31日</Text>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>第1条（適用）</Text>

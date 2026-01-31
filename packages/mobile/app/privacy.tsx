@@ -12,7 +12,7 @@ export default function PrivacyPolicyScreen() {
       />
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={styles.title}>プライバシーポリシー</Text>
-        <Text style={styles.lastUpdated}>最終更新日: 2024年1月23日</Text>
+        <Text style={styles.lastUpdated}>最終更新日: 2026年1月31日</Text>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>1. 収集する情報</Text>
