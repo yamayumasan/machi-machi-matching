@@ -1,8 +1,10 @@
 import { useEffect, useState, useRef } from 'react'
-import { View, Alert } from 'react-native'
+import { View, Alert, Platform } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
+import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency'
+import mobileAds from 'react-native-google-mobile-ads'
 import { useAuthStore } from '@/stores/auth'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { useSocket } from '@/hooks/useSocket'
@@ -27,6 +29,14 @@ function RootLayoutNav() {
   useEffect(() => {
     async function prepare() {
       try {
+        // ATT許可リクエスト（iOS 14.5+）
+        if (Platform.OS === 'ios') {
+          await requestTrackingPermissionsAsync()
+        }
+
+        // AdMob SDK初期化
+        await mobileAds().initialize()
+
         // 認証状態をチェック
         await checkSession()
       } catch (e) {

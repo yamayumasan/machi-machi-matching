@@ -21,6 +21,8 @@ import { CreateRecruitmentData } from '@/services/recruitment'
 import { colors, spacing } from '@/constants/theme'
 import { CategoryIcon } from '@/components/CategoryIcon'
 import { LocationPickerModal, LocationData } from '@/components/LocationPickerModal'
+import { useInterstitialAd } from '@/hooks/useInterstitialAd'
+import { AD_UNIT_IDS } from '@/constants/ads'
 
 type AreaType = 'TOKYO' | 'SENDAI'
 
@@ -28,6 +30,7 @@ export default function CreateRecruitmentScreen() {
   const { user } = useAuthStore()
   const { addRecruitment } = useRecruitmentStore()
   const { categories, fetchCategories } = useCategoryStore()
+  const { showAd } = useInterstitialAd(AD_UNIT_IDS.INTERSTITIAL_CREATE)
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showLocationPicker, setShowLocationPicker] = useState(false)
@@ -102,6 +105,7 @@ export default function CreateRecruitmentScreen() {
       }
 
       const recruitment = await addRecruitment(data)
+      showAd()
       Alert.alert('作成完了', '募集を作成しました。おすすめユーザーにオファーを送りましょう！', [
         {
           text: 'あとで',

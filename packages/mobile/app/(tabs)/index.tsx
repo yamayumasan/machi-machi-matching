@@ -28,6 +28,8 @@ import { RecruitmentDetailModal } from '@/components/RecruitmentDetailModal'
 import { WantToDoDetailModal } from '@/components/WantToDoDetailModal'
 import { NearbyWantToDo, NearbyRecruitment } from '@/services/nearby'
 import { colors, spacing } from '@/constants/theme'
+import { AdBanner } from '@/components/AdBanner'
+import { AD_UNIT_IDS } from '@/constants/ads'
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window')
 
@@ -389,6 +391,9 @@ export default function HomeScreen() {
             ))
           )}
         </ScrollView>
+
+        {/* バナー広告 */}
+        <AdBanner unitId={AD_UNIT_IDS.BANNER_MAP} />
       </Animated.View>
 
       {/* FAB */}

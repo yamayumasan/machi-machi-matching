@@ -15,6 +15,8 @@ import { useGroupStore } from '@/stores/group'
 import { Group } from '@/services/group'
 import { colors, spacing } from '@/constants/theme'
 import { CategoryIcon } from '@/components/CategoryIcon'
+import { AdBanner } from '@/components/AdBanner'
+import { AD_UNIT_IDS } from '@/constants/ads'
 
 export default function GroupsScreen() {
   const { groups, isLoading, fetchGroups } = useGroupStore()
@@ -94,6 +96,9 @@ export default function GroupsScreen() {
           contentContainerStyle={styles.listContent}
         />
       )}
+
+      {/* バナー広告 */}
+      <AdBanner unitId={AD_UNIT_IDS.BANNER_GROUPS} />
     </SafeAreaView>
   )
 }
