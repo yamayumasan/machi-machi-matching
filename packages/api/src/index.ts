@@ -100,6 +100,21 @@ const limiter = rateLimit({
 })
 app.use('/api', limiter)
 
+// 静的ページ（プライバシーポリシー、利用規約、サポート）
+const publicDir = resolve(__dirname, '../public')
+app.get('/privacy', (_req, res) => {
+  res.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'")
+  res.sendFile(resolve(publicDir, 'privacy.html'))
+})
+app.get('/terms', (_req, res) => {
+  res.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'")
+  res.sendFile(resolve(publicDir, 'terms.html'))
+})
+app.get('/support', (_req, res) => {
+  res.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'")
+  res.sendFile(resolve(publicDir, 'support.html'))
+})
+
 // Routes
 app.use('/api/health', healthRouter)
 app.use('/api/auth', authRouter)
