@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, RefreshControl } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, RefreshControl, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
@@ -19,13 +19,14 @@ const TIMING_LABELS: Record<string, string> = {
 }
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuthStore()
+  const { user, signOut, deleteAccount } = useAuthStore()
   const { wantToDos, isLoading, fetchWantToDos } = useWantToDoStore()
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedWantToDo, setSelectedWantToDo] = useState<WantToDo | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // 初期読み込み
   useEffect(() => {
@@ -58,6 +59,45 @@ export default function ProfileScreen() {
           text: 'ログアウト',
           style: 'destructive',
           onPress: signOut,
+        },
+      ]
+    )
+  }
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'アカウントを削除',
+      'アカウントを削除すると、すべてのデータが完全に削除され、復元できません。本当に削除しますか？',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: '削除する',
+          style: 'destructive',
+          onPress: () => {
+            // 2段階確認
+            Alert.alert(
+              '最終確認',
+              'この操作は取り消せません。アカウントを削除してもよろしいですか？',
+              [
+                { text: 'キャンセル', style: 'cancel' },
+                {
+                  text: '削除を実行',
+                  style: 'destructive',
+                  onPress: async () => {
+                    setIsDeleting(true)
+                    try {
+                      await deleteAccount()
+                      router.replace('/(auth)/login')
+                    } catch (error: any) {
+                      Alert.alert('エラー', error.message || 'アカウントの削除に失敗しました')
+                    } finally {
+                      setIsDeleting(false)
+                    }
+                  },
+                },
+              ]
+            )
+          },
         },
       ]
     )
@@ -261,6 +301,24 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutButtonText}>ログアウト</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* アカウント削除 */}
+        <View style={styles.deleteSection}>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleDeleteAccount}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <ActivityIndicator color={colors.error[500]} size="small" />
+            ) : (
+              <Text style={styles.deleteButtonText}>アカウントを削除</Text>
+            )}
+          </TouchableOpacity>
+          <Text style={styles.deleteDescription}>
+            アカウントを削除すると、すべてのデータが完全に削除されます
+          </Text>
         </View>
 
         <View style={{ height: spacing.xl }} />
@@ -535,5 +593,27 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: colors.error[500],
     fontSize: 16,
+  },
+  deleteSection: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  deleteButton: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.error[50],
+  },
+  deleteButtonText: {
+    color: colors.error[500],
+    fontSize: 14,
+  },
+  deleteDescription: {
+    fontSize: 12,
+    color: colors.primary[400],
+    textAlign: 'center',
+    marginTop: spacing.sm,
   },
 })

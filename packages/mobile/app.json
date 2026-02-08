@@ -17,10 +17,13 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.machimachi.matching",
-      "buildNumber": "15",
+      "buildNumber": "16",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "近くの募集やユーザーを表示するために位置情報を使用します",
         "NSLocationAlwaysUsageDescription": "近くの募集やユーザーを表示するために位置情報を使用します",
+        "NSCameraUsageDescription": "プロフィール写真を撮影するためにカメラを使用します。撮影した写真はあなたのプロフィール画像として他のユーザーに表示されます。",
+        "NSPhotoLibraryUsageDescription": "プロフィール写真を選択するためにフォトライブラリにアクセスします。選択した写真はあなたのプロフィール画像として他のユーザーに表示されます。",
         "NSUserTrackingUsageDescription": "あなたに合った広告を表示するために、トラッキングデータを使用します",
         "ITSAppUsesNonExemptEncryption": false,
         "SKAdNetworkItems": [
@@ -46,6 +49,13 @@
       "expo-router",
       "expo-secure-store",
       [
+        "expo-image-picker",
+        {
+          "cameraPermission": "プロフィール写真を撮影するためにカメラを使用します。撮影した写真はあなたのプロフィール画像として他のユーザーに表示されます。",
+          "photosPermission": "プロフィール写真を選択するためにフォトライブラリにアクセスします。選択した写真はあなたのプロフィール画像として他のユーザーに表示されます。"
+        }
+      ],
+      [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "近くの募集やユーザーを表示するために位置情報を使用します"
@@ -63,7 +73,8 @@
           "iosAppId": "ca-app-pub-5939068883130290~7399629086",
           "userTrackingUsageDescription": "あなたに合った広告を表示するために、トラッキングデータを使用します"
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true

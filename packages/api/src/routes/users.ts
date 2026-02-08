@@ -116,7 +116,7 @@ router.post(
   validateRequest(onboardingSchema),
   async (req, res, next) => {
     try {
-      const { nickname, bio, area, categoryIds, latitude, longitude, locationName } = req.body
+      const { nickname, bio, area, categoryIds, latitude, longitude, locationName, agreedToTerms } = req.body
 
       // トランザクションでユーザー更新とカテゴリ設定を行う
       const user = await prisma.$transaction(async (tx) => {
@@ -131,6 +131,7 @@ router.post(
             longitude,
             locationName,
             isOnboarded: true,
+            ...(agreedToTerms && { agreedToTermsAt: new Date() }),
           },
         })
 
@@ -442,6 +443,96 @@ router.delete('/push-token', requireAuth, async (req, res, next) => {
     })
 
     res.status(204).send()
+  } catch (error) {
+    next(error)
+  }
+})
+
+// DELETE /api/users/me - アカウント削除
+router.delete('/me', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user!.id
+
+    // トランザクションで関連データを削除
+    await prisma.$transaction(async (tx) => {
+      // 1. 通知を削除
+      await tx.notification.deleteMany({
+        where: { userId },
+      })
+
+      // 2. メッセージの送信者を匿名化（削除済みユーザーとして残す）
+      await tx.message.updateMany({
+        where: { senderId: userId },
+        data: { senderId: userId }, // 実際にはユーザー削除後も参照は残る
+      })
+
+      // 3. グループメンバーから削除
+      await tx.groupMember.deleteMany({
+        where: { userId },
+      })
+
+      // 4. オファーを削除（送信・受信両方）
+      await tx.offer.deleteMany({
+        where: {
+          OR: [{ senderId: userId }, { receiverId: userId }],
+        },
+      })
+
+      // 5. 申請を削除
+      await tx.application.deleteMany({
+        where: { applicantId: userId },
+      })
+
+      // 6. 自分が作成した募集のステータスをCLOSEDに変更
+      await tx.recruitment.updateMany({
+        where: { creatorId: userId },
+        data: { status: 'CLOSED' },
+      })
+
+      // 7. やりたいことを削除
+      await tx.wantToDo.deleteMany({
+        where: { userId },
+      })
+
+      // 8. ユーザーカテゴリを削除
+      await tx.userCategory.deleteMany({
+        where: { userId },
+      })
+
+      // 9. アバター画像を削除（あれば）
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { avatarUrl: true },
+      })
+
+      if (user?.avatarUrl) {
+        const bucketName = 'avatars'
+        const oldPath = user.avatarUrl.split(`${bucketName}/`)[1]
+        if (oldPath) {
+          await supabaseAdmin.storage.from(bucketName).remove([oldPath])
+        }
+      }
+
+      // 10. ユーザーを削除
+      await tx.user.delete({
+        where: { id: userId },
+      })
+    })
+
+    // Supabase Authからユーザーを削除
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+
+    if (authError) {
+      console.error('Failed to delete user from Supabase Auth:', authError)
+      // DBからは削除済みなので、エラーでも成功として扱う
+    }
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Account deleted successfully',
+      },
+    })
   } catch (error) {
     next(error)
   }

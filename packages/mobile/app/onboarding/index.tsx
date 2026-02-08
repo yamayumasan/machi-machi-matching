@@ -7,9 +7,11 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Linking,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useAuthStore } from '@/stores/auth'
 import { colors, spacing } from '@/constants/theme'
 import { CategoryIcon } from '@/components/CategoryIcon'
@@ -43,6 +45,7 @@ export default function OnboardingScreen() {
   const [bio, setBio] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedArea, setSelectedArea] = useState<'TOKYO' | 'SENDAI' | null>(null)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   const { completeOnboarding } = useAuthStore()
@@ -75,6 +78,11 @@ export default function OnboardingScreen() {
       return
     }
 
+    if (!agreedToTerms) {
+      Alert.alert('エラー', '利用規約とプライバシーポリシーに同意してください')
+      return
+    }
+
     setIsLoading(true)
     try {
       await completeOnboarding({
@@ -82,6 +90,7 @@ export default function OnboardingScreen() {
         bio: bio.trim() || undefined,
         area: selectedArea,
         categoryIds: selectedCategories,
+        agreedToTerms: true,
       })
       router.replace('/(tabs)')
     } catch (error: any) {
@@ -221,6 +230,36 @@ export default function OnboardingScreen() {
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+
+          {/* 利用規約同意 */}
+          <View style={styles.termsSection}>
+            <TouchableOpacity
+              style={styles.termsCheckbox}
+              onPress={() => setAgreedToTerms(!agreedToTerms)}
+            >
+              <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
+                {agreedToTerms && (
+                  <Ionicons name="checkmark" size={16} color={colors.white} />
+                )}
+              </View>
+              <Text style={styles.termsText}>
+                <Text
+                  style={styles.termsLink}
+                  onPress={() => router.push('/terms')}
+                >
+                  利用規約
+                </Text>
+                <Text>と</Text>
+                <Text
+                  style={styles.termsLink}
+                  onPress={() => router.push('/privacy')}
+                >
+                  プライバシーポリシー
+                </Text>
+                <Text>に同意する</Text>
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.buttonGroup}>
@@ -398,5 +437,37 @@ const styles = StyleSheet.create({
   areaNameSelected: {
     color: colors.primary[700],
     fontWeight: '600',
+  },
+  termsSection: {
+    marginTop: spacing.xl,
+  },
+  termsCheckbox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: colors.primary[300],
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary[500],
+    borderColor: colors.primary[500],
+  },
+  termsText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 22,
+    color: colors.primary[700],
+  },
+  termsLink: {
+    color: colors.primary[500],
+    textDecorationLine: 'underline',
   },
 })

@@ -25,6 +25,7 @@ import { recruitmentsRouter } from './routes/recruitments'
 import { groupsRouter } from './routes/groups'
 import { nearbyRouter } from './routes/nearby'
 import { notificationsRouter } from './routes/notifications'
+import { moderationRouter } from './routes/moderation'
 import { errorHandler } from './middlewares/errorHandler'
 import { setupSocket } from './socket'
 import { startScheduler } from './services/schedulerService'
@@ -125,6 +126,7 @@ app.use('/api/recruitments', recruitmentsRouter)
 app.use('/api/groups', groupsRouter)
 app.use('/api/nearby', nearbyRouter)
 app.use('/api/notifications', notificationsRouter)
+app.use('/api/moderation', moderationRouter)
 
 // Error handler
 app.use(errorHandler)

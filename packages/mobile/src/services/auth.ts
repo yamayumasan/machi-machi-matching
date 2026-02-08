@@ -20,6 +20,7 @@ export interface OnboardingData {
   categoryIds: string[]
   latitude?: number
   longitude?: number
+  agreedToTerms?: boolean
 }
 
 // APIレスポンスの型
@@ -70,6 +71,11 @@ export const updateUser = async (
 // ユーザーのカテゴリ更新
 export const updateUserCategories = async (categoryIds: string[]): Promise<void> => {
   await api.put<ApiResponse<unknown>>('/users/me/categories', { categoryIds })
+}
+
+// アカウント削除
+export const deleteAccount = async (): Promise<void> => {
+  await api.delete<ApiResponse<{ message: string }>>('/users/me')
 }
 
 export { getErrorMessage }

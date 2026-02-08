@@ -11,3 +11,5 @@ export { NearbyMap } from './NearbyMap'
 export { RecruitmentDetailModal } from './RecruitmentDetailModal'
 
 export { WantToDoDetailModal } from './WantToDoDetailModal'
+
+export { ReportModal } from './ReportModal'

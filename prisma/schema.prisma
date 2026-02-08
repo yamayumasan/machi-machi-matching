@@ -12,21 +12,22 @@ datasource db {
 // ============================================
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String?
-  nickname     String?
-  avatarUrl    String?
-  bio          String?
-  area         Area?
-  latitude     Float?
-  longitude    Float?
-  locationName String?  // 駅名・ランドマーク名
-  isOnboarded  Boolean  @default(false)
-  pushToken    String?  // Expo Push Token
-  pushPlatform String?  // ios or android
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String?
+  nickname       String?
+  avatarUrl      String?
+  bio            String?
+  area           Area?
+  latitude       Float?
+  longitude      Float?
+  locationName   String?   // 駅名・ランドマーク名
+  isOnboarded    Boolean   @default(false)
+  agreedToTermsAt DateTime? // 利用規約同意日時
+  pushToken      String?   // Expo Push Token
+  pushPlatform   String?   // ios or android
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   // Relations
   interests      UserCategory[]
@@ -38,6 +39,12 @@ model User {
   groupMembers   GroupMember[]
   messages       Message[]
   notifications  Notification[]
+
+  // UGC Moderation
+  reportsMade    Report[]        @relation("Reporter")
+  reportsReceived Report[]       @relation("Reported")
+  blockedUsers   Block[]         @relation("Blocker")
+  blockedByUsers Block[]         @relation("Blocked")
 }
 
 model UserCategory {
@@ -241,6 +248,48 @@ model Notification {
 }
 
 // ============================================
+// 報告（UGCモデレーション）
+// ============================================
+
+model Report {
+  id             String       @id @default(cuid())
+  reporterId     String
+  reportedUserId String
+  targetType     ReportTarget // USER, RECRUITMENT, MESSAGE
+  targetId       String?      // 対象のID（募集ID、メッセージIDなど）
+  reason         ReportReason
+  description    String?
+  status         ReportStatus @default(PENDING)
+  createdAt      DateTime     @default(now())
+  resolvedAt     DateTime?
+
+  reporter     User @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUser User @relation("Reported", fields: [reportedUserId], references: [id], onDelete: Cascade)
+
+  @@index([reporterId])
+  @@index([reportedUserId])
+  @@index([status])
+}
+
+// ============================================
+// ブロック（UGCモデレーション）
+// ============================================
+
+model Block {
+  id            String   @id @default(cuid())
+  blockerId     String
+  blockedUserId String
+  createdAt     DateTime @default(now())
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedUserId])
+  @@index([blockerId])
+  @@index([blockedUserId])
+}
+
+// ============================================
 // Enums
 // ============================================
 
@@ -299,4 +348,27 @@ enum NotificationType {
   GROUP_CREATED
   NEW_MESSAGE
   MEMBER_JOINED
+}
+
+// UGCモデレーション用Enum
+enum ReportTarget {
+  USER
+  RECRUITMENT
+  MESSAGE
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  INAPPROPRIATE_CONTENT
+  FAKE_PROFILE
+  OFFENSIVE_LANGUAGE
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
 }

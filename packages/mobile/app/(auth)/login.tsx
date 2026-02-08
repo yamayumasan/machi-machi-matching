@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { Link, router } from 'expo-router'
+import * as AppleAuthentication from 'expo-apple-authentication'
 import { useAuthStore } from '@/stores/auth'
 import { colors, spacing } from '@/constants/theme'
 
@@ -19,7 +20,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
-  const { signIn, signInWithGoogle, isOnboarded } = useAuthStore()
+  const [isAppleLoading, setIsAppleLoading] = useState(false)
+  const { signIn, signInWithGoogle, signInWithApple, isOnboarded } = useAuthStore()
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -64,6 +66,26 @@ export default function LoginScreen() {
     }
   }
 
+  const handleAppleLogin = async () => {
+    setIsAppleLoading(true)
+    try {
+      await signInWithApple()
+      // ログイン成功後、適切な画面へ遷移
+      const { isOnboarded: onboarded } = useAuthStore.getState()
+      if (onboarded) {
+        router.replace('/(tabs)')
+      } else {
+        router.replace('/onboarding')
+      }
+    } catch (error: any) {
+      if (error.message !== 'ログインがキャンセルされました') {
+        Alert.alert('Appleログインエラー', error.message || 'ログインに失敗しました')
+      }
+    } finally {
+      setIsAppleLoading(false)
+    }
+  }
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -101,7 +123,7 @@ export default function LoginScreen() {
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled]}
             onPress={handleLogin}
-            disabled={isLoading || isGoogleLoading}
+            disabled={isLoading || isGoogleLoading || isAppleLoading}
           >
             {isLoading ? (
               <ActivityIndicator color={colors.white} />
@@ -121,7 +143,7 @@ export default function LoginScreen() {
           <TouchableOpacity
             style={[styles.googleButton, isGoogleLoading && styles.buttonDisabled]}
             onPress={handleGoogleLogin}
-            disabled={isLoading || isGoogleLoading}
+            disabled={isLoading || isGoogleLoading || isAppleLoading}
           >
             {isGoogleLoading ? (
               <ActivityIndicator color={colors.primary[700]} />
@@ -132,6 +154,25 @@ export default function LoginScreen() {
               </>
             )}
           </TouchableOpacity>
+
+          {/* Appleログインボタン（iOSのみ） */}
+          {Platform.OS === 'ios' && (
+            <View style={styles.appleButtonContainer}>
+              {isAppleLoading ? (
+                <View style={styles.appleButtonLoading}>
+                  <ActivityIndicator color={colors.white} />
+                </View>
+              ) : (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                  cornerRadius={8}
+                  style={styles.appleButton}
+                  onPress={handleAppleLogin}
+                />
+              )}
+            </View>
+          )}
         </View>
 
         <View style={styles.footer}>
@@ -238,6 +279,21 @@ const styles = StyleSheet.create({
     color: colors.primary[700],
     fontSize: 16,
     fontWeight: '500',
+  },
+  appleButtonContainer: {
+    marginTop: spacing.sm,
+  },
+  appleButton: {
+    width: '100%',
+    height: 50,
+  },
+  appleButtonLoading: {
+    width: '100%',
+    height: 50,
+    backgroundColor: '#000',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   footer: {
     alignItems: 'center',

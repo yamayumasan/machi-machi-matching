@@ -14,11 +14,12 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router, Stack } from 'expo-router'
-import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons'
 import { useRecruitmentStore } from '@/stores/recruitment'
 import { useAuthStore } from '@/stores/auth'
 import { colors, spacing } from '@/constants/theme'
 import { CategoryIcon } from '@/components/CategoryIcon'
+import { ReportModal } from '@/components/ReportModal'
 import { Application, getApplications, updateApplicationStatus } from '@/services/recruitment'
 
 export default function RecruitmentDetailScreen() {
@@ -35,6 +36,7 @@ export default function RecruitmentDetailScreen() {
   const [isApplyModalVisible, setIsApplyModalVisible] = useState(false)
   const [applyMessage, setApplyMessage] = useState('')
   const [isApplying, setIsApplying] = useState(false)
+  const [isReportModalVisible, setIsReportModalVisible] = useState(false)
 
   // 応募一覧用の状態
   const [applications, setApplications] = useState<Application[]>([])
@@ -184,14 +186,26 @@ export default function RecruitmentDetailScreen() {
         options={{
           title: '募集詳細',
           headerBackTitle: '戻る',
-          headerRight: isCreator && recruitment.status === 'OPEN' ? () => (
-            <TouchableOpacity
-              onPress={() => router.push(`/recruitment/${id}/edit`)}
-              style={styles.headerEditButton}
-            >
-              <MaterialCommunityIcons name="pencil" size={20} color={colors.primary[600]} />
-            </TouchableOpacity>
-          ) : undefined,
+          headerRight: () => (
+            <View style={styles.headerButtons}>
+              {isCreator && recruitment.status === 'OPEN' && (
+                <TouchableOpacity
+                  onPress={() => router.push(`/recruitment/${id}/edit`)}
+                  style={styles.headerButton}
+                >
+                  <MaterialCommunityIcons name="pencil" size={20} color={colors.primary[600]} />
+                </TouchableOpacity>
+              )}
+              {!isCreator && (
+                <TouchableOpacity
+                  onPress={() => setIsReportModalVisible(true)}
+                  style={styles.headerButton}
+                >
+                  <Ionicons name="flag-outline" size={20} color={colors.primary[600]} />
+                </TouchableOpacity>
+              )}
+            </View>
+          ),
         }}
       />
       <ScrollView style={styles.scrollView}>
@@ -520,6 +534,18 @@ export default function RecruitmentDetailScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* 報告モーダル */}
+      {recruitment && recruitment.creatorId && (
+        <ReportModal
+          visible={isReportModalVisible}
+          onClose={() => setIsReportModalVisible(false)}
+          targetUserId={recruitment.creatorId}
+          targetUserName={recruitment.creator.nickname}
+          targetType="RECRUITMENT"
+          targetId={id}
+        />
+      )}
     </SafeAreaView>
   )
 }
@@ -1018,7 +1044,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.white,
   },
-  headerEditButton: {
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  headerButton: {
     padding: spacing.sm,
   },
 })

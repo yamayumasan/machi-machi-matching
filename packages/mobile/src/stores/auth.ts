@@ -3,11 +3,14 @@ import * as SecureStore from 'expo-secure-store'
 import { createClient, Session } from '@supabase/supabase-js'
 import * as WebBrowser from 'expo-web-browser'
 import * as AuthSession from 'expo-auth-session'
+import * as AppleAuthentication from 'expo-apple-authentication'
+import { Platform } from 'react-native'
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants'
 import {
   getCurrentUser,
   completeOnboarding as completeOnboardingApi,
   registerOAuthUser,
+  deleteAccount as deleteAccountApi,
   User,
   OnboardingData,
 } from '@/services/auth'
@@ -49,7 +52,9 @@ interface AuthState {
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string) => Promise<SignUpResult>
   signInWithGoogle: () => Promise<void>
+  signInWithApple: () => Promise<void>
   signOut: () => Promise<void>
+  deleteAccount: () => Promise<void>
   checkSession: () => Promise<void>
   fetchUser: () => Promise<void>
   completeOnboarding: (data: OnboardingData) => Promise<void>
@@ -199,9 +204,99 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
+  signInWithApple: async () => {
+    // iOSのみサポート
+    if (Platform.OS !== 'ios') {
+      throw new Error('Sign in with Apple is only available on iOS')
+    }
+
+    // Apple認証が利用可能か確認
+    const isAvailable = await AppleAuthentication.isAvailableAsync()
+    if (!isAvailable) {
+      throw new Error('Sign in with Apple is not available on this device')
+    }
+
+    try {
+      // Apple認証を実行
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      })
+
+      console.log('[AUTH] Apple credential received:', {
+        user: credential.user,
+        email: credential.email,
+        fullName: credential.fullName,
+        identityToken: credential.identityToken ? 'exists' : 'null',
+      })
+
+      if (!credential.identityToken) {
+        throw new Error('Apple認証トークンの取得に失敗しました')
+      }
+
+      // SupabaseにApple認証トークンを送信
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+      })
+
+      if (error) {
+        console.error('[AUTH] Supabase Apple auth error:', error)
+        throw error
+      }
+
+      console.log('[AUTH] Supabase Apple auth success:', {
+        userId: data.user?.id,
+        email: data.user?.email,
+        session: !!data.session,
+      })
+
+      set({ session: data.session })
+
+      // バックエンドにOAuthコールバックを通知してDBにユーザーを作成/取得
+      if (data.session) {
+        try {
+          const user = await registerOAuthUser(
+            data.session.access_token,
+            data.session.refresh_token
+          )
+          set({
+            user,
+            isOnboarded: user.isOnboarded,
+          })
+        } catch (error) {
+          console.error('[AUTH] Apple OAuth user registration error:', error)
+          // フォールバック: 通常のfetchUserを試行
+          await get().fetchUser()
+        }
+      }
+    } catch (error: any) {
+      if (error.code === 'ERR_REQUEST_CANCELED') {
+        throw new Error('ログインがキャンセルされました')
+      }
+      throw error
+    }
+  },
+
   signOut: async () => {
     await supabase.auth.signOut()
     set({ user: null, session: null, isOnboarded: false })
+  },
+
+  deleteAccount: async () => {
+    console.log('[AUTH] deleteAccount: starting...')
+    try {
+      await deleteAccountApi()
+      console.log('[AUTH] deleteAccount: API success')
+      await supabase.auth.signOut()
+      set({ user: null, session: null, isOnboarded: false })
+      console.log('[AUTH] deleteAccount: completed')
+    } catch (error: any) {
+      console.error('[AUTH] deleteAccount: error:', error?.response?.data || error.message)
+      throw error
+    }
   },
 
   checkSession: async () => {
