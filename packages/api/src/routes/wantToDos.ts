@@ -3,6 +3,7 @@ import { createWantToDoSchema, updateWantToDoSchema, paginationSchema } from '@m
 import { validateRequest } from '../middlewares/validateRequest'
 import { requireAuth, requireOnboarding, optionalAuth } from '../middlewares/auth'
 import { prisma } from '../lib/prisma'
+import { getBlockedUserIds } from '../lib/blockFilter'
 import { Area } from '@prisma/client'
 
 const router = Router()
@@ -47,9 +48,13 @@ router.get('/', optionalAuth, async (req, res, next) => {
       timing?: string
     }
 
+    // ブロックフィルター: ログイン中ユーザーの場合のみ適用
+    const blockedUserIds = req.user ? await getBlockedUserIds(req.user.id) : []
+
     const where: any = {
       status: 'ACTIVE',
       expiresAt: { gt: new Date() },
+      ...(blockedUserIds.length > 0 ? { userId: { notIn: blockedUserIds } } : {}),
     }
 
     if (categoryId) {

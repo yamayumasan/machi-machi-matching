@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { requireAuth, requireOnboarding } from '../middlewares/auth'
 import { prisma } from '../lib/prisma'
+import { getBlockedUserIds } from '../lib/blockFilter'
 import { z } from 'zod'
 
 const router = Router()
@@ -54,6 +55,9 @@ router.get('/', requireAuth, requireOnboarding, async (req, res, next) => {
 
     const bounds = getBoundingBox(lat, lng, radius)
 
+    // ブロックフィルター
+    const blockedUserIds = await getBlockedUserIds(req.user!.id)
+
     const results: Array<{
       id: string
       type: 'recruitment' | 'wantToDo'
@@ -103,6 +107,7 @@ router.get('/', requireAuth, requireOnboarding, async (req, res, next) => {
           latitude: { not: null, gte: bounds.minLat, lte: bounds.maxLat },
           longitude: { not: null, gte: bounds.minLng, lte: bounds.maxLng },
           ...(categoryIds && categoryIds.length > 0 ? { categoryId: { in: categoryIds } } : {}),
+          ...(blockedUserIds.length > 0 ? { creatorId: { notIn: blockedUserIds } } : {}),
         },
         include: {
           creator: {
@@ -178,11 +183,13 @@ router.get('/', requireAuth, requireOnboarding, async (req, res, next) => {
 
     // 表明を取得
     if (types === 'all' || types === 'wantToDo') {
+      // 自分とブロックユーザーを除外
+      const excludeUserIds = [req.user!.id, ...blockedUserIds]
       const wantToDos = await prisma.wantToDo.findMany({
         where: {
           status: 'ACTIVE',
           expiresAt: { gt: new Date() },
-          userId: { not: req.user!.id }, // 自分の表明は除外
+          userId: { notIn: excludeUserIds },
           latitude: { not: null, gte: bounds.minLat, lte: bounds.maxLat },
           longitude: { not: null, gte: bounds.minLng, lte: bounds.maxLng },
           ...(categoryIds && categoryIds.length > 0 ? { categoryId: { in: categoryIds } } : {}),
@@ -278,6 +285,9 @@ router.get('/bounds', requireAuth, requireOnboarding, async (req, res, next) => 
       categoryIds = Array.isArray(query.categoryIds) ? query.categoryIds : [query.categoryIds]
     }
 
+    // ブロックフィルター
+    const blockedUserIds = await getBlockedUserIds(req.user!.id)
+
     const results: Array<{
       id: string
       type: 'recruitment' | 'wantToDo'
@@ -307,6 +317,7 @@ router.get('/bounds', requireAuth, requireOnboarding, async (req, res, next) => 
           latitude: { not: null, gte: south, lte: north },
           longitude: { not: null, gte: west, lte: east },
           ...(categoryIds && categoryIds.length > 0 ? { categoryId: { in: categoryIds } } : {}),
+          ...(blockedUserIds.length > 0 ? { creatorId: { notIn: blockedUserIds } } : {}),
         },
         include: {
           creator: {
@@ -361,11 +372,13 @@ router.get('/bounds', requireAuth, requireOnboarding, async (req, res, next) => 
 
     // 表明を取得
     if (types === 'all' || types === 'wantToDo') {
+      // 自分とブロックユーザーを除外
+      const excludeUserIds = [req.user!.id, ...blockedUserIds]
       const wantToDos = await prisma.wantToDo.findMany({
         where: {
           status: 'ACTIVE',
           expiresAt: { gt: new Date() },
-          userId: { not: req.user!.id },
+          userId: { notIn: excludeUserIds },
           latitude: { not: null, gte: south, lte: north },
           longitude: { not: null, gte: west, lte: east },
           ...(categoryIds && categoryIds.length > 0 ? { categoryId: { in: categoryIds } } : {}),

@@ -20,6 +20,7 @@ import {
   notifyGroupCreated,
   notifyMemberJoined,
 } from '../services/notificationService'
+import { getBlockedUserIds } from '../lib/blockFilter'
 
 const router = Router()
 
@@ -33,10 +34,14 @@ router.get('/', optionalAuth, async (req, res, next) => {
     const query = recruitmentQuerySchema.parse(req.query)
     const { page, limit, area, categoryId, status } = query
 
+    // ブロックフィルター: ログイン中ユーザーの場合のみ適用
+    const blockedUserIds = req.user ? await getBlockedUserIds(req.user.id) : []
+
     const where = {
       status: status as RecruitmentStatus,
       ...(area ? { area: area as Area } : {}),
       ...(categoryId ? { categoryId } : {}),
+      ...(blockedUserIds.length > 0 ? { creatorId: { notIn: blockedUserIds } } : {}),
     }
 
     const [recruitments, total] = await Promise.all([
