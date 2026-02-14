@@ -4,6 +4,7 @@ import { validateRequest } from '../middlewares/validateRequest'
 import { requireAuth, requireOnboarding } from '../middlewares/auth'
 import { prisma } from '../lib/prisma'
 import { notifyGroupCreated } from '../services/notificationService'
+import { checkContent } from '../lib/contentFilter'
 
 const router = Router()
 
@@ -436,6 +437,18 @@ router.post(
           error: {
             code: 'NOT_MEMBER',
             message: 'You are not a member of this group',
+          },
+        })
+      }
+
+      // NGワードチェック
+      const contentCheck = checkContent(content)
+      if (!contentCheck.isValid) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'CONTENT_VIOLATION',
+            message: contentCheck.reason || '不適切なコンテンツが含まれています',
           },
         })
       }

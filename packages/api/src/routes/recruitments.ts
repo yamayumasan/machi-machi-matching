@@ -21,6 +21,7 @@ import {
   notifyMemberJoined,
 } from '../services/notificationService'
 import { getBlockedUserIds } from '../lib/blockFilter'
+import { checkMultipleContents } from '../lib/contentFilter'
 
 const router = Router()
 
@@ -304,6 +305,18 @@ router.post(
     try {
       const { title, categoryId, description, datetime, datetimeFlex, area, location, latitude, longitude, locationName, minPeople, maxPeople } =
         req.body
+
+      // NGワードチェック
+      const contentCheck = checkMultipleContents([title, description, location, locationName])
+      if (!contentCheck.isValid) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'CONTENT_VIOLATION',
+            message: contentCheck.reason || '不適切なコンテンツが含まれています',
+          },
+        })
+      }
 
       // カテゴリの存在確認
       const category = await prisma.category.findUnique({

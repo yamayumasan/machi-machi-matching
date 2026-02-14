@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { validateRequest } from '../middlewares/validateRequest'
 import { requireAuth } from '../middlewares/auth'
 import { prisma } from '../lib/prisma'
+import { notifyDeveloperOfReport, notifyDeveloperOfBlock } from '../services/emailService'
 
 const router = Router()
 
@@ -81,6 +82,12 @@ router.post('/reports', requireAuth, validateRequest(createReportSchema), async 
       })
     }
 
+    // 報告者情報を取得
+    const reporter = await prisma.user.findUnique({
+      where: { id: reporterId },
+      select: { nickname: true },
+    })
+
     const report = await prisma.report.create({
       data: {
         reporterId,
@@ -91,6 +98,17 @@ router.post('/reports', requireAuth, validateRequest(createReportSchema), async 
         description,
       },
     })
+
+    // 開発者へメール通知（非同期）
+    notifyDeveloperOfReport({
+      reporterId,
+      reporterName: reporter?.nickname || null,
+      targetType,
+      targetId: targetId || reportedUserId,
+      targetName: reportedUser.nickname || undefined,
+      reason,
+      createdAt: report.createdAt,
+    }).catch((err) => console.error('[Moderation] Email notification failed:', err))
 
     res.status(201).json({
       success: true,
@@ -166,12 +184,27 @@ router.post('/blocks', requireAuth, async (req, res, next) => {
       })
     }
 
-    await prisma.block.create({
+    // ブロック者情報を取得
+    const blocker = await prisma.user.findUnique({
+      where: { id: blockerId },
+      select: { nickname: true },
+    })
+
+    const block = await prisma.block.create({
       data: {
         blockerId,
         blockedUserId,
       },
     })
+
+    // 開発者へメール通知（非同期）
+    notifyDeveloperOfBlock({
+      blockerId,
+      blockerName: blocker?.nickname || null,
+      blockedUserId,
+      blockedUserName: blockedUser.nickname,
+      createdAt: block.createdAt,
+    }).catch((err) => console.error('[Moderation] Email notification failed:', err))
 
     res.status(201).json({
       success: true,

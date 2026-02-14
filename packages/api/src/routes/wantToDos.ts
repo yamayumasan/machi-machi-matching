@@ -4,6 +4,7 @@ import { validateRequest } from '../middlewares/validateRequest'
 import { requireAuth, requireOnboarding, optionalAuth } from '../middlewares/auth'
 import { prisma } from '../lib/prisma'
 import { getBlockedUserIds } from '../lib/blockFilter'
+import { checkMultipleContents } from '../lib/contentFilter'
 import { Area } from '@prisma/client'
 
 const router = Router()
@@ -163,6 +164,18 @@ router.post(
   async (req, res, next) => {
     try {
       const { categoryId, timing, comment, latitude, longitude, locationName } = req.body
+
+      // NGワードチェック
+      const contentCheck = checkMultipleContents([comment, locationName])
+      if (!contentCheck.isValid) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'CONTENT_VIOLATION',
+            message: contentCheck.reason || '不適切なコンテンツが含まれています',
+          },
+        })
+      }
 
       // カテゴリ存在チェック
       const category = await prisma.category.findUnique({
