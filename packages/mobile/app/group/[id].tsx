@@ -367,11 +367,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   ownBubble: {
-    backgroundColor: colors.accent[600],
+    backgroundColor: colors.primary[600],
     borderBottomRightRadius: 4,
   },
   otherBubble: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.primary[100],
     borderBottomLeftRadius: 4,
   },
   messageText: {
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   otherMessageText: {
-    color: colors.primary[900],
+    color: colors.primary[800],
   },
   messageTime: {
     fontSize: 11,
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     marginLeft: spacing.sm,
-    backgroundColor: colors.primary[900],
+    backgroundColor: colors.primary[600],
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
     borderRadius: 20,

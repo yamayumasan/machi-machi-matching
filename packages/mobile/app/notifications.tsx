@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.accent[600],
     marginLeft: spacing.sm,
     marginTop: 4,
   },
