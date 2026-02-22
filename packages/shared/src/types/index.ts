@@ -332,3 +332,46 @@ export interface NearbyBoundsResponse {
   }
   total: number
 }
+
+// ============================================
+// レビュー（イベント後の相互評価）
+// ============================================
+
+export interface Review {
+  id: string
+  groupId: string
+  reviewerId: string
+  revieweeId: string
+  rating: number
+  comment?: string | null
+  isAnonymous: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ReviewWithDetails extends Review {
+  reviewer: Pick<User, 'id' | 'nickname' | 'avatarUrl'>
+  reviewee: Pick<User, 'id' | 'nickname' | 'avatarUrl'>
+  group: Pick<Group, 'id' | 'name'>
+}
+
+export interface UserReviewSummary {
+  userId: string
+  averageRating: number
+  totalReviews: number
+  ratingDistribution: {
+    1: number
+    2: number
+    3: number
+    4: number
+    5: number
+  }
+}
+
+export interface ReviewableUser {
+  userId: string
+  nickname: string | null
+  avatarUrl: string | null
+  alreadyReviewed: boolean
+  existingReviewId?: string | null
+}

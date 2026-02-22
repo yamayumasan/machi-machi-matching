@@ -46,6 +46,10 @@ model User {
   reportsReceived Report[]       @relation("Reported")
   blockedUsers   Block[]         @relation("Blocker")
   blockedByUsers Block[]         @relation("Blocked")
+
+  // Reviews
+  reviewsGiven     Review[]      @relation("Reviewer")
+  reviewsReceived  Review[]      @relation("Reviewee")
 }
 
 model UserCategory {
@@ -196,6 +200,7 @@ model Group {
   recruitment Recruitment   @relation(fields: [recruitmentId], references: [id], onDelete: Cascade)
   members     GroupMember[]
   messages    Message[]
+  reviews     Review[]
 }
 
 model GroupMember {
@@ -291,6 +296,30 @@ model Block {
 }
 
 // ============================================
+// レビュー（イベント後の相互評価）
+// ============================================
+
+model Review {
+  id            String   @id @default(cuid())
+  groupId       String
+  reviewerId    String
+  revieweeId    String
+  rating        Int      // 1-5
+  comment       String?
+  isAnonymous   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  group    Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  reviewer User  @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee User  @relation("Reviewee", fields: [revieweeId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, reviewerId, revieweeId])
+  @@index([revieweeId])
+  @@index([reviewerId])
+}
+
+// ============================================
 // Enums
 // ============================================
 
@@ -349,6 +378,7 @@ enum NotificationType {
   GROUP_CREATED
   NEW_MESSAGE
   MEMBER_JOINED
+  REVIEW_RECEIVED
 }
 
 // UGCモデレーション用Enum

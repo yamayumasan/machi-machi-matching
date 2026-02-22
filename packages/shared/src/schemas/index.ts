@@ -157,6 +157,23 @@ export const notificationQuerySchema = paginationSchema.extend({
 })
 
 // ============================================
+// レビュースキーマ
+// ============================================
+
+export const createReviewSchema = z.object({
+  revieweeId: z.string().min(1, '評価対象のユーザーを指定してください'),
+  rating: z.number().int().min(1).max(5, '評価は1〜5の範囲で入力してください'),
+  comment: z.string().max(500).optional().nullable(),
+  isAnonymous: z.boolean().default(false),
+})
+
+export const updateReviewSchema = z.object({
+  rating: z.number().int().min(1).max(5).optional(),
+  comment: z.string().max(500).optional().nullable(),
+  isAnonymous: z.boolean().optional(),
+})
+
+// ============================================
 // 型エクスポート
 // ============================================
 
@@ -175,3 +192,5 @@ export type CreateApplicationInput = z.infer<typeof createApplicationSchema>
 export type CreateOfferInput = z.infer<typeof createOfferSchema>
 export type CreateMessageInput = z.infer<typeof createMessageSchema>
 export type PaginationInput = z.infer<typeof paginationSchema>
+export type CreateReviewInput = z.infer<typeof createReviewSchema>
+export type UpdateReviewInput = z.infer<typeof updateReviewSchema>

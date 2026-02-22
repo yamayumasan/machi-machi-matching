@@ -363,3 +363,24 @@ export async function notifyRecruitmentMatch(
     { recruitmentId, recruitmentTitle }
   )
 }
+
+/**
+ * レビューを受信した時の通知（レビュー対象者向け）
+ */
+export async function notifyReviewReceived(
+  revieweeId: string,
+  groupId: string,
+  groupName: string,
+  rating: number,
+  isAnonymous: boolean
+) {
+  const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating)
+  const body = isAnonymous
+    ? `「${groupName}」のメンバーから${stars}の評価を受け取りました`
+    : `「${groupName}」のメンバーから${stars}の評価を受け取りました`
+
+  return createNotification(revieweeId, 'REVIEW_RECEIVED', 'レビューが届きました', body, {
+    groupId,
+    groupName,
+  })
+}

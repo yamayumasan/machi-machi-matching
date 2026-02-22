@@ -1,9 +1,9 @@
 import { Router } from 'express'
-import { createMessageSchema } from '@machi/shared'
+import { createMessageSchema, createReviewSchema, updateReviewSchema } from '@machi/shared'
 import { validateRequest } from '../middlewares/validateRequest'
 import { requireAuth, requireOnboarding } from '../middlewares/auth'
 import { prisma } from '../lib/prisma'
-import { notifyGroupCreated } from '../services/notificationService'
+import { notifyGroupCreated, notifyReviewReceived } from '../services/notificationService'
 import { checkContent } from '../lib/contentFilter'
 
 const router = Router()
@@ -485,6 +485,458 @@ router.post(
           createdAt: message.createdAt,
           isOwn: true,
         },
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+)
+
+// ============================================
+// レビュー
+// ============================================
+
+// GET /api/groups/:id/reviewable-members - レビュー可能なメンバー一覧
+router.get('/:id/reviewable-members', requireAuth, requireOnboarding, async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const userId = req.user!.id
+
+    // メンバーかチェック
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId: id,
+          userId,
+        },
+      },
+    })
+
+    if (!membership) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'NOT_MEMBER',
+          message: 'You are not a member of this group',
+        },
+      })
+    }
+
+    // グループの他のメンバーを取得
+    const members = await prisma.groupMember.findMany({
+      where: {
+        groupId: id,
+        userId: { not: userId },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            nickname: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    })
+
+    // 既にレビュー済みかどうかをチェック
+    const existingReviews = await prisma.review.findMany({
+      where: {
+        groupId: id,
+        reviewerId: userId,
+      },
+    })
+
+    const reviewedUserIds = new Map(existingReviews.map((r) => [r.revieweeId, r.id]))
+
+    const reviewableMembers = members.map((m) => ({
+      userId: m.user.id,
+      nickname: m.user.nickname,
+      avatarUrl: m.user.avatarUrl,
+      alreadyReviewed: reviewedUserIds.has(m.user.id),
+      existingReviewId: reviewedUserIds.get(m.user.id) || null,
+    }))
+
+    res.json({
+      success: true,
+      data: reviewableMembers,
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// POST /api/groups/:id/reviews - レビュー作成
+router.post(
+  '/:id/reviews',
+  requireAuth,
+  requireOnboarding,
+  validateRequest(createReviewSchema),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params
+      const { revieweeId, rating, comment, isAnonymous } = req.body
+      const reviewerId = req.user!.id
+
+      // 自分へのレビューは不可
+      if (revieweeId === reviewerId) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_REVIEWEE',
+            message: '自分自身をレビューすることはできません',
+          },
+        })
+      }
+
+      // レビュワーがメンバーかチェック
+      const reviewerMembership = await prisma.groupMember.findUnique({
+        where: {
+          groupId_userId: {
+            groupId: id,
+            userId: reviewerId,
+          },
+        },
+      })
+
+      if (!reviewerMembership) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'NOT_MEMBER',
+            message: 'You are not a member of this group',
+          },
+        })
+      }
+
+      // レビュー対象がメンバーかチェック
+      const revieweeMembership = await prisma.groupMember.findUnique({
+        where: {
+          groupId_userId: {
+            groupId: id,
+            userId: revieweeId,
+          },
+        },
+      })
+
+      if (!revieweeMembership) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_REVIEWEE',
+            message: '指定されたユーザーはこのグループのメンバーではありません',
+          },
+        })
+      }
+
+      // 既にレビュー済みかチェック
+      const existingReview = await prisma.review.findUnique({
+        where: {
+          groupId_reviewerId_revieweeId: {
+            groupId: id,
+            reviewerId,
+            revieweeId,
+          },
+        },
+      })
+
+      if (existingReview) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'ALREADY_REVIEWED',
+            message: '既にこのユーザーをレビュー済みです',
+          },
+        })
+      }
+
+      // コメントのNGワードチェック
+      if (comment) {
+        const contentCheck = checkContent(comment)
+        if (!contentCheck.isValid) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 'CONTENT_VIOLATION',
+              message: contentCheck.reason || '不適切なコンテンツが含まれています',
+            },
+          })
+        }
+      }
+
+      const review = await prisma.review.create({
+        data: {
+          groupId: id,
+          reviewerId,
+          revieweeId,
+          rating,
+          comment,
+          isAnonymous,
+        },
+        include: {
+          reviewer: {
+            select: {
+              id: true,
+              nickname: true,
+              avatarUrl: true,
+            },
+          },
+          reviewee: {
+            select: {
+              id: true,
+              nickname: true,
+              avatarUrl: true,
+            },
+          },
+          group: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      })
+
+      // 通知を送信
+      try {
+        await notifyReviewReceived(revieweeId, id, review.group.name, rating, isAnonymous)
+      } catch (notifyError) {
+        console.error('Failed to send review notification:', notifyError)
+      }
+
+      res.status(201).json({
+        success: true,
+        data: {
+          id: review.id,
+          groupId: review.groupId,
+          rating: review.rating,
+          comment: review.comment,
+          isAnonymous: review.isAnonymous,
+          reviewee: review.reviewee,
+          createdAt: review.createdAt,
+        },
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+)
+
+// GET /api/groups/:id/reviews - グループのレビュー一覧
+router.get('/:id/reviews', requireAuth, requireOnboarding, async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const userId = req.user!.id
+
+    // メンバーかチェック
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId: id,
+          userId,
+        },
+      },
+    })
+
+    if (!membership) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'NOT_MEMBER',
+          message: 'You are not a member of this group',
+        },
+      })
+    }
+
+    const reviews = await prisma.review.findMany({
+      where: { groupId: id },
+      include: {
+        reviewer: {
+          select: {
+            id: true,
+            nickname: true,
+            avatarUrl: true,
+          },
+        },
+        reviewee: {
+          select: {
+            id: true,
+            nickname: true,
+            avatarUrl: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // 匿名レビューの場合はレビュワー情報を隠す（自分が書いた場合は見える）
+    const formattedReviews = reviews.map((r) => ({
+      id: r.id,
+      rating: r.rating,
+      comment: r.comment,
+      isAnonymous: r.isAnonymous,
+      reviewer: r.isAnonymous && r.reviewerId !== userId ? null : r.reviewer,
+      reviewee: r.reviewee,
+      isOwn: r.reviewerId === userId,
+      createdAt: r.createdAt,
+    }))
+
+    res.json({
+      success: true,
+      data: formattedReviews,
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// PUT /api/groups/:groupId/reviews/:reviewId - レビュー更新
+router.put(
+  '/:groupId/reviews/:reviewId',
+  requireAuth,
+  requireOnboarding,
+  validateRequest(updateReviewSchema),
+  async (req, res, next) => {
+    try {
+      const { groupId, reviewId } = req.params
+      const { rating, comment, isAnonymous } = req.body
+      const userId = req.user!.id
+
+      const review = await prisma.review.findUnique({
+        where: { id: reviewId },
+      })
+
+      if (!review) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Review not found',
+          },
+        })
+      }
+
+      if (review.groupId !== groupId) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_GROUP',
+            message: 'Review does not belong to this group',
+          },
+        })
+      }
+
+      if (review.reviewerId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: '自分のレビューのみ編集できます',
+          },
+        })
+      }
+
+      // コメントのNGワードチェック
+      if (comment) {
+        const contentCheck = checkContent(comment)
+        if (!contentCheck.isValid) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 'CONTENT_VIOLATION',
+              message: contentCheck.reason || '不適切なコンテンツが含まれています',
+            },
+          })
+        }
+      }
+
+      const updatedReview = await prisma.review.update({
+        where: { id: reviewId },
+        data: {
+          ...(rating !== undefined && { rating }),
+          ...(comment !== undefined && { comment }),
+          ...(isAnonymous !== undefined && { isAnonymous }),
+        },
+        include: {
+          reviewee: {
+            select: {
+              id: true,
+              nickname: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      })
+
+      res.json({
+        success: true,
+        data: {
+          id: updatedReview.id,
+          groupId: updatedReview.groupId,
+          rating: updatedReview.rating,
+          comment: updatedReview.comment,
+          isAnonymous: updatedReview.isAnonymous,
+          reviewee: updatedReview.reviewee,
+          updatedAt: updatedReview.updatedAt,
+        },
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+)
+
+// DELETE /api/groups/:groupId/reviews/:reviewId - レビュー削除
+router.delete(
+  '/:groupId/reviews/:reviewId',
+  requireAuth,
+  requireOnboarding,
+  async (req, res, next) => {
+    try {
+      const { groupId, reviewId } = req.params
+      const userId = req.user!.id
+
+      const review = await prisma.review.findUnique({
+        where: { id: reviewId },
+      })
+
+      if (!review) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Review not found',
+          },
+        })
+      }
+
+      if (review.groupId !== groupId) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_GROUP',
+            message: 'Review does not belong to this group',
+          },
+        })
+      }
+
+      if (review.reviewerId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: '自分のレビューのみ削除できます',
+          },
+        })
+      }
+
+      await prisma.review.delete({
+        where: { id: reviewId },
+      })
+
+      res.json({
+        success: true,
+        data: { message: 'Review deleted successfully' },
       })
     } catch (error) {
       next(error)
