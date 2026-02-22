@@ -350,9 +350,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[100],
   },
   categoryChipActive: {
-    backgroundColor: colors.primary[100],
+    backgroundColor: colors.primary[600],
     borderWidth: 1,
-    borderColor: colors.primary[500],
+    borderColor: colors.primary[600],
   },
   categoryChipIcon: {
     fontSize: 14,
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
     color: colors.primary[600],
   },
   categoryChipTextActive: {
-    color: colors.primary[700],
+    color: colors.white,
     fontWeight: '600',
   },
   loadingContainer: {
