@@ -10,6 +10,7 @@ export interface TestUser {
   bio: string | null
   area: string | null
   isOnboarded: boolean
+  lastActiveAt: Date
 }
 
 // デフォルトのテストユーザー
@@ -21,6 +22,7 @@ export const defaultTestUser: TestUser = {
   bio: 'テスト用のユーザーです',
   area: '東京都渋谷区',
   isOnboarded: true,
+  lastActiveAt: new Date(),
 }
 
 // テスト用の認証済みユーザーを設定するミドルウェア

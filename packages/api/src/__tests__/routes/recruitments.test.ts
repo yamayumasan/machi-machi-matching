@@ -15,6 +15,7 @@ const testUser = {
   bio: 'テスト用のユーザーです',
   area: '東京都渋谷区',
   isOnboarded: true,
+  lastActiveAt: new Date(),
 }
 
 // ミドルウェアのモック
