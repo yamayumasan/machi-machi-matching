@@ -1,4 +1,4 @@
-import { View, Text, Image, StyleSheet, ViewStyle } from 'react-native'
+import { View, Text, Image, StyleSheet, ViewStyle, ImageStyle } from 'react-native'
 import { colors, fontWeight } from '@/constants/theme'
 
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
@@ -7,7 +7,7 @@ export interface AvatarProps {
   size?: AvatarSize
   name?: string | null
   imageUrl?: string | null
-  style?: ViewStyle
+  style?: ViewStyle | ImageStyle
 }
 
 const sizeMap: Record<AvatarSize, number> = {
@@ -47,7 +47,7 @@ export function Avatar({
         style={[
           styles.image,
           { width: dimension, height: dimension, borderRadius: dimension / 2 },
-          style,
+          style as ImageStyle,
         ]}
       />
     )
