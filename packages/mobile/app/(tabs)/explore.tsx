@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[100],
   },
   filterChipActive: {
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[600],
   },
   filterChipText: {
     fontSize: 13,

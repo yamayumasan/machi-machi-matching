@@ -455,12 +455,12 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.primary[300],
+    borderColor: colors.primary[200],
     borderRadius: 8,
     padding: spacing.md,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.primary[900],
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
   },
   textArea: {
     minHeight: 100,
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   areaChipActive: {
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[600],
   },
   areaText: {
     fontSize: 15,
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.primary[200],
   },
   submitButton: {
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[600],
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',

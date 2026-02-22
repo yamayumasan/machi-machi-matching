@@ -84,3 +84,125 @@ export const fontWeight = {
   semibold: '600' as const,
   bold: '700' as const,
 }
+
+// デザインガイドライン準拠のシャドウ
+export const shadows = {
+  subtle: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  soft: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  card: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  elevated: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 32,
+    elevation: 8,
+  },
+}
+
+// 共通スタイルパターン
+export const commonStyles = {
+  // カード（ガイドライン準拠）
+  card: {
+    backgroundColor: '#FAF8F5',
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+  },
+  // プライマリCTAボタン
+  primaryButton: {
+    backgroundColor: colors.primary[600],
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  primaryButtonText: {
+    color: colors.white,
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+  },
+  // セカンダリボタン
+  secondaryButton: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  secondaryButtonText: {
+    color: colors.primary[700],
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+  },
+  // アクセントボタン
+  accentButton: {
+    backgroundColor: colors.accent[600],
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  accentButtonText: {
+    color: colors.white,
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+  },
+  // 入力フィールド
+  input: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    fontSize: fontSize.md,
+    color: colors.primary[900],
+  },
+  inputFocused: {
+    borderColor: colors.primary[600],
+  },
+  // セクション背景
+  sectionBackground: {
+    backgroundColor: colors.primary[50],
+  },
+  // テキストスタイル
+  heading: {
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.bold,
+    color: colors.primary[900],
+  },
+  body: {
+    fontSize: fontSize.md,
+    color: colors.primary[800],
+  },
+  subtext: {
+    fontSize: fontSize.sm,
+    color: colors.primary[500],
+  },
+  placeholder: {
+    color: colors.primary[400],
+  },
+}

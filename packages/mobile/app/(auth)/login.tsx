@@ -191,7 +191,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -222,16 +222,17 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.primary[300],
+    borderColor: colors.primary[200],
     borderRadius: 8,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     fontSize: 16,
     color: colors.primary[900],
+    backgroundColor: colors.background,
   },
   button: {
-    backgroundColor: colors.primary[500],
-    borderRadius: 8,
+    backgroundColor: colors.primary[600],
+    borderRadius: 12,
     paddingVertical: spacing.md,
     alignItems: 'center',
     marginTop: spacing.sm,
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.primary[300],
+    backgroundColor: colors.primary[200],
   },
   dividerText: {
     color: colors.primary[500],
@@ -265,8 +266,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: colors.primary[300],
-    borderRadius: 8,
+    borderColor: colors.primary[200],
+    borderRadius: 12,
     paddingVertical: spacing.md,
   },
   googleIcon: {
