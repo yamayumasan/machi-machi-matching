@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
@@ -11,8 +10,10 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { Link, router } from 'expo-router'
+import * as AppleAuthentication from 'expo-apple-authentication'
 import { useAuthStore } from '@/stores/auth'
-import { colors, spacing } from '@/constants/theme'
+import { Button, Input } from '@/components'
+import { colors, spacing, fontSize, fontWeight, borderRadius } from '@/constants/theme'
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('')
@@ -20,8 +21,11 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const [isAppleLoading, setIsAppleLoading] = useState(false)
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false)
-  const { signUp, signInWithGoogle } = useAuthStore()
+  const { signUp, signInWithGoogle, signInWithApple } = useAuthStore()
+
+  const isAnyLoading = isLoading || isGoogleLoading || isAppleLoading
 
   const handleRegister = async () => {
     if (!email || !password || !confirmPassword) {
@@ -56,7 +60,6 @@ export default function RegisterScreen() {
     setIsGoogleLoading(true)
     try {
       await signInWithGoogle()
-      // ログイン成功後、適切な画面へ遷移
       const { isOnboarded: onboarded } = useAuthStore.getState()
       if (onboarded) {
         router.replace('/(tabs)')
@@ -72,25 +75,47 @@ export default function RegisterScreen() {
     }
   }
 
+  const handleAppleLogin = async () => {
+    setIsAppleLoading(true)
+    try {
+      await signInWithApple()
+      const { isOnboarded: onboarded } = useAuthStore.getState()
+      if (onboarded) {
+        router.replace('/(tabs)')
+      } else {
+        router.replace('/onboarding')
+      }
+    } catch (error: any) {
+      if (error.message !== 'ログインがキャンセルされました') {
+        Alert.alert('Appleログインエラー', error.message || 'ログインに失敗しました')
+      }
+    } finally {
+      setIsAppleLoading(false)
+    }
+  }
+
   // メール確認待ち画面
   if (showEmailConfirmation) {
     return (
       <View style={styles.container}>
         <View style={styles.content}>
           <View style={styles.confirmationContainer}>
-            <Text style={styles.confirmationIcon}>✉️</Text>
+            <View style={styles.confirmationIconContainer}>
+              <Text style={styles.confirmationIcon}>✉️</Text>
+            </View>
             <Text style={styles.confirmationTitle}>確認メールを送信しました</Text>
             <Text style={styles.confirmationText}>
               {email} に確認メールを送信しました。{'\n'}
               メール内のリンクをクリックして{'\n'}
               登録を完了してください。
             </Text>
-            <TouchableOpacity
-              style={styles.confirmationButton}
+            <Button
               onPress={() => router.replace('/login')}
+              fullWidth
+              style={styles.confirmationButton}
             >
-              <Text style={styles.buttonText}>ログイン画面へ</Text>
-            </TouchableOpacity>
+              ログイン画面へ
+            </Button>
             <TouchableOpacity
               style={styles.resendButton}
               onPress={() => setShowEmailConfirmation(false)}
@@ -118,20 +143,37 @@ export default function RegisterScreen() {
 
         <View style={styles.form}>
           {/* Googleログインボタン */}
-          <TouchableOpacity
-            style={[styles.googleButton, isGoogleLoading && styles.buttonDisabled]}
+          <Button
+            variant="secondary"
             onPress={handleGoogleLogin}
-            disabled={isLoading || isGoogleLoading}
+            loading={isGoogleLoading}
+            disabled={isAnyLoading}
+            fullWidth
           >
-            {isGoogleLoading ? (
-              <ActivityIndicator color={colors.primary[700]} />
-            ) : (
-              <>
-                <Text style={styles.googleIcon}>G</Text>
-                <Text style={styles.googleButtonText}>Googleで登録</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            <View style={styles.googleContent}>
+              <Text style={styles.googleIcon}>G</Text>
+              <Text style={styles.googleButtonText}>Googleで登録</Text>
+            </View>
+          </Button>
+
+          {/* Apple ログインボタン (iOS only) */}
+          {Platform.OS === 'ios' && (
+            <View style={styles.appleButtonContainer}>
+              {isAppleLoading ? (
+                <View style={styles.appleButtonLoading}>
+                  <ActivityIndicator color={colors.white} />
+                </View>
+              ) : (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                  cornerRadius={borderRadius.lg}
+                  style={styles.appleButton}
+                  onPress={handleAppleLogin}
+                />
+              )}
+            </View>
+          )}
 
           {/* 区切り線 */}
           <View style={styles.divider}>
@@ -140,10 +182,8 @@ export default function RegisterScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          <TextInput
-            style={styles.input}
+          <Input
             placeholder="メールアドレス"
-            placeholderTextColor={colors.primary[400]}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -151,37 +191,31 @@ export default function RegisterScreen() {
             autoComplete="email"
           />
 
-          <TextInput
-            style={styles.input}
+          <Input
             placeholder="パスワード（6文字以上）"
-            placeholderTextColor={colors.primary[400]}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="new-password"
           />
 
-          <TextInput
-            style={styles.input}
+          <Input
             placeholder="パスワード（確認）"
-            placeholderTextColor={colors.primary[400]}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
             autoComplete="new-password"
           />
 
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
+          <Button
             onPress={handleRegister}
-            disabled={isLoading || isGoogleLoading}
+            loading={isLoading}
+            disabled={isAnyLoading}
+            fullWidth
+            style={styles.registerButton}
           >
-            {isLoading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.buttonText}>登録する</Text>
-            )}
-          </TouchableOpacity>
+            登録する
+          </Button>
         </View>
 
         <View style={styles.footer}>
@@ -200,7 +234,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -213,76 +247,64 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: fontWeight.bold,
     color: colors.primary[900],
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: colors.primary[500],
     marginTop: spacing.sm,
   },
   form: {
     gap: spacing.md,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.primary[300],
-    borderRadius: 8,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    fontSize: 16,
-    color: colors.primary[900],
-  },
-  button: {
-    backgroundColor: colors.primary[500],
-    borderRadius: 8,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
+  registerButton: {
     marginTop: spacing.sm,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: spacing.sm,
+    marginVertical: spacing.md,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.primary[300],
+    backgroundColor: colors.primary[200],
   },
   dividerText: {
     color: colors.primary[500],
-    fontSize: 14,
+    fontSize: fontSize.sm,
     marginHorizontal: spacing.md,
   },
-  googleButton: {
+  googleContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.primary[300],
-    borderRadius: 8,
-    paddingVertical: spacing.md,
   },
   googleIcon: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: fontWeight.bold,
     color: '#4285F4',
     marginRight: spacing.sm,
   },
   googleButtonText: {
     color: colors.primary[700],
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+  },
+  appleButtonContainer: {
+    marginTop: spacing.sm,
+  },
+  appleButton: {
+    width: '100%',
+    height: 50,
+  },
+  appleButtonLoading: {
+    width: '100%',
+    height: 50,
+    backgroundColor: '#000',
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   footer: {
     alignItems: 'center',
@@ -290,50 +312,53 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: colors.primary[500],
-    fontSize: 14,
+    fontSize: fontSize.sm,
   },
   linkText: {
-    color: colors.primary[500],
-    fontSize: 14,
-    fontWeight: '600',
+    color: colors.primary[600],
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
     marginTop: spacing.xs,
   },
   confirmationContainer: {
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
   },
-  confirmationIcon: {
-    fontSize: 64,
+  confirmationIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.primary[50],
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: spacing.lg,
   },
+  confirmationIcon: {
+    fontSize: 48,
+  },
   confirmationTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: fontSize.xxl,
+    fontWeight: fontWeight.bold,
     color: colors.primary[900],
     marginBottom: spacing.md,
     textAlign: 'center',
   },
   confirmationText: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     color: colors.primary[600],
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: spacing.xl,
   },
   confirmationButton: {
-    backgroundColor: colors.primary[500],
-    borderRadius: 8,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl * 2,
-    alignItems: 'center',
     marginBottom: spacing.md,
   },
   resendButton: {
     paddingVertical: spacing.sm,
   },
   resendButtonText: {
-    color: colors.primary[500],
-    fontSize: 14,
-    fontWeight: '500',
+    color: colors.primary[600],
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
   },
 })
