@@ -1,42 +1,56 @@
-# プロジェクト名
+# マチマチマッチング
 
-<!--
-  このファイルをプロジェクトに合わせて編集してください。
-  CLAUDE.md にリネームして使用します。
--->
-
-## プロジェクト概要
-
-<!-- プロジェクトの簡単な説明 -->
+募集をかけることも、募集待ちの状態にし誘いを待つこともできる、相互型マッチングアプリ（iOS）。
+モノレポ構成（pnpm workspace）で API / Mobile / Shared の3パッケージ。
 
 ## コマンド
 
 ```bash
-# 開発サーバー起動
-# npm run dev
-
-# テスト
-# npm test
+# 開発サーバー
+pnpm dev                          # 全パッケージ
+pnpm --filter @machi/api dev      # APIのみ
 
 # 型チェック
-# npx tsc --noEmit
+pnpm --filter @machi/api exec tsc --noEmit
+pnpm --filter @machi/mobile typecheck
 
-# ビルド
-# npm run build
+# テスト
+pnpm --filter @machi/api test     # API（Vitest）
+pnpm --filter @machi/mobile test  # Mobile（Jest）
+
+# Prisma
+pnpm prisma generate
+pnpm prisma migrate dev
 ```
 
 ## ファイル構造
 
 ```
-src/
-├── ...
+packages/
+├── api/src/           # Hono API サーバー
+│   ├── routes/        # ルート定義
+│   ├── services/      # ビジネスロジック
+│   ├── middlewares/   # ミドルウェア
+│   ├── lib/           # ユーティリティ
+│   └── __tests__/     # テスト
+├── mobile/app/        # Expo Router ページ
+│   ├── (tabs)/        # タブナビゲーション
+│   ├── auth/          # 認証画面
+│   ├── recruitment/   # 募集関連画面
+│   └── group/         # グループ関連画面
+├── shared/src/        # 共通コード
+│   ├── types/         # 型定義
+│   └── schemas/       # バリデーションスキーマ
+└── prisma/            # DBスキーマ・マイグレーション
 ```
 
 ## 開発ルール
 
-- コード変更後は必ずテスト・型チェックを実行
+- コード変更後は必ず型チェックを実行
 - Conventional Commits形式でコミット（feat:, fix:, refactor: など）
 - .envファイルは変更しない
+- `prisma/schema.prisma` を変更したら `pnpm prisma generate` を実行
+- デザインは `.claude/rules/design-guidelines.md` に従う
 
 ---
 
@@ -54,12 +68,38 @@ src/
 ```
 1. TASK_PROGRESS.mdから次の未完了タスクを確認
 2. 「要人間操作」タスクはスキップ
-3. タスクを実装
-4. テスト・型チェック実行
+3. タスクを実装（下記「自律的なタスク進行」参照）
+4. 型チェック実行
 5. git add && git commit（Conventional Commits形式）
 6. TASK_PROGRESS.mdのステータスと引き継ぎメモを更新
 7. 全タスク完了なら「ALL_TASKS_COMPLETE」と出力
 ```
+
+## 自律的なタスク進行
+
+フェーズタスクを進める際は以下のステップで自律的に進めること:
+
+1. **調査**: 現状を把握し、必要な情報を収集
+   - コードベースを読む
+   - 既存の実装を理解する
+   - 必要に応じてWeb検索で最新情報を取得
+
+2. **計画**: 具体的なサブタスクを洗い出す
+   - 引き継ぎメモに計画を記録
+   - 優先順位を決める
+
+3. **実装**: サブタスクを1つずつ実装
+   - 1イテレーションで意味のある進捗を出す
+   - 大きすぎる変更は分割する
+
+4. **検証**: 動作確認
+   - 型チェック
+   - テスト実行（あれば）
+
+5. **記録**: 引き継ぎメモを更新
+   - 完了したこと
+   - 次にやるべきこと
+   - 注意事項
 
 ## 禁止事項
 
@@ -72,7 +112,7 @@ src/
 
 以下はTASK_PROGRESS.mdで「要人間操作」とマークし、スキップ:
 
-- 外部サービスのコンソール操作
-- 環境変数の設定
-- APIキーの取得
+- App Store Connect / Google Play Console の操作
+- Railway / Vercel 等の環境変数設定
+- 外部サービスのAPIキー取得
 - 本番デプロイの承認
