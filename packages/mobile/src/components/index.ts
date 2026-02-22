@@ -1,4 +1,7 @@
-// UI Components
+// Design System UI Components
+export * from './ui'
+
+// Feature Components
 export { FilterTabs, SegmentedControl } from './FilterTabs'
 export type { FilterType } from './FilterTabs'
 

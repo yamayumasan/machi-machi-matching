@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
@@ -13,7 +12,8 @@ import {
 import { Link, router } from 'expo-router'
 import * as AppleAuthentication from 'expo-apple-authentication'
 import { useAuthStore } from '@/stores/auth'
-import { colors, spacing } from '@/constants/theme'
+import { Button, Input } from '@/components'
+import { colors, spacing, fontSize, fontWeight } from '@/constants/theme'
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
@@ -21,7 +21,9 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [isAppleLoading, setIsAppleLoading] = useState(false)
-  const { signIn, signInWithGoogle, signInWithApple, isOnboarded } = useAuthStore()
+  const { signIn, signInWithGoogle, signInWithApple } = useAuthStore()
+
+  const isAnyLoading = isLoading || isGoogleLoading || isAppleLoading
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -32,7 +34,6 @@ export default function LoginScreen() {
     setIsLoading(true)
     try {
       await signIn(email, password)
-      // ログイン成功後、適切な画面へ遷移
       const { isOnboarded: onboarded } = useAuthStore.getState()
       if (onboarded) {
         router.replace('/(tabs)')
@@ -50,7 +51,6 @@ export default function LoginScreen() {
     setIsGoogleLoading(true)
     try {
       await signInWithGoogle()
-      // ログイン成功後、適切な画面へ遷移
       const { isOnboarded: onboarded } = useAuthStore.getState()
       if (onboarded) {
         router.replace('/(tabs)')
@@ -70,7 +70,6 @@ export default function LoginScreen() {
     setIsAppleLoading(true)
     try {
       await signInWithApple()
-      // ログイン成功後、適切な画面へ遷移
       const { isOnboarded: onboarded } = useAuthStore.getState()
       if (onboarded) {
         router.replace('/(tabs)')
@@ -99,10 +98,8 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.form}>
-          <TextInput
-            style={styles.input}
+          <Input
             placeholder="メールアドレス"
-            placeholderTextColor={colors.primary[400]}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -110,52 +107,43 @@ export default function LoginScreen() {
             autoComplete="email"
           />
 
-          <TextInput
-            style={styles.input}
+          <Input
             placeholder="パスワード"
-            placeholderTextColor={colors.primary[400]}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="password"
           />
 
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
+          <Button
             onPress={handleLogin}
-            disabled={isLoading || isGoogleLoading || isAppleLoading}
+            loading={isLoading}
+            disabled={isAnyLoading}
+            fullWidth
+            style={styles.loginButton}
           >
-            {isLoading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.buttonText}>ログイン</Text>
-            )}
-          </TouchableOpacity>
+            ログイン
+          </Button>
 
-          {/* 区切り線 */}
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>または</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Googleログインボタン */}
-          <TouchableOpacity
-            style={[styles.googleButton, isGoogleLoading && styles.buttonDisabled]}
+          <Button
+            variant="secondary"
             onPress={handleGoogleLogin}
-            disabled={isLoading || isGoogleLoading || isAppleLoading}
+            loading={isGoogleLoading}
+            disabled={isAnyLoading}
+            fullWidth
           >
-            {isGoogleLoading ? (
-              <ActivityIndicator color={colors.primary[700]} />
-            ) : (
-              <>
-                <Text style={styles.googleIcon}>G</Text>
-                <Text style={styles.googleButtonText}>Googleでログイン</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            <View style={styles.googleContent}>
+              <Text style={styles.googleIcon}>G</Text>
+              <Text style={styles.googleButtonText}>Googleでログイン</Text>
+            </View>
+          </Button>
 
-          {/* Appleログインボタン（iOSのみ） */}
           {Platform.OS === 'ios' && (
             <View style={styles.appleButtonContainer}>
               {isAppleLoading ? (
@@ -166,7 +154,7 @@ export default function LoginScreen() {
                 <AppleAuthentication.AppleAuthenticationButton
                   buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
                   buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                  cornerRadius={8}
+                  cornerRadius={12}
                   style={styles.appleButton}
                   onPress={handleAppleLogin}
                 />
@@ -204,46 +192,24 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: fontWeight.bold,
     color: colors.primary[900],
   },
   titleAccent: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: fontWeight.bold,
     color: colors.primary[500],
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: colors.primary[500],
     marginTop: spacing.sm,
   },
   form: {
     gap: spacing.md,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.primary[200],
-    borderRadius: 8,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    fontSize: 16,
-    color: colors.primary[900],
-    backgroundColor: colors.background,
-  },
-  button: {
-    backgroundColor: colors.primary[600],
-    borderRadius: 12,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
+  loginButton: {
     marginTop: spacing.sm,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
   },
   divider: {
     flexDirection: 'row',
@@ -257,29 +223,23 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     color: colors.primary[500],
-    fontSize: 14,
+    fontSize: fontSize.sm,
     marginHorizontal: spacing.md,
   },
-  googleButton: {
+  googleContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.primary[200],
-    borderRadius: 12,
-    paddingVertical: spacing.md,
   },
   googleIcon: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: fontWeight.bold,
     color: '#4285F4',
     marginRight: spacing.sm,
   },
   googleButtonText: {
     color: colors.primary[700],
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
   },
   appleButtonContainer: {
     marginTop: spacing.sm,
@@ -292,7 +252,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 50,
     backgroundColor: '#000',
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -302,12 +262,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: colors.primary[500],
-    fontSize: 14,
+    fontSize: fontSize.sm,
   },
   linkText: {
-    color: colors.primary[500],
-    fontSize: 14,
-    fontWeight: '600',
+    color: colors.primary[600],
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
     marginTop: spacing.xs,
   },
 })
