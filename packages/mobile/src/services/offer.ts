@@ -22,6 +22,37 @@ export interface SuggestedUser {
     timing: string
   }
   matchedCategories: string[]
+  /** 「今すぐ」対応可能（TODAY タイミングのやりたいことあり） */
+  isAvailableNow?: boolean
+  /** 過去にマッチングした相手かどうか */
+  isPastMatch?: boolean
+  /** 過去のマッチング回数 */
+  matchCount?: number
+  /** 同じカテゴリでのマッチング回数 */
+  sameCategoryMatchCount?: number
+}
+
+export interface PastMatchUser {
+  user: {
+    id: string
+    nickname: string | null
+    avatarUrl: string | null
+    bio: string | null
+    area: string | null
+  }
+  matchCount: number
+  lastMatchedAt: string
+  categories: string[]
+  lastRecruitment: {
+    id: string
+    title: string
+    datetime: string | null
+    category: {
+      id: string
+      name: string
+      icon: string
+    }
+  }
 }
 
 export interface Offer {
@@ -83,4 +114,22 @@ export const respondToOffer = async (
     ApiResponse<{ id: string; status: OfferStatus; respondedAt: string }>
   >(`/recruitments/${recruitmentId}/offers/${offerId}`, { action })
   return response.data.data
+}
+
+// 過去マッチング相手一覧取得
+export const getPastMatches = async (categoryId?: string): Promise<PastMatchUser[]> => {
+  const params = categoryId ? { categoryId } : {}
+  const response = await api.get<ApiResponse<{ items: PastMatchUser[]; total: number }>>(
+    '/recruitments/me/past-matches',
+    { params }
+  )
+  return response.data.data.items || []
+}
+
+// 募集に対して過去のマッチング相手を優先表示
+export const getPastMatchSuggestions = async (recruitmentId: string): Promise<SuggestedUser[]> => {
+  const response = await api.get<ApiResponse<SuggestedUser[]>>(
+    `/recruitments/${recruitmentId}/suggestions/past-matches`
+  )
+  return response.data.data || []
 }

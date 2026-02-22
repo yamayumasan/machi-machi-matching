@@ -2,16 +2,27 @@ import { create } from 'zustand'
 import {
   Offer,
   SuggestedUser,
+  PastMatchUser,
   getSuggestions,
   sendOffer,
   getReceivedOffers,
   respondToOffer,
+  getPastMatches,
+  getPastMatchSuggestions,
 } from '@/services/offer'
 
 interface OfferState {
   // おすすめユーザー
   suggestions: SuggestedUser[]
   isLoadingSuggestions: boolean
+
+  // 過去マッチング相手（提案）
+  pastMatchSuggestions: SuggestedUser[]
+  isLoadingPastMatchSuggestions: boolean
+
+  // 過去マッチング相手一覧
+  pastMatches: PastMatchUser[]
+  isLoadingPastMatches: boolean
 
   // 受信オファー
   receivedOffers: Offer[]
@@ -25,6 +36,8 @@ interface OfferState {
 
   // Actions
   fetchSuggestions: (recruitmentId: string) => Promise<void>
+  fetchPastMatchSuggestions: (recruitmentId: string) => Promise<void>
+  fetchPastMatches: (categoryId?: string) => Promise<void>
   sendOffer: (recruitmentId: string, receiverId: string, message?: string) => Promise<void>
   fetchReceivedOffers: () => Promise<void>
   respondToOffer: (
@@ -39,6 +52,10 @@ interface OfferState {
 export const useOfferStore = create<OfferState>((set, get) => ({
   suggestions: [],
   isLoadingSuggestions: false,
+  pastMatchSuggestions: [],
+  isLoadingPastMatchSuggestions: false,
+  pastMatches: [],
+  isLoadingPastMatches: false,
   receivedOffers: [],
   isLoadingOffers: false,
   isSendingOffer: false,
@@ -58,13 +75,40 @@ export const useOfferStore = create<OfferState>((set, get) => ({
     }
   },
 
+  fetchPastMatchSuggestions: async (recruitmentId: string) => {
+    set({ isLoadingPastMatchSuggestions: true, error: null })
+    try {
+      const pastMatchSuggestions = await getPastMatchSuggestions(recruitmentId)
+      set({ pastMatchSuggestions, isLoadingPastMatchSuggestions: false })
+    } catch (error: any) {
+      set({
+        error: error.message || '過去マッチング相手の取得に失敗しました',
+        isLoadingPastMatchSuggestions: false,
+      })
+    }
+  },
+
+  fetchPastMatches: async (categoryId?: string) => {
+    set({ isLoadingPastMatches: true, error: null })
+    try {
+      const pastMatches = await getPastMatches(categoryId)
+      set({ pastMatches, isLoadingPastMatches: false })
+    } catch (error: any) {
+      set({
+        error: error.message || '過去マッチング相手の取得に失敗しました',
+        isLoadingPastMatches: false,
+      })
+    }
+  },
+
   sendOffer: async (recruitmentId: string, receiverId: string, message?: string) => {
     set({ isSendingOffer: true, error: null })
     try {
       await sendOffer(recruitmentId, receiverId, message)
-      // おすすめリストから送信済みユーザーを除外
+      // おすすめリストから送信済みユーザーを除外（両方のリストから）
       set((state) => ({
         suggestions: state.suggestions.filter((s) => s.user.id !== receiverId),
+        pastMatchSuggestions: state.pastMatchSuggestions.filter((s) => s.user.id !== receiverId),
         isSendingOffer: false,
       }))
     } catch (error: any) {
@@ -116,5 +160,5 @@ export const useOfferStore = create<OfferState>((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
-  clearSuggestions: () => set({ suggestions: [] }),
+  clearSuggestions: () => set({ suggestions: [], pastMatchSuggestions: [] }),
 }))
