@@ -1330,6 +1330,28 @@ router.get('/:id/suggestions', requireAuth, async (req, res, next) => {
       }
     }
 
+    // 各ユーザーの信頼スコア情報を取得
+    const userIds = usersWithInterest.map((u) => u.id)
+
+    // レビュー統計を取得
+    const reviewStats = await prisma.review.groupBy({
+      by: ['revieweeId'],
+      where: { revieweeId: { in: userIds } },
+      _avg: { rating: true },
+      _count: { id: true },
+    })
+
+    // マッチング回数を取得
+    const matchCounts = await prisma.groupMember.groupBy({
+      by: ['userId'],
+      where: { userId: { in: userIds } },
+      _count: { id: true },
+    })
+
+    // ユーザーごとに信頼スコアをマップ
+    const reviewStatsMap = new Map(reviewStats.map((r) => [r.revieweeId, r]))
+    const matchCountMap = new Map(matchCounts.map((m) => [m.userId, m._count.id]))
+
     // スコア計算とソート
     const suggestions = usersWithInterest.map((user) => {
       const hasActiveWantToDo = user.wantToDos.length > 0
@@ -1341,6 +1363,19 @@ router.get('/:id/suggestions', requireAuth, async (req, res, next) => {
       if (hasActiveWantToDo && wantToDo) {
         score += getTimingScore(wantToDo.timing)
       }
+
+      // 信頼スコアを計算
+      const userReviewStats = reviewStatsMap.get(user.id)
+      const userMatchCount = matchCountMap.get(user.id) || 0
+      const averageRating = userReviewStats?._avg.rating || null
+      const totalReviews = userReviewStats?._count.id || 0
+
+      let trustScore = 50
+      if (averageRating !== null) {
+        trustScore += (averageRating - 3) * 15
+      }
+      trustScore += Math.min(userMatchCount * 2, 20)
+      trustScore = Math.max(0, Math.min(100, Math.round(trustScore)))
 
       return {
         user: {
@@ -1354,6 +1389,12 @@ router.get('/:id/suggestions', requireAuth, async (req, res, next) => {
         wantToDo: wantToDo || undefined,
         matchedCategories: matchedCategories.slice(0, 3),
         isAvailableNow: wantToDo?.timing === 'TODAY', // 「今すぐ」フラグ
+        trustScore: {
+          score: trustScore,
+          totalReviews,
+          averageRating: averageRating !== null ? Math.round(averageRating * 10) / 10 : null,
+          matchCount: userMatchCount,
+        },
       }
     })
 

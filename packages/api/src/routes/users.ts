@@ -49,6 +49,51 @@ const upload = multer({
   },
 })
 
+// 信頼スコアを計算するヘルパー関数
+const calculateTrustScore = async (userId: string): Promise<{
+  score: number
+  totalReviews: number
+  averageRating: number | null
+  matchCount: number
+}> => {
+  // レビュー統計を取得
+  const reviewStats = await prisma.review.aggregate({
+    where: { revieweeId: userId },
+    _avg: { rating: true },
+    _count: { id: true },
+  })
+
+  // マッチング回数（グループ参加数）を取得
+  const matchCount = await prisma.groupMember.count({
+    where: { userId },
+  })
+
+  const totalReviews = reviewStats._count.id
+  const averageRating = reviewStats._avg.rating
+
+  // 信頼スコア計算（0-100）
+  // - ベーススコア: 50
+  // - レビュー平均評価による加点（最大30点）: (rating - 3) * 15 (3以上なら加点、未満なら減点)
+  // - マッチング経験による加点（最大20点）: min(matchCount * 2, 20)
+  let score = 50
+
+  if (averageRating !== null) {
+    score += (averageRating - 3) * 15
+  }
+
+  score += Math.min(matchCount * 2, 20)
+
+  // スコアを0-100の範囲に収める
+  score = Math.max(0, Math.min(100, Math.round(score)))
+
+  return {
+    score,
+    totalReviews,
+    averageRating: averageRating !== null ? Math.round(averageRating * 10) / 10 : null,
+    matchCount,
+  }
+}
+
 const router = Router()
 
 // GET /api/users/me - 自分のプロフィール取得
@@ -75,6 +120,9 @@ router.get('/me', requireAuth, async (req, res, next) => {
       })
     }
 
+    // 信頼スコアを計算
+    const trustScore = await calculateTrustScore(req.user!.id)
+
     res.json({
       success: true,
       data: {
@@ -94,6 +142,7 @@ router.get('/me', requireAuth, async (req, res, next) => {
           id: i.category.id,
           name: i.category.name,
         })),
+        trustScore,
       },
     })
   } catch (error) {
@@ -409,6 +458,9 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
     // アクティビティステータスを計算
     const activityInfo = getActivityStatus(user.lastActiveAt)
 
+    // 信頼スコアを計算
+    const trustScore = await calculateTrustScore(id)
+
     // 公開情報のみ返す
     res.json({
       success: true,
@@ -423,6 +475,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
           name: i.category.name,
         })),
         activity: activityInfo,
+        trustScore,
       },
     })
   } catch (error) {
