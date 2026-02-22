@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
   retryButton: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[600],
     borderRadius: 8,
   },
   retryButtonText: {
@@ -727,7 +727,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.primary[200],
   },
   applyButton: {
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[600],
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -797,7 +797,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   groupButton: {
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[600],
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -813,7 +813,7 @@ const styles = StyleSheet.create({
   },
   applicationsButton: {
     flex: 1,
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[600],
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -880,7 +880,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   submitButton: {
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[600],
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
