@@ -6,6 +6,33 @@ import { requireAuth, requireOnboarding, optionalAuth } from '../middlewares/aut
 import { prisma } from '../lib/prisma'
 import { supabaseAdmin } from '../lib/supabase'
 
+// アクティビティステータスを計算するヘルパー
+type ActivityStatus = 'active' | 'recent' | 'away' | 'offline'
+
+const getActivityStatus = (lastActiveAt: Date): { status: ActivityStatus; lastActiveAt: string } => {
+  const now = new Date()
+  const diffMs = now.getTime() - lastActiveAt.getTime()
+  const diffMinutes = diffMs / (1000 * 60)
+  const diffHours = diffMinutes / 60
+  const diffDays = diffHours / 24
+
+  let status: ActivityStatus
+  if (diffMinutes < 15) {
+    status = 'active' // 15分以内: オンライン
+  } else if (diffHours < 24) {
+    status = 'recent' // 24時間以内: 最近
+  } else if (diffDays < 7) {
+    status = 'away' // 7日以内: 離れている
+  } else {
+    status = 'offline' // 7日以上: オフライン
+  }
+
+  return {
+    status,
+    lastActiveAt: lastActiveAt.toISOString(),
+  }
+}
+
 // multer設定（メモリストレージ、5MB制限）
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -379,6 +406,9 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       })
     }
 
+    // アクティビティステータスを計算
+    const activityInfo = getActivityStatus(user.lastActiveAt)
+
     // 公開情報のみ返す
     res.json({
       success: true,
@@ -392,6 +422,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
           id: i.category.id,
           name: i.category.name,
         })),
+        activity: activityInfo,
       },
     })
   } catch (error) {

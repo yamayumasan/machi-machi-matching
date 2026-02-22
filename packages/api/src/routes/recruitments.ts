@@ -23,6 +23,22 @@ import {
 import { getBlockedUserIds } from '../lib/blockFilter'
 import { checkMultipleContents } from '../lib/contentFilter'
 
+// アクティビティステータスを計算するヘルパー
+type ActivityStatus = 'active' | 'recent' | 'away' | 'offline'
+
+const getActivityStatus = (lastActiveAt: Date): ActivityStatus => {
+  const now = new Date()
+  const diffMs = now.getTime() - lastActiveAt.getTime()
+  const diffMinutes = diffMs / (1000 * 60)
+  const diffHours = diffMinutes / 60
+  const diffDays = diffHours / 24
+
+  if (diffMinutes < 15) return 'active'
+  if (diffHours < 24) return 'recent'
+  if (diffDays < 7) return 'away'
+  return 'offline'
+}
+
 const router = Router()
 
 // ============================================

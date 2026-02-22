@@ -14,8 +14,26 @@ declare global {
         bio: string | null
         area: string | null
         isOnboarded: boolean
+        lastActiveAt: Date
       }
     }
+  }
+}
+
+// アクティビティステータス更新のスロットリング（5分）
+const ACTIVITY_UPDATE_INTERVAL_MS = 5 * 60 * 1000
+
+// アクティビティステータスを更新（非同期、エラー無視）
+const updateLastActiveAt = (userId: string, lastActiveAt: Date): void => {
+  const now = new Date()
+  // 5分以上経過している場合のみ更新
+  if (now.getTime() - lastActiveAt.getTime() > ACTIVITY_UPDATE_INTERVAL_MS) {
+    prisma.user.update({
+      where: { id: userId },
+      data: { lastActiveAt: now },
+    }).catch(() => {
+      // エラーは無視（アクティビティ更新は重要でない）
+    })
   }
 }
 
@@ -75,7 +93,11 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
       bio: user.bio,
       area: user.area,
       isOnboarded: user.isOnboarded,
+      lastActiveAt: user.lastActiveAt,
     }
+
+    // アクティビティステータスを非同期で更新
+    updateLastActiveAt(user.id, user.lastActiveAt)
 
     next()
   } catch (error) {
@@ -136,7 +158,11 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
           bio: user.bio,
           area: user.area,
           isOnboarded: user.isOnboarded,
+          lastActiveAt: user.lastActiveAt,
         }
+
+        // アクティビティステータスを非同期で更新
+        updateLastActiveAt(user.id, user.lastActiveAt)
       }
     }
 
