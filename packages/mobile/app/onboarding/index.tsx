@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[600],
     borderRadius: 2,
   },
   content: {
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[600],
     borderRadius: 8,
     paddingVertical: spacing.md,
     alignItems: 'center',
@@ -395,8 +395,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   categoryItemSelected: {
-    borderColor: colors.primary[500],
-    backgroundColor: colors.primary[50],
+    borderColor: colors.primary[600],
+    backgroundColor: colors.primary[100],
   },
   categoryIcon: {
     fontSize: 28,
@@ -423,8 +423,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   areaItemSelected: {
-    borderColor: colors.primary[500],
-    backgroundColor: colors.primary[50],
+    borderColor: colors.primary[600],
+    backgroundColor: colors.primary[100],
   },
   areaIcon: {
     fontSize: 32,
@@ -457,8 +457,8 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   checkboxChecked: {
-    backgroundColor: colors.primary[500],
-    borderColor: colors.primary[500],
+    backgroundColor: colors.primary[600],
+    borderColor: colors.primary[600],
   },
   termsText: {
     flex: 1,
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     color: colors.primary[700],
   },
   termsLink: {
-    color: colors.primary[500],
+    color: colors.primary[600],
     textDecorationLine: 'underline',
   },
 })
