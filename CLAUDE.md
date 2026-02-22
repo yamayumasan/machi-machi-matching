@@ -1,45 +1,78 @@
-# AI-DLC and Spec-Driven Development
+# プロジェクト名
 
-Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life Cycle)
+<!--
+  このファイルをプロジェクトに合わせて編集してください。
+  CLAUDE.md にリネームして使用します。
+-->
 
-## Project Context
+## プロジェクト概要
 
-### Paths
-- Steering: `.kiro/steering/`
-- Specs: `.kiro/specs/`
+<!-- プロジェクトの簡単な説明 -->
 
-### Steering vs Specification
+## コマンド
 
-**Steering** (`.kiro/steering/`) - Guide AI with project-wide rules and context
-**Specs** (`.kiro/specs/`) - Formalize development process for individual features
+```bash
+# 開発サーバー起動
+# npm run dev
 
-### Active Specifications
-- Check `.kiro/specs/` for active specifications
-- Use `/kiro:spec-status [feature-name]` to check progress
+# テスト
+# npm test
 
-## Development Guidelines
-- Think in English, generate responses in Japanese. All Markdown content written to project files (e.g., requirements.md, design.md, tasks.md, research.md, validation reports) MUST be written in the target language configured for this specification (see spec.json.language).
+# 型チェック
+# npx tsc --noEmit
 
-## Minimal Workflow
-- Phase 0 (optional): `/kiro:steering`, `/kiro:steering-custom`
-- Phase 1 (Specification):
-  - `/kiro:spec-init "description"`
-  - `/kiro:spec-requirements {feature}`
-  - `/kiro:validate-gap {feature}` (optional: for existing codebase)
-  - `/kiro:spec-design {feature} [-y]`
-  - `/kiro:validate-design {feature}` (optional: design review)
-  - `/kiro:spec-tasks {feature} [-y]`
-- Phase 2 (Implementation): `/kiro:spec-impl {feature} [tasks]`
-  - `/kiro:validate-impl {feature}` (optional: after implementation)
-- Progress check: `/kiro:spec-status {feature}` (use anytime)
+# ビルド
+# npm run build
+```
 
-## Development Rules
-- 3-phase approval workflow: Requirements → Design → Tasks → Implementation
-- Human review required each phase; use `-y` only for intentional fast-track
-- Keep steering current and verify alignment with `/kiro:spec-status`
-- Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end in this run, asking questions only when essential information is missing or the instructions are critically ambiguous.
+## ファイル構造
 
-## Steering Configuration
-- Load entire `.kiro/steering/` as project memory
-- Default files: `product.md`, `tech.md`, `structure.md`
-- Custom files are supported (managed via `/kiro:steering-custom`)
+```
+src/
+├── ...
+```
+
+## 開発ルール
+
+- コード変更後は必ずテスト・型チェックを実行
+- Conventional Commits形式でコミット（feat:, fix:, refactor: など）
+- .envファイルは変更しない
+
+---
+
+# 自律開発ループ設定
+
+## タスク管理
+
+- **TASK_PROGRESS.md** を読んで次のタスクを確認
+- 1イテレーションで1タスクに集中（複数同時にやらない）
+- 完了したらTASK_PROGRESS.mdのステータスと引き継ぎメモを更新
+- 作業内容を簡潔にgit commit
+
+## 自律ループフロー
+
+```
+1. TASK_PROGRESS.mdから次の未完了タスクを確認
+2. 「要人間操作」タスクはスキップ
+3. タスクを実装
+4. テスト・型チェック実行
+5. git add && git commit（Conventional Commits形式）
+6. TASK_PROGRESS.mdのステータスと引き継ぎメモを更新
+7. 全タスク完了なら「ALL_TASKS_COMPLETE」と出力
+```
+
+## 禁止事項
+
+- .env, .env.* ファイルの変更
+- rm -rf コマンドの実行
+- 本番環境への直接操作
+- APIキー・シークレットのハードコード
+
+## 要人間操作タスク
+
+以下はTASK_PROGRESS.mdで「要人間操作」とマークし、スキップ:
+
+- 外部サービスのコンソール操作
+- 環境変数の設定
+- APIキーの取得
+- 本番デプロイの承認
