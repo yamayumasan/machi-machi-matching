@@ -45,6 +45,11 @@ jest.unstable_mockModule('../../services/notificationService.js', () => ({
   notifyMemberJoined: jest.fn(),
 }))
 
+jest.unstable_mockModule('../../lib/blockFilter.js', () => ({
+  getBlockedUserIds: jest.fn<() => Promise<string[]>>().mockResolvedValue([]),
+  excludeBlockedUsers: jest.fn<() => Record<string, unknown>>().mockReturnValue({}),
+}))
+
 // モジュールをモック後にインポート
 const { recruitmentsRouter } = await import('../../routes/recruitments.js')
 
@@ -314,7 +319,7 @@ describe('Recruitments API', () => {
         _count: { applications: 1 },
       }
 
-      ;(mockPrisma.recruitment.findUnique as jest.Mock).mockResolvedValue(mockRecruitment)
+      ;(mockPrisma.recruitment.findUnique as MockFn).mockResolvedValue(mockRecruitment)
 
       const response = await request(app)
         .post('/api/recruitments/recruitment-1/apply')
@@ -333,7 +338,7 @@ describe('Recruitments API', () => {
         _count: { applications: 1 },
       }
 
-      ;(mockPrisma.recruitment.findUnique as jest.Mock).mockResolvedValue(mockRecruitment)
+      ;(mockPrisma.recruitment.findUnique as MockFn).mockResolvedValue(mockRecruitment)
 
       const response = await request(app)
         .post('/api/recruitments/recruitment-1/apply')
