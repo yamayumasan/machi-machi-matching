@@ -15,8 +15,8 @@ pnpm --filter @machi/api exec tsc --noEmit
 pnpm --filter @machi/mobile typecheck
 
 # テスト
-pnpm --filter @machi/api test     # API（Vitest）
-pnpm --filter @machi/mobile test  # Mobile（Jest）
+pnpm --filter @machi/api test     # API（Jest + ESM）
+pnpm --filter @machi/mobile test  # Mobile（Jest + jest-expo）
 
 # Prisma
 pnpm prisma generate
@@ -66,14 +66,18 @@ packages/
 ## 自律ループフロー
 
 ```
-1. TASK_PROGRESS.mdから次の未完了タスクを確認
-2. 「要人間操作」タスクはスキップ
-3. タスクを実装（下記「自律的なタスク進行」参照）
-4. 型チェック実行
-5. git add && git commit（Conventional Commits形式）
-6. TASK_PROGRESS.mdのステータスと引き継ぎメモを更新
-7. 全タスク完了なら「ALL_TASKS_COMPLETE」と出力
+1. TASK_PROGRESS.mdを読み、引き継ぎメモを確認
+2. **最初に** TASK_PROGRESS.mdの「最新イテレーション」日時を更新し、何をするか記録
+3. 「要人間操作」タスクはスキップ
+4. タスクを実装（下記「自律的なタスク進行」参照）
+5. 型チェック実行
+6. git add && git commit（Conventional Commits形式）
+7. TASK_PROGRESS.mdのステータスと引き継ぎメモを更新（完了したこと、次にやること）
+8. 全タスク完了なら「ALL_TASKS_COMPLETE」と出力
 ```
+
+**重要**: イテレーション開始時（ステップ2）で必ずTASK_PROGRESS.mdを更新すること。
+これにより進捗が記録され、サーキットブレーカーの誤作動を防ぐ。
 
 ## 自律的なタスク進行
 

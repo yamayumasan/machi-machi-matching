@@ -1,3 +1,4 @@
+import { describe, it, expect } from '@jest/globals'
 import request from 'supertest'
 import { createTestApp } from '../helpers/testApp.js'
 import { categoriesRouter } from '../../routes/categories.js'

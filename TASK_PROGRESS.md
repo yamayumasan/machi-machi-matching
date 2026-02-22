@@ -45,17 +45,30 @@
 
 ### 最新イテレーション
 
-**日時**: 2025-02-22
+**日時**: 2025-02-22（その2）
 
 **実施内容**:
-- 自律開発ループ基盤を整備（auto-dev-loopからインストール）
-- CLAUDE.md, TASK_PROGRESS.md を作成
+- CLAUDE.mdにイテレーション開始時のTASK_PROGRESS.md更新ルールを追加
+- APIテストの修正:
+  - `@jest/globals`からのインポートを追加（ESM対応）
+  - 12/13テストがパス
+- Mobileテストの修正:
+  - `@testing-library/react-native`バージョン修正（^14.1.0 → ^13.3.3）
+  - `--passWithNoTests`オプション追加（テストファイルなしでも成功）
+  - テストフレームワーク（jest-expo）セットアップ完了
+
+**テスト状況**:
+- API: 2/3テストファイルがパス、12/13テストがパス
+  - `health.test.ts`: ✅ PASS
+  - `categories.test.ts`: ✅ PASS
+  - `recruitments.test.ts`: ❌ FAIL（ESMモック問題、1テスト失敗）
+- Mobile: テストファイルなし、フレームワークのみセットアップ完了
 
 **次のイテレーションでやるべきこと**:
-- フェーズ1の調査から開始
-- 既存の `packages/api/src/__tests__/` を確認
-- テストフレームワークの現状を把握
+1. `recruitments.test.ts`のESMモック問題を修正
+2. Mobileテストファイルを作成（優先度: 認証、募集一覧、マッチングフロー）
+3. 残りのAPIテスト追加（ユーザー、グループ、アプリケーション等）
 
 **注意事項**:
-- テストコマンド（`pnpm test`）はまだ動作しない可能性あり
-- セットアップから行う必要があるかも
+- Jest 30 + ESMでは`jest.unstable_mockModule`が必要
+- トップレベルawaitでモック後にモジュールをインポートする必要あり

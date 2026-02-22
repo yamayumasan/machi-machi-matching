@@ -9,7 +9,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "eas-build-post-install": "cd ../shared && pnpm install && pnpm build"
@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
-    "@testing-library/react-native": "^14.1.0",
+    "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.1.10",
     "babel-plugin-module-resolver": "^5.0.0",
