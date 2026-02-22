@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   wantToDoComment: {
     marginTop: spacing.xs,
     fontSize: 13,
-    color: colors.accent[800],
+    color: colors.accent[700],
   },
   categoriesRow: {
     flexDirection: 'row',
