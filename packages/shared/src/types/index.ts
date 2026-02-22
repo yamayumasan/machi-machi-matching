@@ -229,6 +229,37 @@ export interface UserSuggestion {
   hasActiveWantToDo: boolean
   wantToDo?: WantToDoWithCategory | null
   matchedCategories: string[]
+  /** 「今すぐ」対応可能（TODAY タイミングのやりたいことあり） */
+  isAvailableNow?: boolean
+  /** 過去にマッチングした相手かどうか */
+  isPastMatch?: boolean
+  /** 過去のマッチング回数 */
+  matchCount?: number
+  /** 同じカテゴリでのマッチング回数 */
+  sameCategoryMatchCount?: number
+}
+
+// ============================================
+// リピートマッチング
+// ============================================
+
+export interface PastMatchUser {
+  user: {
+    id: string
+    nickname: string | null
+    avatarUrl: string | null
+    bio: string | null
+    area: string | null
+  }
+  matchCount: number
+  lastMatchedAt: string
+  categories: string[]
+  lastRecruitment: {
+    id: string
+    title: string
+    datetime: string | null
+    category: Category
+  }
 }
 
 // ============================================

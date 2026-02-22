@@ -1299,15 +1299,31 @@ router.get('/:id/suggestions', requireAuth, async (req, res, next) => {
       take: 10,
     })
 
+    // タイミング別スコア計算用関数
+    const getTimingScore = (timing: string): number => {
+      switch (timing) {
+        case 'TODAY':
+          return 20 // 今すぐ会いたい人を最優先
+        case 'THIS_WEEK':
+          return 15
+        case 'THIS_MONTH':
+          return 12
+        case 'ANYTIME':
+        default:
+          return 10
+      }
+    }
+
     // スコア計算とソート
     const suggestions = usersWithInterest.map((user) => {
       const hasActiveWantToDo = user.wantToDos.length > 0
+      const wantToDo = user.wantToDos[0]
       const matchedCategories = user.interests.map((i) => i.category.name)
 
-      // スコア計算: やりたいこと表明中 > 興味カテゴリ一致
+      // スコア計算: 今すぐ度 > やりたいこと表明中 > 興味カテゴリ一致
       let score = matchedCategories.length
-      if (hasActiveWantToDo) {
-        score += 10
+      if (hasActiveWantToDo && wantToDo) {
+        score += getTimingScore(wantToDo.timing)
       }
 
       return {
@@ -1319,8 +1335,9 @@ router.get('/:id/suggestions', requireAuth, async (req, res, next) => {
         },
         score,
         hasActiveWantToDo,
-        wantToDo: user.wantToDos[0] || undefined,
+        wantToDo: wantToDo || undefined,
         matchedCategories: matchedCategories.slice(0, 3),
+        isAvailableNow: wantToDo?.timing === 'TODAY', // 「今すぐ」フラグ
       }
     })
 
@@ -1428,6 +1445,328 @@ router.get('/me/applications', requireAuth, async (req, res, next) => {
           creator: a.recruitment.creator,
         },
       })),
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// ============================================
+// リピートマッチング
+// ============================================
+
+// GET /api/recruitments/me/past-matches - 過去にマッチングした相手一覧
+// 新しい募集を作成する際に、過去のマッチング相手を簡単にオファーできるようにする
+router.get('/me/past-matches', requireAuth, async (req, res, next) => {
+  try {
+    const { categoryId } = req.query as { categoryId?: string }
+
+    // ユーザーが所属しているグループを取得
+    const userGroupMemberships = await prisma.groupMember.findMany({
+      where: { userId: req.user!.id },
+      select: { groupId: true },
+    })
+
+    const groupIds = userGroupMemberships.map((m) => m.groupId)
+
+    if (groupIds.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          items: [],
+          message: 'まだマッチングした相手がいません',
+        },
+      })
+    }
+
+    // 同じグループにいた他のメンバーを取得（カテゴリフィルタ対応）
+    const pastMatches = await prisma.groupMember.findMany({
+      where: {
+        groupId: { in: groupIds },
+        userId: { not: req.user!.id },
+        ...(categoryId
+          ? {
+              group: {
+                recruitment: {
+                  categoryId,
+                },
+              },
+            }
+          : {}),
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            nickname: true,
+            avatarUrl: true,
+            bio: true,
+            area: true,
+          },
+        },
+        group: {
+          include: {
+            recruitment: {
+              select: {
+                id: true,
+                title: true,
+                datetime: true,
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                    icon: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { joinedAt: 'desc' },
+    })
+
+    // ユーザーごとにグループ化し、マッチング回数をカウント
+    const matchCountByUser = new Map<
+      string,
+      {
+        user: {
+          id: string
+          nickname: string | null
+          avatarUrl: string | null
+          bio: string | null
+          area: string | null
+        }
+        matchCount: number
+        lastMatchedAt: Date
+        categories: Set<string>
+        lastRecruitment: {
+          id: string
+          title: string
+          datetime: Date | null
+          category: { id: string; name: string; icon: string }
+        }
+      }
+    >()
+
+    for (const match of pastMatches) {
+      const existing = matchCountByUser.get(match.userId)
+      if (existing) {
+        existing.matchCount += 1
+        existing.categories.add(match.group.recruitment.category.name)
+        if (match.joinedAt > existing.lastMatchedAt) {
+          existing.lastMatchedAt = match.joinedAt
+          existing.lastRecruitment = match.group.recruitment
+        }
+      } else {
+        matchCountByUser.set(match.userId, {
+          user: match.user,
+          matchCount: 1,
+          lastMatchedAt: match.joinedAt,
+          categories: new Set([match.group.recruitment.category.name]),
+          lastRecruitment: match.group.recruitment,
+        })
+      }
+    }
+
+    // マッチング回数順にソート
+    const sortedMatches = Array.from(matchCountByUser.values())
+      .sort((a, b) => b.matchCount - a.matchCount || b.lastMatchedAt.getTime() - a.lastMatchedAt.getTime())
+      .map((m) => ({
+        user: m.user,
+        matchCount: m.matchCount,
+        lastMatchedAt: m.lastMatchedAt.toISOString(),
+        categories: Array.from(m.categories),
+        lastRecruitment: {
+          id: m.lastRecruitment.id,
+          title: m.lastRecruitment.title,
+          datetime: m.lastRecruitment.datetime?.toISOString() || null,
+          category: m.lastRecruitment.category,
+        },
+      }))
+
+    res.json({
+      success: true,
+      data: {
+        items: sortedMatches,
+        total: sortedMatches.length,
+      },
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// GET /api/recruitments/:id/suggestions/past-matches - 募集に対して過去のマッチング相手を優先表示
+router.get('/:id/suggestions/past-matches', requireAuth, async (req, res, next) => {
+  try {
+    const { id } = req.params
+
+    const recruitment = await prisma.recruitment.findUnique({
+      where: { id },
+      include: { category: true },
+    })
+
+    if (!recruitment) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Recruitment not found' },
+      })
+    }
+
+    if (recruitment.creatorId !== req.user!.id) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Not authorized' },
+      })
+    }
+
+    // 既存のオファー・申請を除外
+    const [existingOffers, existingApplications] = await Promise.all([
+      prisma.offer.findMany({
+        where: { recruitmentId: id },
+        select: { receiverId: true },
+      }),
+      prisma.application.findMany({
+        where: { recruitmentId: id },
+        select: { applicantId: true },
+      }),
+    ])
+
+    const excludedUserIds = new Set([
+      recruitment.creatorId,
+      ...existingOffers.map((o) => o.receiverId),
+      ...existingApplications.map((a) => a.applicantId),
+    ])
+
+    // ユーザーの過去グループを取得
+    const userGroupMemberships = await prisma.groupMember.findMany({
+      where: { userId: req.user!.id },
+      select: { groupId: true },
+    })
+
+    const groupIds = userGroupMemberships.map((m) => m.groupId)
+
+    // 同じグループにいた他のメンバーで、同じカテゴリに興味があるユーザー
+    const pastMatches = await prisma.groupMember.findMany({
+      where: {
+        groupId: { in: groupIds },
+        userId: { notIn: Array.from(excludedUserIds) },
+        user: {
+          isOnboarded: true,
+          area: recruitment.area,
+          interests: {
+            some: { categoryId: recruitment.categoryId },
+          },
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            nickname: true,
+            avatarUrl: true,
+            bio: true,
+            interests: {
+              include: { category: { select: { name: true } } },
+            },
+            wantToDos: {
+              where: {
+                status: 'ACTIVE',
+                categoryId: recruitment.categoryId,
+              },
+              select: { id: true, comment: true, timing: true },
+              take: 1,
+            },
+          },
+        },
+        group: {
+          include: {
+            recruitment: {
+              select: { categoryId: true },
+            },
+          },
+        },
+      },
+      orderBy: { joinedAt: 'desc' },
+    })
+
+    // ユーザーごとに集計
+    const userMatchData = new Map<
+      string,
+      {
+        user: (typeof pastMatches)[0]['user']
+        matchCount: number
+        sameCategoryMatchCount: number
+      }
+    >()
+
+    for (const match of pastMatches) {
+      const existing = userMatchData.get(match.userId)
+      const isSameCategory = match.group.recruitment.categoryId === recruitment.categoryId
+
+      if (existing) {
+        existing.matchCount += 1
+        if (isSameCategory) existing.sameCategoryMatchCount += 1
+      } else {
+        userMatchData.set(match.userId, {
+          user: match.user,
+          matchCount: 1,
+          sameCategoryMatchCount: isSameCategory ? 1 : 0,
+        })
+      }
+    }
+
+    // タイミング別スコア
+    const getTimingScore = (timing: string): number => {
+      switch (timing) {
+        case 'TODAY':
+          return 20
+        case 'THIS_WEEK':
+          return 15
+        case 'THIS_MONTH':
+          return 12
+        default:
+          return 10
+      }
+    }
+
+    // スコア計算とソート
+    const suggestions = Array.from(userMatchData.values()).map((data) => {
+      const { user, matchCount, sameCategoryMatchCount } = data
+      const hasActiveWantToDo = user.wantToDos.length > 0
+      const wantToDo = user.wantToDos[0]
+      const matchedCategories = user.interests.map((i) => i.category.name)
+
+      // スコア: 過去マッチ回数 + 同カテゴリマッチ + タイミングボーナス + 興味カテゴリ
+      let score = matchCount * 5 + sameCategoryMatchCount * 10 + matchedCategories.length
+      if (hasActiveWantToDo && wantToDo) {
+        score += getTimingScore(wantToDo.timing)
+      }
+
+      return {
+        user: {
+          id: user.id,
+          nickname: user.nickname || 'ユーザー',
+          avatarUrl: user.avatarUrl,
+          bio: user.bio,
+        },
+        score,
+        hasActiveWantToDo,
+        wantToDo: wantToDo || undefined,
+        matchedCategories: matchedCategories.slice(0, 3),
+        isAvailableNow: wantToDo?.timing === 'TODAY',
+        isPastMatch: true,
+        matchCount,
+        sameCategoryMatchCount,
+      }
+    })
+
+    suggestions.sort((a, b) => b.score - a.score)
+
+    res.json({
+      success: true,
+      data: suggestions.slice(0, 10),
     })
   } catch (error) {
     next(error)
