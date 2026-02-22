@@ -1,6 +1,10 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals'
 import request from 'supertest'
 import express, { Request, Response, NextFunction } from 'express'
+import { mockPrisma } from '../setup.js'
+
+// Jestモック関数の型
+type MockFn = ReturnType<typeof jest.fn>
 
 // テスト用ユーザー
 const testUser = {
@@ -13,41 +17,7 @@ const testUser = {
   isOnboarded: true,
 }
 
-// Prismaモック
-const mockPrisma = {
-  recruitment: {
-    findMany: jest.fn<() => Promise<unknown>>(),
-    findUnique: jest.fn<() => Promise<unknown>>(),
-    create: jest.fn<() => Promise<unknown>>(),
-    update: jest.fn<() => Promise<unknown>>(),
-    count: jest.fn<() => Promise<number>>(),
-  },
-  category: {
-    findUnique: jest.fn<() => Promise<unknown>>(),
-  },
-  application: {
-    findUnique: jest.fn<() => Promise<unknown>>(),
-    findMany: jest.fn<() => Promise<unknown>>(),
-    create: jest.fn<() => Promise<unknown>>(),
-  },
-  offer: {
-    findUnique: jest.fn<() => Promise<unknown>>(),
-  },
-}
-
-// ESMモジュールをモック
-jest.unstable_mockModule('../../lib/prisma.js', () => ({
-  prisma: mockPrisma,
-}))
-
-jest.unstable_mockModule('../../lib/supabase.js', () => ({
-  supabase: {
-    auth: {
-      getUser: jest.fn(),
-    },
-  },
-}))
-
+// ミドルウェアのモック
 jest.unstable_mockModule('../../middlewares/auth.js', () => ({
   requireAuth: (req: Request, _res: Response, next: NextFunction) => {
     req.user = testUser
@@ -87,7 +57,6 @@ function createTestApp() {
 
 // エラーハンドラー
 function testErrorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
-  console.error('Test error:', err.message)
   res.status(500).json({
     success: false,
     error: { code: 'INTERNAL_ERROR', message: err.message },
@@ -139,8 +108,8 @@ describe('Recruitments API', () => {
         },
       ]
 
-      mockPrisma.recruitment.findMany.mockResolvedValue(mockRecruitments)
-      mockPrisma.recruitment.count.mockResolvedValue(1)
+      ;(mockPrisma.recruitment.findMany as MockFn).mockResolvedValue(mockRecruitments)
+      ;(mockPrisma.recruitment.count as MockFn).mockResolvedValue(1)
 
       const response = await request(app).get('/api/recruitments?status=OPEN')
 
@@ -186,9 +155,9 @@ describe('Recruitments API', () => {
         group: null,
       }
 
-      mockPrisma.recruitment.findUnique.mockResolvedValue(mockRecruitment)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
-      mockPrisma.offer.findUnique.mockResolvedValue(null)
+      ;(mockPrisma.recruitment.findUnique as MockFn).mockResolvedValue(mockRecruitment)
+      ;(mockPrisma.application.findUnique as MockFn).mockResolvedValue(null)
+      ;(mockPrisma.offer.findUnique as MockFn).mockResolvedValue(null)
 
       const response = await request(app).get('/api/recruitments/recruitment-1')
 
@@ -199,7 +168,7 @@ describe('Recruitments API', () => {
     })
 
     it('should return 404 if recruitment not found', async () => {
-      mockPrisma.recruitment.findUnique.mockResolvedValue(null)
+      ;(mockPrisma.recruitment.findUnique as MockFn).mockResolvedValue(null)
 
       const response = await request(app).get('/api/recruitments/non-existent')
 
@@ -230,8 +199,8 @@ describe('Recruitments API', () => {
         category: mockCategory,
       }
 
-      mockPrisma.category.findUnique.mockResolvedValue(mockCategory)
-      mockPrisma.recruitment.create.mockResolvedValue(mockCreatedRecruitment)
+      ;(mockPrisma.category.findUnique as MockFn).mockResolvedValue(mockCategory)
+      ;(mockPrisma.recruitment.create as MockFn).mockResolvedValue(mockCreatedRecruitment)
 
       const response = await request(app)
         .post('/api/recruitments')
@@ -252,7 +221,7 @@ describe('Recruitments API', () => {
     })
 
     it('should return 400 if category is invalid', async () => {
-      mockPrisma.category.findUnique.mockResolvedValue(null)
+      ;(mockPrisma.category.findUnique as MockFn).mockResolvedValue(null)
 
       const response = await request(app)
         .post('/api/recruitments')
@@ -279,8 +248,8 @@ describe('Recruitments API', () => {
         status: 'OPEN',
       }
 
-      mockPrisma.recruitment.findUnique.mockResolvedValue(mockRecruitment)
-      mockPrisma.recruitment.update.mockResolvedValue({ ...mockRecruitment, status: 'CANCELLED' })
+      ;(mockPrisma.recruitment.findUnique as MockFn).mockResolvedValue(mockRecruitment)
+      ;(mockPrisma.recruitment.update as MockFn).mockResolvedValue({ ...mockRecruitment, status: 'CANCELLED' })
 
       const response = await request(app).delete('/api/recruitments/recruitment-1')
 
@@ -295,7 +264,7 @@ describe('Recruitments API', () => {
         status: 'OPEN',
       }
 
-      mockPrisma.recruitment.findUnique.mockResolvedValue(mockRecruitment)
+      ;(mockPrisma.recruitment.findUnique as MockFn).mockResolvedValue(mockRecruitment)
 
       const response = await request(app).delete('/api/recruitments/recruitment-1')
 
@@ -323,9 +292,9 @@ describe('Recruitments API', () => {
         createdAt: new Date(),
       }
 
-      mockPrisma.recruitment.findUnique.mockResolvedValue(mockRecruitment)
-      mockPrisma.application.findUnique.mockResolvedValue(null)
-      mockPrisma.application.create.mockResolvedValue(mockApplication)
+      ;(mockPrisma.recruitment.findUnique as MockFn).mockResolvedValue(mockRecruitment)
+      ;(mockPrisma.application.findUnique as MockFn).mockResolvedValue(null)
+      ;(mockPrisma.application.create as MockFn).mockResolvedValue(mockApplication)
 
       const response = await request(app)
         .post('/api/recruitments/recruitment-1/apply')
@@ -345,7 +314,7 @@ describe('Recruitments API', () => {
         _count: { applications: 1 },
       }
 
-      mockPrisma.recruitment.findUnique.mockResolvedValue(mockRecruitment)
+      ;(mockPrisma.recruitment.findUnique as jest.Mock).mockResolvedValue(mockRecruitment)
 
       const response = await request(app)
         .post('/api/recruitments/recruitment-1/apply')
@@ -364,7 +333,7 @@ describe('Recruitments API', () => {
         _count: { applications: 1 },
       }
 
-      mockPrisma.recruitment.findUnique.mockResolvedValue(mockRecruitment)
+      ;(mockPrisma.recruitment.findUnique as jest.Mock).mockResolvedValue(mockRecruitment)
 
       const response = await request(app)
         .post('/api/recruitments/recruitment-1/apply')
