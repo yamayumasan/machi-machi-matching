@@ -53,7 +53,7 @@ export function ListItem({
         <MaterialCommunityIcons
           name="chevron-right"
           size={20}
-          color={colors.primary[400]}
+          color={colors.neutral[400]} // ガイドライン v2 準拠
         />
       )}
     </View>
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   },
   border: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.primary[100],
+    borderBottomColor: colors.neutral[200], // ガイドライン v2 準拠
   },
   leftElement: {
     marginRight: spacing.md,
@@ -94,17 +94,17 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize.md,
-    color: colors.primary[900],
+    color: colors.neutral[800], // ガイドライン v2 準拠: 見出し
   },
   titleDanger: {
     color: colors.error[500],
   },
   titleDisabled: {
-    color: colors.primary[300],
+    color: colors.neutral[300], // ガイドライン v2 準拠: disabled
   },
   subtitle: {
     fontSize: fontSize.sm,
-    color: colors.primary[500],
+    color: colors.neutral[500], // ガイドライン v2 準拠: サブテキスト
     marginTop: 2,
   },
   rightElement: {

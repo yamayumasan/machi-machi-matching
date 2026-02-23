@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   default: {
     backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: colors.primary[200],
+    borderBottomColor: colors.neutral[200], // ガイドライン v2 準拠
   },
   transparent: {
     backgroundColor: 'transparent',
@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
-    color: colors.primary[900],
+    color: colors.neutral[800], // ガイドライン v2 準拠: 見出し
     flex: 1,
   },
   rightElement: {

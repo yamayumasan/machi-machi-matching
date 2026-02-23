@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ViewStyle } from 'react-native'
-import { colors, spacing, fontSize, fontWeight } from '@/constants/theme'
+import { colors, spacing, fontSize, fontWeight, borderRadius } from '@/constants/theme'
 
 export interface SectionProps {
   children: React.ReactNode
@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
     marginHorizontal: spacing.md,
-    borderRadius: 12,
+    borderRadius: borderRadius.lg, // ガイドライン v2 準拠
     overflow: 'hidden',
   },
   header: {
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.primary[700],
+    color: colors.neutral[700], // ガイドライン v2 準拠: 強調テキスト
   },
   rightElement: {
     marginLeft: spacing.md,
