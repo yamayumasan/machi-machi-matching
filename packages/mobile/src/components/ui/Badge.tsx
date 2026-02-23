@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ViewStyle } from 'react-native'
-import { colors, spacing, fontSize, fontWeight } from '@/constants/theme'
+import { colors, spacing, fontSize, fontWeight, borderRadius } from '@/constants/theme'
 
 export type BadgeVariant = 'primary' | 'accent' | 'success' | 'warning' | 'error'
 export type BadgeSize = 'sm' | 'md'
@@ -51,12 +51,12 @@ const styles = StyleSheet.create({
   base: {
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: borderRadius.full, // ガイドライン v2 準拠: rounded-full
   },
   dot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: borderRadius.full, // ガイドライン v2 準拠
   },
 
   // Sizes

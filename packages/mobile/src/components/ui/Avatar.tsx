@@ -1,5 +1,5 @@
 import { View, Text, Image, StyleSheet, ViewStyle, ImageStyle } from 'react-native'
-import { colors, fontWeight } from '@/constants/theme'
+import { colors, fontWeight, shadows } from '@/constants/theme'
 
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
@@ -73,9 +73,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[500],
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2, // ガイドライン v2 準拠
+    borderColor: colors.white,
+    ...shadows.xs, // ガイドライン v2 準拠
   },
   image: {
     backgroundColor: colors.primary[100],
+    borderWidth: 2, // ガイドライン v2 準拠
+    borderColor: colors.white,
   },
   initial: {
     color: colors.white,
