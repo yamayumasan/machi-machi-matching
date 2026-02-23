@@ -1,74 +1,74 @@
-// デザインガイドライン v2 準拠 - ウォーム系パステル（やさしいデザイン）
+// デザインガイドライン v3 準拠 - セージグリーン × テラコッタ（ナチュラル＆落ち着き）
 export const colors = {
-  // プライマリ（ソフトパープル系）- 親しみやすさと信頼感
+  // プライマリ（セージグリーン系）- 自然、穏やか、安心
   primary: {
-    50: '#FAF5FF',   // セクション背景、軽いハイライト
-    100: '#F3E8FF',  // カード背景、ホバー
-    200: '#E9D5FF',  // ボーダー、区切り線
-    300: '#D8B4FE',  // disabled状態
-    400: '#C084FC',  // アイコン（非アクティブ）
-    500: '#A855F7',  // リンク、セカンダリアクション
-    600: '#9333EA',  // プライマリCTA
-    700: '#7E22CE',  // ホバー・押下時
-    800: '#6B21A8',  // 強調テキスト
-    900: '#581C87',  // 見出し
-    950: '#3B0764',  // 最も濃い
+    50: '#F0F5F0',   // セクション背景、軽いハイライト
+    100: '#E1EBE1',  // カード背景、ホバー
+    200: '#C3D7C3',  // ボーダー、区切り線
+    300: '#A5C3A5',  // disabled状態
+    400: '#87AF87',  // アイコン（非アクティブ）
+    500: '#6B8E6B',  // リンク、セカンダリアクション（メインカラー）
+    600: '#5A7A5A',  // プライマリCTA
+    700: '#4A664A',  // ホバー・押下時
+    800: '#3A523A',  // 強調テキスト
+    900: '#2A3E2A',  // 見出し
+    950: '#1A2A1A',  // 最も濃い
   },
-  // アクセント（ウォームピーチ系）- 温かみと親しみやすさ
+  // アクセント（テラコッタ系）- 温もり、地に足がついた
   accent: {
-    50: '#FFF7ED',   // 通知バッジ背景
-    100: '#FFEDD5',  // ハイライト
-    200: '#FED7AA',  // 軽いアクセント
-    300: '#FDBA74',  // バッジ
-    400: '#FB923C',  // アイコンアクセント
-    500: '#F97316',  // 強調
-    600: '#EA580C',  // セカンダリCTA
-    700: '#C2410C',  // ホバー時
+    50: '#FDF5F0',   // 通知バッジ背景
+    100: '#FBEADE',  // ハイライト
+    200: '#F7D5BD',  // 軽いアクセント
+    300: '#F0B896',  // バッジ
+    400: '#E69B70',  // アイコンアクセント
+    500: '#CD8B62',  // 強調（メインアクセントカラー）
+    600: '#B87A54',  // セカンダリCTA
+    700: '#9A6647',  // ホバー時
   },
-  // ニュートラル（ウォームグレー系）- テキスト・ボーダー・背景
+  // ニュートラル（ナチュラルグレー系）- テキスト・ボーダー・背景
   neutral: {
-    50: '#FAFAF9',   // カード背景（薄）
-    100: '#F5F5F4',  // セクション背景
-    200: '#E7E5E4',  // ボーダー、区切り線
-    300: '#D6D3D1',  // disabled状態
-    400: '#A8A29E',  // プレースホルダー
-    500: '#78716C',  // サブテキスト
-    600: '#57534E',  // 本文テキスト
-    700: '#44403C',  // 強調テキスト
-    800: '#292524',  // 見出し
-    900: '#1C1917',  // 最も濃い
+    50: '#FDFCFB',   // カード背景（薄）、クリーム
+    100: '#F8F6F4',  // セクション背景
+    200: '#EBE7E4',  // ボーダー、区切り線
+    300: '#D9D3CE',  // disabled状態
+    400: '#AEA6A0',  // プレースホルダー
+    500: '#7D756E',  // サブテキスト
+    600: '#5C554F',  // 本文テキスト
+    700: '#45403B',  // 強調テキスト
+    800: '#2E2A27',  // 見出し
+    900: '#1C1A18',  // 最も濃い
   },
   // 背景色
-  background: '#FFFFFF',    // メイン背景（ピュアホワイト）
-  surface: '#F8FAFC',       // カード背景（neutral-50）
+  background: '#FDFCFB',  // メイン背景（クリーム）
+  surface: '#F8F6F4',     // カード背景（neutral-100）
   // 基本色
   white: '#FFFFFF',
   black: '#000000',
-  // ステータスカラー
+  // ステータスカラー（ナチュラルトーンに調整）
   success: {
-    50: '#DCFCE7',
-    500: '#22C55E',
-    600: '#16A34A',
+    50: '#E8F5E8',
+    500: '#5B9B5B',
+    600: '#4A8A4A',
   },
   warning: {
-    50: '#FEF3C7',
-    500: '#F59E0B',
-    600: '#D97706',
+    50: '#FEF5E7',
+    500: '#D4A24A',
+    600: '#C2902E',
   },
   error: {
-    50: '#FEE2E2',
-    500: '#EF4444',
-    600: '#DC2626',
+    50: '#FDEDED',
+    500: '#D35F5F',
+    600: '#C24A4A',
   },
   info: {
-    50: '#DBEAFE',
-    500: '#3B82F6',
-    600: '#2563EB',
+    50: '#E8F2F8',
+    500: '#5A8EB5',
+    600: '#4A7DA3',
   },
   // マップマーカー用（視認性重視）
   marker: {
-    recruitment: '#F97316',  // 募集（ピーチオレンジ）
-    wantToDo: '#9333EA',     // やりたいこと（ソフトパープル）
+    recruitment: '#CD8B62',  // 募集（テラコッタ）
+    wantToDo: '#6B8E6B',     // やりたいこと（セージグリーン）
   },
 }
 
@@ -121,69 +121,69 @@ export const fontWeight = {
   bold: '700' as const,
 }
 
-// デザインガイドライン v2 準拠のシャドウ
+// デザインガイドライン v3 準拠のシャドウ（より繊細に）
 export const shadows = {
   xs: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 8,
-  },
-  xl: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.15,
-    shadowRadius: 48,
-    elevation: 12,
-  },
-  // 互換性のためのエイリアス
-  subtle: {
-    shadowColor: '#000',
+    shadowColor: '#2E2A27',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 2,
     elevation: 1,
   },
-  soft: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+  sm: {
+    shadowColor: '#2E2A27',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: '#2E2A27',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: '#2E2A27',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  xl: {
+    shadowColor: '#2E2A27',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.12,
+    shadowRadius: 48,
+    elevation: 12,
+  },
+  // 互換性のためのエイリアス
+  subtle: {
+    shadowColor: '#2E2A27',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  soft: {
+    shadowColor: '#2E2A27',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
   card: {
-    shadowColor: '#000',
+    shadowColor: '#2E2A27',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowRadius: 16,
     elevation: 4,
   },
   elevated: {
-    shadowColor: '#000',
+    shadowColor: '#2E2A27',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.1,
     shadowRadius: 32,
     elevation: 8,
   },
@@ -191,7 +191,7 @@ export const shadows = {
 
 // 共通スタイルパターン
 export const commonStyles = {
-  // カード（ガイドライン v2 準拠）
+  // カード（ガイドライン v3 準拠）
   card: {
     backgroundColor: colors.white,
     borderRadius: borderRadius.xl,
@@ -245,7 +245,7 @@ export const commonStyles = {
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
   },
-  // デストラクティブボタン
+  // デストラクティブボタン（テラコッタ系）
   destructiveButton: {
     backgroundColor: colors.accent[600],
     borderRadius: borderRadius.lg,
