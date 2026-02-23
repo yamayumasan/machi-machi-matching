@@ -38,7 +38,7 @@ export function Input({
           hasError && styles.inputError,
           style,
         ]}
-        placeholderTextColor={colors.primary[400]}
+        placeholderTextColor={colors.neutral[400]} // ガイドライン準拠
         onFocus={(e) => {
           setIsFocused(true)
           props.onFocus?.(e)
@@ -59,18 +59,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.primary[700],
+    color: colors.neutral[700], // ガイドライン準拠
     marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.primary[200],
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.white, // ガイドライン準拠
+    borderWidth: 1.5, // ガイドライン準拠
+    borderColor: colors.neutral[200], // ガイドライン準拠
+    borderRadius: borderRadius.lg, // ガイドライン準拠: 12px
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    fontSize: fontSize.md,
-    color: colors.primary[900],
+    paddingVertical: 14, // ガイドライン準拠
+    fontSize: fontSize.md, // 16px - iOS対応
+    color: colors.neutral[800], // ガイドライン準拠
   },
   inputFocused: {
     borderColor: colors.primary[600],
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   helper: {
     fontSize: fontSize.xs,
-    color: colors.primary[500],
+    color: colors.neutral[500], // ガイドライン準拠
     marginTop: spacing.xs,
   },
 })

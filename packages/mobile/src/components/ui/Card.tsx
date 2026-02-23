@@ -34,21 +34,22 @@ export function Card({
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.white, // ガイドライン準拠: カードは白背景
+    borderRadius: borderRadius.xl, // ガイドライン準拠: 16px
   },
   padding: {
     padding: spacing.md,
   },
 
-  // Variants
+  // Variants - design-guidelines v2準拠
   default: {
     borderWidth: 1,
-    borderColor: colors.primary[200],
+    borderColor: colors.neutral[200], // ガイドライン準拠
+    ...shadows.sm, // ガイドライン準拠: カードには軽いシャドウ
   },
   outlined: {
     borderWidth: 1,
-    borderColor: colors.primary[200],
+    borderColor: colors.neutral[200], // ガイドライン準拠
     backgroundColor: colors.white,
   },
   elevated: {

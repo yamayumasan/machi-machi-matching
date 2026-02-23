@@ -92,8 +92,8 @@ const styles = StyleSheet.create({
   secondary: {
     backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.primary[200],
+    borderWidth: 1.5, // ガイドライン準拠
+    borderColor: colors.neutral[200], // ガイドライン準拠: neutral系
   },
   accent: {
     backgroundColor: colors.accent[600],
@@ -108,21 +108,21 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
   },
 
-  // Sizes
+  // Sizes - design-guidelines v2準拠
   size_sm: {
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
-    minHeight: 32,
+    minHeight: 36,
   },
   size_md: {
-    paddingVertical: spacing.md,
+    paddingVertical: 14,
     paddingHorizontal: spacing.lg,
-    minHeight: 44,
+    minHeight: 48, // ガイドライン準拠: タップしやすいサイズ
   },
   size_lg: {
     paddingVertical: spacing.md + 4,
     paddingHorizontal: spacing.xl,
-    minHeight: 52,
+    minHeight: 56,
   },
 
   // Text
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   secondaryText: {
-    color: colors.primary[700],
+    color: colors.neutral[700], // ガイドライン準拠
   },
   accentText: {
     color: colors.white,

@@ -112,7 +112,7 @@ export function Modal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(19, 45, 35, 0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.6)', // ガイドライン準拠: neutral-900 @ 60%
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -125,9 +125,9 @@ const styles = StyleSheet.create({
   content: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.xl,
-    ...shadows.elevated,
+    backgroundColor: colors.white, // ガイドライン準拠
+    borderRadius: borderRadius['2xl'], // ガイドライン準拠: 20px
+    ...shadows.xl, // ガイドライン準拠: モーダル用シャドウ
   },
   contentFullScreen: {
     maxWidth: '100%',
