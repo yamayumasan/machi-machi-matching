@@ -2,60 +2,61 @@
 
 ## コンセプト
 - **モダン＆ミニマル**: Linear / Notion風のクリーンで洗練されたデザイン
-- **信頼感＆親しみやすさ**: インディゴ（信頼）× コーラル（温かみ）の組み合わせ
+- **やさしさ＆親しみやすさ**: ソフトパープル（親しみ）× ウォームピーチ（温かみ）の組み合わせ
 - **余白重視**: ゆとりのあるレイアウト、呼吸感のあるデザイン
 - **微細なディテール**: 繊細なシャドウ、滑らかなトランジション
+- **パステル調**: 優しい色合いで心地よいUX
 
 ---
 
 ## カラーパレット
 
-### プライマリ（インディゴ系）
-マッチングアプリに適した信頼感と落ち着きを演出
+### プライマリ（ソフトパープル系）
+マッチングアプリに適した親しみやすさと信頼感を演出
 
 | Token | Hex | 用途 |
 |-------|-----|------|
-| primary-50 | #EEF2FF | セクション背景、軽いハイライト |
-| primary-100 | #E0E7FF | カード背景、ホバー |
-| primary-200 | #C7D2FE | ボーダー、区切り線 |
-| primary-300 | #A5B4FC | disabled状態 |
-| primary-400 | #818CF8 | アイコン（非アクティブ） |
-| primary-500 | #6366F1 | リンク、セカンダリアクション |
-| primary-600 | #4F46E5 | **プライマリCTA**、メインアクション |
-| primary-700 | #4338CA | ホバー・押下時 |
-| primary-800 | #3730A3 | 強調テキスト |
-| primary-900 | #312E81 | 見出し |
-| primary-950 | #1E1B4B | 最も濃い |
+| primary-50 | #FAF5FF | セクション背景、軽いハイライト |
+| primary-100 | #F3E8FF | カード背景、ホバー |
+| primary-200 | #E9D5FF | ボーダー、区切り線 |
+| primary-300 | #D8B4FE | disabled状態 |
+| primary-400 | #C084FC | アイコン（非アクティブ） |
+| primary-500 | #A855F7 | リンク、セカンダリアクション |
+| primary-600 | #9333EA | **プライマリCTA**、メインアクション |
+| primary-700 | #7E22CE | ホバー・押下時 |
+| primary-800 | #6B21A8 | 強調テキスト |
+| primary-900 | #581C87 | 見出し |
+| primary-950 | #3B0764 | 最も濃い |
 
-### アクセント（コーラル系）
-温かみと活力を演出、CTAの補助やハイライトに
+### アクセント（ウォームピーチ系）
+温かみと親しみやすさを演出、CTAの補助やハイライトに
 
 | Token | Hex | 用途 |
 |-------|-----|------|
-| accent-50 | #FFF5F5 | 通知バッジ背景 |
-| accent-100 | #FFE4E4 | ハイライト |
-| accent-200 | #FECACA | 軽いアクセント |
-| accent-300 | #FDA4A4 | バッジ |
-| accent-400 | #F87171 | アイコンアクセント |
-| accent-500 | #EF4444 | 強調 |
-| accent-600 | #DC2626 | セカンダリCTA |
-| accent-700 | #B91C1C | ホバー時 |
+| accent-50 | #FFF7ED | 通知バッジ背景 |
+| accent-100 | #FFEDD5 | ハイライト |
+| accent-200 | #FED7AA | 軽いアクセント |
+| accent-300 | #FDBA74 | バッジ |
+| accent-400 | #FB923C | アイコンアクセント |
+| accent-500 | #F97316 | 強調 |
+| accent-600 | #EA580C | セカンダリCTA |
+| accent-700 | #C2410C | ホバー時 |
 
-### ニュートラル（スレートグレー系）
+### ニュートラル（ウォームグレー系）
 テキスト、ボーダー、背景に使用
 
 | Token | Hex | 用途 |
 |-------|-----|------|
-| neutral-50 | #F8FAFC | カード背景（薄） |
-| neutral-100 | #F1F5F9 | セクション背景 |
-| neutral-200 | #E2E8F0 | ボーダー、区切り線 |
-| neutral-300 | #CBD5E1 | disabled状態 |
-| neutral-400 | #94A3B8 | プレースホルダー |
-| neutral-500 | #64748B | サブテキスト |
-| neutral-600 | #475569 | 本文テキスト |
-| neutral-700 | #334155 | 強調テキスト |
-| neutral-800 | #1E293B | 見出し |
-| neutral-900 | #0F172A | 最も濃い |
+| neutral-50 | #FAFAF9 | カード背景（薄） |
+| neutral-100 | #F5F5F4 | セクション背景 |
+| neutral-200 | #E7E5E4 | ボーダー、区切り線 |
+| neutral-300 | #D6D3D1 | disabled状態 |
+| neutral-400 | #A8A29E | プレースホルダー |
+| neutral-500 | #78716C | サブテキスト |
+| neutral-600 | #57534E | 本文テキスト |
+| neutral-700 | #44403C | 強調テキスト |
+| neutral-800 | #292524 | 見出し |
+| neutral-900 | #1C1917 | 最も濃い |
 
 ### ステータスカラー
 | 状態 | 背景 | テキスト/アイコン |
@@ -73,13 +74,13 @@
 - `background: #FFFFFF` (ピュアホワイト)
 
 ### カード/サーフェス背景
-- `background: #F8FAFC` (neutral-50)
+- `background: #FAFAF9` (neutral-50)
 
 ### セクション背景
-- `background: #F1F5F9` (neutral-100)
+- `background: #F5F5F4` (neutral-100)
 
 ### オーバーレイ
-- `background: rgba(15, 23, 42, 0.6)` (neutral-900 @ 60%)
+- `background: rgba(28, 25, 23, 0.6)` (neutral-900 @ 60%)
 - `backdrop-filter: blur(8px)`
 
 ---
@@ -105,11 +106,11 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont,
 | text-4xl | 36px | 40px | ヒーロー |
 
 ### テキストカラー
-- 見出し: `text-neutral-800` (#1E293B)
-- 本文: `text-neutral-600` (#475569)
-- サブテキスト: `text-neutral-500` (#64748B)
-- プレースホルダー: `text-neutral-400` (#94A3B8)
-- リンク: `text-primary-600` (#4F46E5)
+- 見出し: `text-neutral-800` (#292524)
+- 本文: `text-neutral-600` (#57534E)
+- サブテキスト: `text-neutral-500` (#78716C)
+- プレースホルダー: `text-neutral-400` (#A8A29E)
+- リンク: `text-primary-600` (#9333EA)
 
 ### iOSズーム防止
 入力フィールドは必ず `font-size: 16px` 以上を使用すること。
@@ -120,7 +121,7 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont,
 
 ### ボタン
 - **プライマリCTA**:
-  - `bg-primary-600` (#4F46E5)
+  - `bg-primary-600` (#9333EA)
   - `hover:bg-primary-700`, `active:bg-primary-800`
   - `text-white`, `rounded-xl` (12px)
   - 高さ: 48px（タップしやすいサイズ）
@@ -135,24 +136,24 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont,
   - `text-primary-600`, `hover:bg-primary-50`
 
 - **デストラクティブ**:
-  - `bg-accent-600` (#DC2626)
+  - `bg-accent-600` (#EA580C)
   - `hover:bg-accent-700`, `text-white`
 
 ### カード
 - `background: #FFFFFF`
-- `border: 1px solid #E2E8F0` (neutral-200)
+- `border: 1px solid #E7E5E4` (neutral-200)
 - `border-radius: 16px`
 - `shadow: 0 1px 3px rgb(0 0 0 / 0.05)`
 - ホバー: `shadow: 0 4px 12px rgb(0 0 0 / 0.08)`
 
 ### 入力フィールド
 - `background: #FFFFFF`
-- `border: 1.5px solid #E2E8F0` (neutral-200)
+- `border: 1.5px solid #E7E5E4` (neutral-200)
 - `border-radius: 12px`
 - `padding: 14px 16px`
 - `font-size: 16px` (iOS対応)
 - フォーカス時:
-  - `border-color: #4F46E5` (primary-600)
+  - `border-color: #9333EA` (primary-600)
   - `ring: 4px primary-100`
 
 ### タグ/バッジ
@@ -187,20 +188,20 @@ border-radius: 20px;
 ## チャット
 
 ### 自分のメッセージ
-- `background: #4F46E5` (primary-600)
+- `background: #9333EA` (primary-600)
 - `color: white`
 - `border-radius: 20px 20px 4px 20px`
 
 ### 相手のメッセージ
-- `background: #F1F5F9` (neutral-100)
-- `color: #475569` (neutral-600)
+- `background: #F5F5F4` (neutral-100)
+- `color: #57534E` (neutral-600)
 - `border-radius: 20px 20px 20px 4px`
 
 ---
 
 ## マップマーカー
-- **募集**: コーラル `#EF4444` (視認性重視)
-- **やりたいこと**: インディゴ `#4F46E5` (プライマリ)
+- **募集**: ピーチオレンジ `#F97316` (視認性重視)
+- **やりたいこと**: ソフトパープル `#9333EA` (プライマリ)
 - **選択中**: ホワイト背景 + プライマリボーダー
 
 ---
@@ -262,9 +263,10 @@ border-radius: 20px;
 ## 原則
 
 1. **Less is More**: 要素を最小限に、余白を最大限に
-2. **インディゴで信頼感**: CTAはprimary-600で統一
-3. **コーラルは控えめに**: アクセントとして使用、メインにしない
-4. **グレーで構造化**: ボーダーと背景はニュートラル系
+2. **パープルで親しみやすさ**: CTAはprimary-600で統一
+3. **ピーチは控えめに**: アクセントとして使用、メインにしない
+4. **ウォームグレーで構造化**: ボーダーと背景はニュートラル系
 5. **シャドウは繊細に**: 重いシャドウは避け、軽い立体感を演出
 6. **コントラスト確保**: WCAG AA 4.5:1以上を維持
 7. **一貫性**: 同じコンポーネントは同じスタイルで
+8. **やさしい色合い**: パステル調で心地よいUXを実現

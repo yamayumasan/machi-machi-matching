@@ -14,6 +14,7 @@ const TAB_ICONS: Record<string, IconName> = {
 
 export default function TabLayout() {
   const { user, isOnboarded } = useAuthStore()
+  const insets = useSafeAreaInsets()
 
   // 未ログインの場合
   if (!user) {
@@ -25,7 +26,7 @@ export default function TabLayout() {
     return <Redirect href={"/onboarding" as "/notifications"} />
   }
 
-  // デザインガイドライン v2 準拠のタブバー
+  // デザインガイドライン v2 準拠のタブバー（SafeArea対応）
   return (
     <Tabs
       screenOptions={{
@@ -37,7 +38,8 @@ export default function TabLayout() {
           borderTopColor: colors.neutral[200], // ガイドライン準拠: neutral系ボーダー
           backgroundColor: colors.white,
           paddingTop: 4,
-          height: 56,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 8, // SafeArea対応
+          height: 56 + (insets.bottom > 0 ? insets.bottom : 8), // SafeArea分の高さ追加
         },
         tabBarLabelStyle: {
           fontSize: fontSize.xs - 1,
