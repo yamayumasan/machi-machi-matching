@@ -14,6 +14,14 @@
 
 ## 進行中
 
+- [x] **緊急: ランタイムエラー修正**（フェーズ4-4の前に対応必須）✅
+  - [x] Animated エラー修正: FABアニメーションの`useNativeDriver`を統一（false）
+    - `packages/mobile/app/(tabs)/index.tsx` のFAB scale アニメーションを修正
+    - 同一コンポーネントでnative/non-native混在を解消
+  - [x] onboarding ルート警告修正
+    - `app/onboarding/_layout.tsx` を追加してルートを明示的に登録
+  - **完了条件**: 型チェック通過 ✓
+
 - [ ] フェーズ4: デザイン大刷新（モダン・ミニマル路線）
   - **目標**: より最適化された使いやすくattractiveなデザインへ全面刷新
   - **方向性**: Airbnb / Linear / Notion風のモダン・ミニマルデザイン
@@ -56,6 +64,24 @@
 ## 引き継ぎメモ
 
 ### 最新イテレーション
+
+**日時**: 2026-02-23 (iteration 30)
+
+**実施内容**:
+- 緊急: ランタイムエラー修正 ✅
+  - Animated APIエラー: FABで`useNativeDriver: true`と`false`が混在していた問題を修正
+    - `fabScaleAnim`のアニメーションを`useNativeDriver: false`に統一
+    - 同じAnimated.Viewで`bottom`（non-native）と`transform`（native対応）を使用していたため
+  - onboardingルート警告: `app/onboarding/_layout.tsx`を追加してルートを明示的に登録
+- 型チェック: API ✓, Mobile ✓
+- **緊急タスク完了**
+
+**次のタスク**:
+- フェーズ4-4: オンボーディング体験の実装
+
+---
+
+### 過去イテレーション
 
 **日時**: 2026-02-23 (iteration 29)
 

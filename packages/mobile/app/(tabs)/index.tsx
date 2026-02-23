@@ -99,10 +99,12 @@ export default function HomeScreen() {
   const fabScaleAnim = useRef(new Animated.Value(1)).current
 
   // FAB押下時のアニメーション
+  // NOTE: FABはbottom（non-native）とtransform（native対応）を併用しているため
+  // 同一コンポーネントではuseNativeDriverを統一する必要がある
   const handleFABPressIn = useCallback(() => {
     Animated.spring(fabScaleAnim, {
       toValue: 0.92,
-      useNativeDriver: true,
+      useNativeDriver: false, // bottomプロパティと同一Viewなのでfalseに統一
       friction: 8,
       tension: 100,
     }).start()
@@ -111,7 +113,7 @@ export default function HomeScreen() {
   const handleFABPressOut = useCallback(() => {
     Animated.spring(fabScaleAnim, {
       toValue: 1,
-      useNativeDriver: true,
+      useNativeDriver: false, // bottomプロパティと同一Viewなのでfalseに統一
       friction: 8,
       tension: 100,
     }).start()
