@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { colors, spacing, borderRadius, fontSize, fontWeight, shadows, animation } from '@/constants/theme'
+import { successFeedback, errorFeedback, warningFeedback, lightTap } from '@/utils/haptics'
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info'
 

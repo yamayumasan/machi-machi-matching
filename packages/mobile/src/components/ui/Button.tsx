@@ -11,6 +11,7 @@ import {
   Pressable,
 } from 'react-native'
 import { colors, spacing, borderRadius, fontSize, fontWeight, animation } from '@/constants/theme'
+import { lightTap, mediumTap, heavyTap } from '@/utils/haptics'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'danger'
 export type ButtonSize = 'sm' | 'md' | 'lg'
@@ -26,6 +27,8 @@ export interface ButtonProps extends Omit<TouchableOpacityProps, 'style'> {
   textStyle?: TextStyle
   /** アニメーションを無効化する場合 */
   noAnimation?: boolean
+  /** ハプティックフィードバックを無効化する場合 */
+  noHaptics?: boolean
 }
 
 export function Button({
@@ -38,22 +41,35 @@ export function Button({
   style,
   textStyle,
   noAnimation = false,
+  noHaptics = false,
   onPress,
   ...props
 }: ButtonProps) {
   const isDisabled = disabled || loading
   const scaleAnim = useRef(new Animated.Value(1)).current
 
-  // デザインガイドライン v2準拠: scale(0.98) + 150ms
+  // デザインガイドライン v2準拠: scale(0.98) + 150ms + ハプティックフィードバック
   const handlePressIn = useCallback(() => {
     if (noAnimation || isDisabled) return
+
+    // ハプティックフィードバック（variant に応じて強度を変える）
+    if (!noHaptics && !isDisabled) {
+      if (variant === 'danger') {
+        heavyTap()
+      } else if (variant === 'primary' || variant === 'accent') {
+        mediumTap()
+      } else {
+        lightTap()
+      }
+    }
+
     Animated.spring(scaleAnim, {
       toValue: 0.98,
       useNativeDriver: true,
       friction: 8,
       tension: 100,
     }).start()
-  }, [scaleAnim, noAnimation, isDisabled])
+  }, [scaleAnim, noAnimation, isDisabled, noHaptics, variant])
 
   const handlePressOut = useCallback(() => {
     if (noAnimation || isDisabled) return
