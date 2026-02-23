@@ -10,6 +10,8 @@ import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { useSocket } from '@/hooks/useSocket'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import { ErrorProvider } from '@/contexts/ErrorContext'
+import { ToastProvider } from '@/contexts/ToastContext'
+import { colors } from '@/constants/theme'
 
 // Expo Go かどうかを判定
 const isExpoGo = Constants.appOwnership === 'expo'
@@ -97,6 +99,22 @@ function RootLayoutNav() {
       <Stack
         screenOptions={{
           headerShown: false,
+          // 画面遷移アニメーション設定（デザインガイドライン準拠: 300ms ease-out）
+          animation: 'slide_from_right',
+          animationDuration: 300,
+          // ヘッダースタイル
+          headerStyle: {
+            backgroundColor: colors.white,
+          },
+          headerTintColor: colors.primary[600],
+          headerTitleStyle: {
+            fontWeight: '600',
+            color: colors.neutral[800],
+          },
+          // コンテンツスタイル
+          contentStyle: {
+            backgroundColor: colors.background,
+          },
         }}
       >
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -151,7 +169,9 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <ErrorProvider>
-      <RootLayoutNav />
+      <ToastProvider>
+        <RootLayoutNav />
+      </ToastProvider>
     </ErrorProvider>
   )
 }
