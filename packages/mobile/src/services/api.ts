@@ -1,6 +1,10 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import * as SecureStore from 'expo-secure-store'
 import { API_URL, SUPABASE_URL } from '@/constants'
+import { config, isDev } from '@/config/env'
+
+// 開発モード用トークン
+const DEV_ACCESS_TOKEN = 'dev-access-token'
 
 // エラーコードの定義
 export const ErrorCodes = {
@@ -33,6 +37,11 @@ const getSupabaseStorageKey = () => {
 
 // トークン取得
 const getAccessToken = async (): Promise<string | null> => {
+  // 開発モード: 開発用トークンを使用
+  if (isDev && config.dev.autoLogin) {
+    return DEV_ACCESS_TOKEN
+  }
+
   try {
     const storageKey = getSupabaseStorageKey()
     const session = await SecureStore.getItemAsync(storageKey)

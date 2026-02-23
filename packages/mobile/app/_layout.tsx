@@ -4,12 +4,15 @@ import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency'
-import mobileAds from 'react-native-google-mobile-ads'
+import Constants from 'expo-constants'
 import { useAuthStore } from '@/stores/auth'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { useSocket } from '@/hooks/useSocket'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import { ErrorProvider } from '@/contexts/ErrorContext'
+
+// Expo Go かどうかを判定
+const isExpoGo = Constants.appOwnership === 'expo'
 
 // スプラッシュスクリーンを表示したまま維持
 SplashScreen.preventAutoHideAsync()
@@ -29,13 +32,24 @@ function RootLayoutNav() {
   useEffect(() => {
     async function prepare() {
       try {
-        // ATT許可リクエスト（iOS 14.5+）
-        if (Platform.OS === 'ios') {
-          await requestTrackingPermissionsAsync()
+        // ATT許可リクエスト（iOS 14.5+）- Expo Go では動作しない場合がある
+        if (Platform.OS === 'ios' && !isExpoGo) {
+          try {
+            await requestTrackingPermissionsAsync()
+          } catch (e) {
+            console.log('[Layout] ATT request skipped in Expo Go')
+          }
         }
 
-        // AdMob SDK初期化
-        await mobileAds().initialize()
+        // AdMob SDK初期化 - Expo Go または開発モードではスキップ
+        if (!isExpoGo && !__DEV__) {
+          try {
+            const mobileAds = (await import('react-native-google-mobile-ads')).default
+            await mobileAds().initialize()
+          } catch (e) {
+            console.log('[Layout] AdMob initialization skipped:', e)
+          }
+        }
 
         // 認証状態をチェック
         await checkSession()

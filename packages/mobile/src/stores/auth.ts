@@ -6,6 +6,7 @@ import * as AuthSession from 'expo-auth-session'
 import * as AppleAuthentication from 'expo-apple-authentication'
 import { Platform } from 'react-native'
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants'
+import { config, isDev } from '@/config/env'
 import {
   getCurrentUser,
   completeOnboarding as completeOnboardingApi,
@@ -17,6 +18,24 @@ import {
 
 // WebBrowserの完了ハンドリングを有効化
 WebBrowser.maybeCompleteAuthSession()
+
+// 開発モード用のモックセッション
+const createDevMockSession = (): Session => ({
+  access_token: 'dev-access-token',
+  refresh_token: 'dev-refresh-token',
+  expires_in: 3600 * 24 * 365, // 1年
+  expires_at: Math.floor(Date.now() / 1000) + 3600 * 24 * 365,
+  token_type: 'bearer',
+  user: {
+    id: config.dev.mockUser.id,
+    email: config.dev.mockUser.email,
+    aud: 'authenticated',
+    role: 'authenticated',
+    app_metadata: {},
+    user_metadata: {},
+    created_at: new Date().toISOString(),
+  },
+})
 
 // Supabase クライアント
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -301,6 +320,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   checkSession: async () => {
     set({ isLoading: true })
+
+    // 開発モード: 自動ログイン
+    if (isDev && config.dev.autoLogin) {
+      console.log('[AUTH] DEV MODE: Auto-login enabled')
+      const mockSession = createDevMockSession()
+      set({ session: mockSession })
+
+      // APIから実際のユーザーデータを取得
+      try {
+        console.log('[AUTH] DEV MODE: Fetching user from API...')
+        const user = await getCurrentUser()
+        set({
+          user,
+          isOnboarded: user.isOnboarded,
+          isLoading: false,
+        })
+        console.log('[AUTH] DEV MODE: Logged in as', user.email)
+      } catch (error: any) {
+        console.error('[AUTH] DEV MODE: Failed to fetch user:', error?.message)
+        // フォールバック: モックユーザーを使用
+        const mockUser = config.dev.mockUser
+        set({
+          user: mockUser,
+          isOnboarded: mockUser.isOnboarded,
+          isLoading: false,
+        })
+        console.log('[AUTH] DEV MODE: Using fallback mock user')
+      }
+      return
+    }
 
     try {
       const { data: { session }, error } = await supabase.auth.getSession()

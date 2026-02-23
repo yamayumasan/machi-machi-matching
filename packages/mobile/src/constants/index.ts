@@ -1,8 +1,11 @@
 export * from './theme'
 
-// API URL
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api'
+// 環境設定からインポート
+import { config } from '@/config/env'
+
+// API URL（環境自動判別）
+export const API_URL = config.apiUrl
 
 // Supabase
-export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || ''
-export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ''
+export const SUPABASE_URL = config.supabaseUrl
+export const SUPABASE_ANON_KEY = config.supabaseAnonKey

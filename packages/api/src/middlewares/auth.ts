@@ -2,6 +2,15 @@ import { Request, Response, NextFunction } from 'express'
 import { supabase } from '../lib/supabase'
 import { prisma } from '../lib/prisma'
 
+// 開発モード判定
+const isDev = process.env.NODE_ENV !== 'production'
+
+// 開発用トークン
+const DEV_ACCESS_TOKEN = 'dev-access-token'
+
+// 開発用モックユーザー設定
+const DEV_USER_EMAIL = 'test_user_0@example.com'
+
 // Express.Requestを拡張してユーザー情報を追加
 declare global {
   namespace Express {
@@ -52,6 +61,39 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     }
 
     const token = authHeader.substring(7)
+
+    // 開発モード: 開発用トークンの場合はSupabase認証をバイパス
+    if (isDev && token === DEV_ACCESS_TOKEN) {
+      console.log('[AUTH] DEV MODE: Using dev access token')
+      const devUser = await prisma.user.findFirst({
+        where: { email: DEV_USER_EMAIL },
+      })
+
+      if (!devUser) {
+        console.log('[AUTH] DEV MODE: Dev user not found, creating mock user')
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'DEV_USER_NOT_FOUND',
+            message: `Development user (${DEV_USER_EMAIL}) not found. Run: pnpm db:seed`,
+          },
+        })
+      }
+
+      req.user = {
+        id: devUser.id,
+        email: devUser.email,
+        nickname: devUser.nickname,
+        avatarUrl: devUser.avatarUrl,
+        bio: devUser.bio,
+        area: devUser.area,
+        isOnboarded: devUser.isOnboarded,
+        lastActiveAt: devUser.lastActiveAt,
+      }
+
+      console.log('[AUTH] DEV MODE: Authenticated as', devUser.email)
+      return next()
+    }
 
     // Supabaseでトークン検証
     const {
@@ -139,6 +181,27 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
     }
 
     const token = authHeader.substring(7)
+
+    // 開発モード: 開発用トークンの場合はSupabase認証をバイパス
+    if (isDev && token === DEV_ACCESS_TOKEN) {
+      const devUser = await prisma.user.findFirst({
+        where: { email: DEV_USER_EMAIL },
+      })
+
+      if (devUser) {
+        req.user = {
+          id: devUser.id,
+          email: devUser.email,
+          nickname: devUser.nickname,
+          avatarUrl: devUser.avatarUrl,
+          bio: devUser.bio,
+          area: devUser.area,
+          isOnboarded: devUser.isOnboarded,
+          lastActiveAt: devUser.lastActiveAt,
+        }
+      }
+      return next()
+    }
 
     const {
       data: { user: authUser },

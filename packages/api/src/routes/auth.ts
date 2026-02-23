@@ -6,6 +6,11 @@ import { prisma } from '../lib/prisma'
 
 const router = Router()
 
+// 開発モード設定
+const isDev = process.env.NODE_ENV !== 'production'
+const DEV_ACCESS_TOKEN = 'dev-access-token'
+const DEV_USER_EMAIL = 'test_user_0@example.com'
+
 // POST /api/auth/signup - メール・パスワードで新規登録
 // 注意: モバイルアプリからは直接Supabase Auth APIを使用するため、このエンドポイントは使用しません
 // メール確認フローはSupabase側で処理され、確認後のログイン時にDBユーザーが自動作成されます
@@ -227,6 +232,51 @@ router.get('/me', async (req, res, next) => {
     }
 
     const token = authHeader.substring(7)
+
+    // 開発モード: 開発用トークンの場合はSupabase認証をバイパス
+    if (isDev && token === DEV_ACCESS_TOKEN) {
+      console.log('[AUTH] DEV MODE: /me using dev access token')
+      const devUser = await prisma.user.findFirst({
+        where: { email: DEV_USER_EMAIL },
+        include: {
+          interests: {
+            include: {
+              category: true,
+            },
+          },
+        },
+      })
+
+      if (!devUser) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'DEV_USER_NOT_FOUND',
+            message: `Development user (${DEV_USER_EMAIL}) not found. Run: pnpm db:seed`,
+          },
+        })
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          user: {
+            id: devUser.id,
+            email: devUser.email,
+            nickname: devUser.nickname,
+            avatarUrl: devUser.avatarUrl,
+            bio: devUser.bio,
+            area: devUser.area,
+            isOnboarded: devUser.isOnboarded,
+            createdAt: devUser.createdAt,
+            interests: devUser.interests.map((i) => ({
+              id: i.category.id,
+              name: i.category.name,
+            })),
+          },
+        },
+      })
+    }
 
     // Supabaseでトークン検証
     const {
