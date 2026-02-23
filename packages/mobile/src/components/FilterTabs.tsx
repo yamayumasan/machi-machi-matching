@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
+import { useRef, useCallback, useEffect } from 'react'
+import { View, Text, StyleSheet, Pressable, ScrollView, Animated } from 'react-native'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { colors, spacing, borderRadius, fontWeight, fontSize, shadows } from '@/constants/theme'
 
@@ -61,21 +62,62 @@ interface TabItemProps {
 }
 
 function TabItem({ tab, isActive, onPress, showIcon }: TabItemProps) {
+  // タップアニメーション
+  const scaleAnim = useRef(new Animated.Value(1)).current
+  const bgAnim = useRef(new Animated.Value(isActive ? 1 : 0)).current
+
+  useEffect(() => {
+    Animated.timing(bgAnim, {
+      toValue: isActive ? 1 : 0,
+      duration: 150,
+      useNativeDriver: false,
+    }).start()
+  }, [isActive, bgAnim])
+
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+      friction: 10,
+      tension: 100,
+    }).start()
+  }, [scaleAnim])
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 10,
+      tension: 100,
+    }).start()
+  }, [scaleAnim])
+
+  const backgroundColor = bgAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [colors.neutral[100], colors.primary[600]],
+  })
+
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-      <View style={[styles.tab, isActive && styles.tabActive]}>
-        {showIcon && tab.icon && (
-          <MaterialCommunityIcons
-            name={tab.icon}
-            size={14}
-            color={isActive ? colors.white : colors.primary[600]}
-          />
-        )}
-        <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
-          {tab.label}
-        </Text>
-      </View>
-    </TouchableOpacity>
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      >
+        <Animated.View style={[styles.tab, { backgroundColor }]}>
+          {showIcon && tab.icon && (
+            <MaterialCommunityIcons
+              name={tab.icon}
+              size={14}
+              color={isActive ? colors.white : colors.primary[600]}
+            />
+          )}
+          <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+            {tab.label}
+          </Text>
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
   )
 }
 

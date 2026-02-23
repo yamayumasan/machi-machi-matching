@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'
+import { useRef, useCallback } from 'react'
+import { View, Text, StyleSheet, Pressable, Image, Animated } from 'react-native'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { NearbyItem } from '@/services/nearby'
 import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/constants/theme'
@@ -24,6 +25,27 @@ export function NearbyItemCard({
   compact = false,
 }: NearbyItemCardProps) {
   const isRecruitment = item.type === 'recruitment'
+
+  // タップアニメーション
+  const scaleAnim = useRef(new Animated.Value(1)).current
+
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      useNativeDriver: true,
+      friction: 10,
+      tension: 100,
+    }).start()
+  }, [scaleAnim])
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 10,
+      tension: 100,
+    }).start()
+  }, [scaleAnim])
 
   // 距離をフォーマット
   const formatDistance = (meters?: number) => {
@@ -52,12 +74,14 @@ export function NearbyItemCard({
 
   if (compact) {
     return (
-      <TouchableOpacity
-        style={[styles.compactContainer, isSelected && styles.selected]}
-        onPress={onPress}
-        onLongPress={onLongPress}
-        activeOpacity={0.7}
-      >
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <Pressable
+          style={[styles.compactContainer, isSelected && styles.selected]}
+          onPress={onPress}
+          onLongPress={onLongPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+        >
         {/* カテゴリアイコン */}
         <View style={[
           styles.compactIcon,
@@ -90,23 +114,26 @@ export function NearbyItemCard({
 
         {/* 詳細ボタン */}
         {onDetailPress && (
-          <TouchableOpacity
+          <Pressable
             style={styles.detailButton}
             onPress={onDetailPress}
           >
             <Text style={styles.detailButtonText}>詳細</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
-      </TouchableOpacity>
+      </Pressable>
+      </Animated.View>
     )
   }
 
   return (
-    <TouchableOpacity
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+    <Pressable
       style={[styles.container, isSelected && styles.selected]}
       onPress={onPress}
       onLongPress={onLongPress}
-      activeOpacity={0.7}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
     >
       {/* ヘッダー: タイプバッジ + カテゴリ */}
       <View style={styles.header}>
@@ -173,12 +200,12 @@ export function NearbyItemCard({
 
         {/* 詳細ボタン */}
         {onDetailPress && (
-          <TouchableOpacity
+          <Pressable
             style={styles.detailButtonNormal}
             onPress={onDetailPress}
           >
             <Text style={styles.detailButtonText}>詳細</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
 
@@ -188,7 +215,8 @@ export function NearbyItemCard({
           <Text style={styles.participatingText}>参加中</Text>
         </View>
       )}
-    </TouchableOpacity>
+    </Pressable>
+    </Animated.View>
   )
 }
 

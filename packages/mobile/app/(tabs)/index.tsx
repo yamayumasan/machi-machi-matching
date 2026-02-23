@@ -9,6 +9,7 @@ import {
   ScrollView,
   Animated,
   PanResponder,
+  Pressable,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
@@ -90,6 +91,28 @@ export default function HomeScreen() {
 
   // FABの位置をリスト高さに連動
   const fabBottomAnim = Animated.add(listHeightAnim, spacing.md)
+
+  // FABのスケールアニメーション
+  const fabScaleAnim = useRef(new Animated.Value(1)).current
+
+  // FAB押下時のアニメーション
+  const handleFABPressIn = useCallback(() => {
+    Animated.spring(fabScaleAnim, {
+      toValue: 0.92,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 100,
+    }).start()
+  }, [fabScaleAnim])
+
+  const handleFABPressOut = useCallback(() => {
+    Animated.spring(fabScaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 100,
+    }).start()
+  }, [fabScaleAnim])
 
   useEffect(() => {
     fetchNotifications()
@@ -396,14 +419,22 @@ export default function HomeScreen() {
         <AdBanner unitId={AD_UNIT_IDS.BANNER_MAP} />
       </Animated.View>
 
-      {/* FAB */}
-      <Animated.View style={[styles.fab, { bottom: fabBottomAnim }]}>
-        <TouchableOpacity
+      {/* FAB - マイクロインタラクション付き */}
+      <Animated.View style={[
+        styles.fab,
+        {
+          bottom: fabBottomAnim,
+          transform: [{ scale: fabScaleAnim }],
+        }
+      ]}>
+        <Pressable
           style={styles.fabTouchable}
           onPress={handleFABPress}
+          onPressIn={handleFABPressIn}
+          onPressOut={handleFABPressOut}
         >
           <MaterialCommunityIcons name="plus" size={28} color={colors.white} />
-        </TouchableOpacity>
+        </Pressable>
       </Animated.View>
 
       {/* 募集詳細モーダル */}
@@ -497,11 +528,12 @@ const styles = StyleSheet.create({
   },
   handleContainer: {
     alignItems: 'center',
-    paddingVertical: spacing.sm + 2,
+    paddingTop: spacing.sm + 4,
+    paddingBottom: spacing.sm,
   },
   handle: {
-    width: 36,
-    height: 4,
+    width: 40,
+    height: 5,
     backgroundColor: colors.neutral[300],
     borderRadius: borderRadius.full,
   },
