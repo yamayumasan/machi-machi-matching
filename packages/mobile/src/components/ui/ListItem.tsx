@@ -1,12 +1,15 @@
+import { useRef, useCallback } from 'react'
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   ViewStyle,
+  Animated,
 } from 'react-native'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { colors, spacing, fontSize, fontWeight } from '@/constants/theme'
+import { lightTap, heavyTap } from '@/utils/haptics'
 
 export interface ListItemProps {
   title: string
@@ -33,8 +36,58 @@ export function ListItem({
   isLast = false,
   style,
 }: ListItemProps) {
+  // タップアニメーション
+  const scaleAnim = useRef(new Animated.Value(1)).current
+  const bgAnim = useRef(new Animated.Value(0)).current
+
+  const handlePressIn = useCallback(() => {
+    if (disabled) return
+    // ハプティックフィードバック（variantに応じて強度を変える）
+    if (variant === 'danger') {
+      heavyTap()
+    } else {
+      lightTap()
+    }
+
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 0.98,
+        useNativeDriver: true,
+        friction: 10,
+        tension: 100,
+      }),
+      Animated.timing(bgAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: false,
+      }),
+    ]).start()
+  }, [scaleAnim, bgAnim, disabled, variant])
+
+  const handlePressOut = useCallback(() => {
+    if (disabled) return
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 10,
+        tension: 100,
+      }),
+      Animated.timing(bgAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: false,
+      }),
+    ]).start()
+  }, [scaleAnim, bgAnim, disabled])
+
+  const backgroundColor = bgAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [colors.white, colors.neutral[50]],
+  })
+
   const content = (
-    <View style={[styles.container, !isLast && styles.border, style]}>
+    <View style={[styles.innerContainer, !isLast && styles.border]}>
       {leftElement && <View style={styles.leftElement}>{leftElement}</View>}
       <View style={styles.content}>
         <Text
@@ -53,7 +106,7 @@ export function ListItem({
         <MaterialCommunityIcons
           name="chevron-right"
           size={20}
-          color={colors.neutral[400]} // ガイドライン v2 準拠
+          color={colors.neutral[400]}
         />
       )}
     </View>
@@ -61,26 +114,33 @@ export function ListItem({
 
   if (onPress) {
     return (
-      <TouchableOpacity
-        onPress={onPress}
-        disabled={disabled}
-        activeOpacity={0.7}
+      <Animated.View
+        style={[
+          { transform: [{ scale: scaleAnim }], backgroundColor },
+          style,
+        ]}
       >
-        {content}
-      </TouchableOpacity>
+        <Pressable
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          disabled={disabled}
+        >
+          {content}
+        </Pressable>
+      </Animated.View>
     )
   }
 
-  return content
+  return <View style={style}>{content}</View>
 }
 
 const styles = StyleSheet.create({
-  container: {
+  innerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.white,
   },
   border: {
     borderBottomWidth: 1,
