@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { colors, spacing } from '@/constants/theme'
+import { colors, spacing, borderRadius, fontWeight, fontSize, shadows } from '@/constants/theme'
 
 export type FilterType = 'all' | 'recruitment' | 'wantToDo' | 'participating'
 
@@ -128,11 +128,12 @@ export function SegmentedControl({
   )
 }
 
+// デザインガイドライン v2 準拠
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: colors.primary[200],
+    borderBottomColor: colors.neutral[200], // ガイドライン準拠: neutral系ボーダー
   },
   scrollContent: {
     paddingHorizontal: spacing.md,
@@ -145,27 +146,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.xs + 2,
     paddingHorizontal: spacing.md,
-    borderRadius: 20,
+    borderRadius: borderRadius.full, // ガイドライン準拠: ピル型ボタン
     gap: 4,
-    backgroundColor: colors.primary[100],
+    backgroundColor: colors.neutral[100], // ガイドライン準拠: neutral系背景
   },
   tabActive: {
-    backgroundColor: colors.primary[900],
+    backgroundColor: colors.primary[600], // ガイドライン準拠: プライマリCTA色
   },
   tabText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: colors.primary[600],
+    fontSize: fontSize.sm, // 14px
+    fontWeight: fontWeight.medium,
+    color: colors.neutral[600], // ガイドライン準拠: 本文テキスト
   },
   tabTextActive: {
     color: colors.white,
+    fontWeight: fontWeight.semibold,
   },
 
-  // Segmented Control styles
+  // Segmented Control styles - ガイドライン v2 準拠
   segmentContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.primary[100],
-    borderRadius: 8,
+    backgroundColor: colors.neutral[100], // ガイドライン準拠
+    borderRadius: borderRadius.lg,
     padding: 2,
     marginHorizontal: spacing.md,
     marginVertical: spacing.sm,
@@ -176,12 +178,8 @@ const styles = StyleSheet.create({
     top: 2,
     bottom: 2,
     backgroundColor: colors.white,
-    borderRadius: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderRadius: borderRadius.md,
+    ...shadows.xs, // ガイドライン準拠
   },
   segment: {
     flex: 1,
@@ -190,12 +188,12 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   segmentText: {
-    fontSize: 13,
-    color: colors.primary[500],
-    fontWeight: '500',
+    fontSize: fontSize.sm,
+    color: colors.neutral[500], // ガイドライン準拠: サブテキスト
+    fontWeight: fontWeight.medium,
   },
   segmentTextActive: {
-    color: colors.primary[900],
-    fontWeight: '600',
+    color: colors.neutral[800], // ガイドライン準拠: 見出し
+    fontWeight: fontWeight.semibold,
   },
 })
