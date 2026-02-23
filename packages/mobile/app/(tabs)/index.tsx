@@ -25,6 +25,7 @@ import { NearbyMap, NearbyMapRef } from '@/components/NearbyMap'
 import { NearbyItemCard } from '@/components/NearbyItemCard'
 import { FilterTabs } from '@/components/FilterTabs'
 import type { FilterType } from '@/components/FilterTabs'
+import { QuickCategoryFilter } from '@/components/QuickCategoryFilter'
 import { RecruitmentDetailModal } from '@/components/RecruitmentDetailModal'
 import { WantToDoDetailModal } from '@/components/WantToDoDetailModal'
 import { NearbyWantToDo, NearbyRecruitment } from '@/services/nearby'
@@ -61,10 +62,12 @@ export default function HomeScreen() {
     isLoading,
     selectItem,
     setFilterType: setStoreFilterType,
+    setSelectedCategories,
+    selectedCategoryIds,
     getFilteredItems,
   } = useNearbyStore()
   const { unreadCount, fetchNotifications } = useNotificationStore()
-  const { fetchCategories } = useCategoryStore()
+  const { categories, fetchCategories } = useCategoryStore()
 
   const [filterType, setFilterType] = useState<FilterType>('all')
 
@@ -124,6 +127,18 @@ export default function HomeScreen() {
     setFilterType(newFilterType)
     setStoreFilterType(filterTypeToNearbyFilterType(newFilterType))
   }, [setStoreFilterType])
+
+  // カテゴリ選択ハンドラー
+  const handleCategorySelect = useCallback((categoryId: string | null) => {
+    if (categoryId === null) {
+      setSelectedCategories([])
+    } else {
+      setSelectedCategories([categoryId])
+    }
+  }, [setSelectedCategories])
+
+  // 現在選択中のカテゴリID（単一選択の場合）
+  const selectedCategoryId = selectedCategoryIds.length > 0 ? selectedCategoryIds[0] : null
 
   // フィルタリングされたアイテム（ストアから取得）
   const filteredItems = getFilteredItems().filter((item) => {
@@ -373,6 +388,15 @@ export default function HomeScreen() {
           onChange={handleFilterChange}
         />
 
+        {/* カテゴリクイックフィルター */}
+        {categories.length > 0 && (
+          <QuickCategoryFilter
+            categories={categories}
+            selectedCategoryId={selectedCategoryId}
+            onSelectCategory={handleCategorySelect}
+          />
+        )}
+
         {/* リスト */}
         <ScrollView
           ref={scrollViewRef}
@@ -419,7 +443,7 @@ export default function HomeScreen() {
         <AdBanner unitId={AD_UNIT_IDS.BANNER_MAP} />
       </Animated.View>
 
-      {/* FAB - マイクロインタラクション付き */}
+      {/* 拡張FAB - ラベル付きモダンデザイン */}
       <Animated.View style={[
         styles.fab,
         {
@@ -433,7 +457,8 @@ export default function HomeScreen() {
           onPressIn={handleFABPressIn}
           onPressOut={handleFABPressOut}
         >
-          <MaterialCommunityIcons name="plus" size={28} color={colors.white} />
+          <MaterialCommunityIcons name="plus" size={22} color={colors.white} />
+          <Text style={styles.fabLabel}>募集する</Text>
         </Pressable>
       </Animated.View>
 
@@ -565,20 +590,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // FAB - モダンデザイン
+  // 拡張FAB - モダンデザイン（ラベル付き）
   fab: {
     position: 'absolute',
     right: spacing.lg,
-    width: 56,
-    height: 56,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.primary[600], // インディゴに変更（ガイドライン準拠）
+    backgroundColor: colors.primary[600],
     ...shadows.lg,
   },
   fabTouchable: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.xs,
+  },
+  fabLabel: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.white,
   },
 })

@@ -1,5 +1,5 @@
-import { useRef, useCallback, useEffect } from 'react'
-import { View, Text, StyleSheet, Pressable, ScrollView, Animated } from 'react-native'
+import { useRef, useCallback, useEffect, useState } from 'react'
+import { View, Text, StyleSheet, Pressable, ScrollView, Animated, TouchableOpacity, LayoutChangeEvent } from 'react-native'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { colors, spacing, borderRadius, fontWeight, fontSize, shadows } from '@/constants/theme'
 
@@ -121,7 +121,7 @@ function TabItem({ tab, isActive, onPress, showIcon }: TabItemProps) {
   )
 }
 
-// シンプルなセグメントコントロール版
+// シンプルなセグメントコントロール版（アニメーション付き）
 interface SegmentedControlProps {
   value: FilterType
   onChange: (value: FilterType) => void
@@ -134,19 +134,40 @@ export function SegmentedControl({
   tabs = DEFAULT_TABS.slice(0, 3), // 最初の3つだけ
 }: SegmentedControlProps) {
   const activeIndex = tabs.findIndex((t) => t.key === value)
+  const [containerWidth, setContainerWidth] = useState(0)
+  const indicatorAnim = useRef(new Animated.Value(0)).current
+
+  // タブ幅を計算
+  const tabWidth = containerWidth / tabs.length
+
+  // インジケーターのアニメーション
+  useEffect(() => {
+    Animated.spring(indicatorAnim, {
+      toValue: activeIndex * tabWidth,
+      useNativeDriver: true,
+      friction: 10,
+      tension: 80,
+    }).start()
+  }, [activeIndex, tabWidth, indicatorAnim])
+
+  const handleLayout = (event: LayoutChangeEvent) => {
+    setContainerWidth(event.nativeEvent.layout.width)
+  }
 
   return (
-    <View style={styles.segmentContainer}>
-      {/* アクティブインジケーター */}
-      <View
-        style={[
-          styles.segmentIndicator,
-          {
-            width: `${100 / tabs.length}%` as any,
-            left: `${(activeIndex * 100) / tabs.length}%` as any,
-          },
-        ]}
-      />
+    <View style={styles.segmentContainer} onLayout={handleLayout}>
+      {/* アクティブインジケーター（アニメーション付き） */}
+      {containerWidth > 0 && (
+        <Animated.View
+          style={[
+            styles.segmentIndicator,
+            {
+              width: tabWidth - 4,
+              transform: [{ translateX: indicatorAnim }],
+            },
+          ]}
+        />
+      )}
 
       {/* タブ */}
       {tabs.map((tab) => (
@@ -219,9 +240,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     bottom: 2,
+    left: 2,
     backgroundColor: colors.white,
     borderRadius: borderRadius.md,
-    ...shadows.xs, // ガイドライン準拠
+    ...shadows.sm, // ガイドライン準拠（より明瞭なシャドウ）
   },
   segment: {
     flex: 1,
