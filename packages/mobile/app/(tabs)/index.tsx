@@ -27,7 +27,7 @@ import type { FilterType } from '@/components/FilterTabs'
 import { RecruitmentDetailModal } from '@/components/RecruitmentDetailModal'
 import { WantToDoDetailModal } from '@/components/WantToDoDetailModal'
 import { NearbyWantToDo, NearbyRecruitment } from '@/services/nearby'
-import { colors, spacing } from '@/constants/theme'
+import { colors, spacing, borderRadius, shadows, fontSize, fontWeight } from '@/constants/theme'
 import { AdBanner } from '@/components/AdBanner'
 import { AD_UNIT_IDS } from '@/constants/ads'
 
@@ -423,16 +423,17 @@ export default function HomeScreen() {
   )
 }
 
+// デザインガイドライン v2 準拠のスタイル
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary[100],
+    backgroundColor: colors.background, // ピュアホワイト背景
   },
   mapContainer: {
     flex: 1,
   },
 
-  // Floating Header
+  // Floating Header - モダン＆ミニマル
   floatingHeader: {
     position: 'absolute',
     right: spacing.md,
@@ -444,68 +445,65 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: borderRadius.full,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+    ...shadows.sm,
   },
   badge: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    backgroundColor: colors.accent[600],
-    borderRadius: 10,
+    top: -4,
+    right: -4,
+    backgroundColor: colors.accent[500],
+    borderRadius: borderRadius.full,
     minWidth: 18,
     height: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.white,
   },
   badgeText: {
     color: colors.white,
-    fontSize: 10,
-    fontWeight: 'bold',
+    fontSize: fontSize.xs - 2,
+    fontWeight: fontWeight.bold,
   },
   avatarPlaceholder: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primary[200],
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary[100],
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
     color: colors.primary[600],
   },
 
-  // Bottom List
+  // Bottom List - モダンボトムシート
   bottomList: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
     backgroundColor: colors.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 10,
+    borderTopLeftRadius: borderRadius['2xl'],
+    borderTopRightRadius: borderRadius['2xl'],
+    ...shadows.lg,
   },
   handleContainer: {
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
   },
   handle: {
-    width: 40,
+    width: 36,
     height: 4,
-    backgroundColor: colors.primary[300],
-    borderRadius: 2,
+    backgroundColor: colors.neutral[300],
+    borderRadius: borderRadius.full,
   },
   listContent: {
     flex: 1,
@@ -520,31 +518,30 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.lg,
+    padding: spacing.xl,
   },
   emptyText: {
-    fontSize: 14,
-    color: colors.primary[500],
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+    color: colors.neutral[600],
     marginBottom: spacing.xs,
+    textAlign: 'center',
   },
   emptySubText: {
-    fontSize: 12,
-    color: colors.primary[400],
+    fontSize: fontSize.sm,
+    color: colors.neutral[400],
+    textAlign: 'center',
   },
 
-  // FAB
+  // FAB - モダンデザイン
   fab: {
     position: 'absolute',
     right: spacing.lg,
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.accent[600],
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary[600], // インディゴに変更（ガイドライン準拠）
+    ...shadows.lg,
   },
   fabTouchable: {
     width: '100%',

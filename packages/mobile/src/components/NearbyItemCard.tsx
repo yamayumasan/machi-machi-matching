@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { NearbyItem } from '@/services/nearby'
-import { colors, spacing } from '@/constants/theme'
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/constants/theme'
 import { CategoryIcon } from './CategoryIcon'
 
 interface NearbyItemCardProps {
@@ -192,16 +192,21 @@ export function NearbyItemCard({
   )
 }
 
+// デザインガイドライン v2 準拠のスタイル
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.white,
-    borderRadius: 12,
+    borderRadius: borderRadius.xl,
     padding: spacing.md,
     marginHorizontal: spacing.md,
     marginVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+    ...shadows.sm,
   },
   selected: {
-    backgroundColor: colors.primary[100],
+    backgroundColor: colors.primary[50],
+    borderColor: colors.primary[400],
     borderLeftWidth: 3,
     borderLeftColor: colors.primary[600],
   },
@@ -216,36 +221,37 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   typeBadge: {
-    paddingVertical: 2,
+    paddingVertical: 3,
     paddingHorizontal: spacing.sm,
-    borderRadius: 4,
+    borderRadius: borderRadius.full,
   },
   typeBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
   },
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary[100],
-    paddingVertical: 2,
+    backgroundColor: colors.neutral[100],
+    paddingVertical: 3,
     paddingHorizontal: spacing.sm,
-    borderRadius: 4,
+    borderRadius: borderRadius.full,
     gap: 4,
   },
   categoryName: {
-    fontSize: 11,
-    color: colors.primary[700],
+    fontSize: fontSize.xs,
+    color: colors.neutral[600],
+    fontWeight: fontWeight.medium,
   },
   distanceBadge: {
-    fontSize: 12,
-    color: colors.primary[500],
-    fontWeight: '500',
+    fontSize: fontSize.sm,
+    color: colors.neutral[500],
+    fontWeight: fontWeight.medium,
   },
   title: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.primary[900],
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.neutral[800],
     marginBottom: spacing.sm,
     lineHeight: 22,
   },
@@ -261,26 +267,26 @@ const styles = StyleSheet.create({
   avatar: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: borderRadius.full,
     marginRight: spacing.xs,
   },
   avatarPlaceholder: {
     width: 24,
     height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.primary[200],
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary[100],
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.xs,
   },
   avatarText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
     color: colors.primary[600],
   },
   nickname: {
-    fontSize: 13,
-    color: colors.primary[600],
+    fontSize: fontSize.sm,
+    color: colors.neutral[600],
   },
   peopleInfo: {
     flexDirection: 'row',
@@ -288,8 +294,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   peopleText: {
-    fontSize: 13,
-    color: colors.primary[500],
+    fontSize: fontSize.sm,
+    color: colors.neutral[500],
   },
   timingInfo: {
     flexDirection: 'row',
@@ -297,43 +303,43 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   timingText: {
-    fontSize: 13,
-    color: colors.primary[500],
+    fontSize: fontSize.sm,
+    color: colors.neutral[500],
   },
   participatingBadge: {
     position: 'absolute',
     top: spacing.sm,
     right: spacing.sm,
-    backgroundColor: colors.accent[100],
-    paddingVertical: 2,
+    backgroundColor: colors.success[50],
+    paddingVertical: 3,
     paddingHorizontal: spacing.sm,
-    borderRadius: 4,
+    borderRadius: borderRadius.full,
   },
   participatingText: {
-    fontSize: 10,
-    color: colors.accent[700],
-    fontWeight: '600',
+    fontSize: fontSize.xs - 1,
+    color: colors.success[600],
+    fontWeight: fontWeight.semibold,
   },
   distance: {
-    fontSize: 12,
-    color: colors.primary[400],
+    fontSize: fontSize.sm,
+    color: colors.neutral[400],
     marginLeft: spacing.sm,
   },
 
-  // Compact styles
+  // Compact styles - モダンデザイン
   compactContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.white,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.primary[100],
+    borderBottomColor: colors.neutral[100],
   },
   compactIcon: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm,
@@ -342,34 +348,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   compactTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.primary[900],
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: colors.neutral[800],
     marginBottom: 2,
   },
   compactMeta: {
-    fontSize: 12,
-    color: colors.primary[500],
+    fontSize: fontSize.xs,
+    color: colors.neutral[500],
   },
 
-  // Detail button styles
+  // Detail button styles - モダンデザイン
   detailButton: {
     marginLeft: spacing.sm,
-    backgroundColor: colors.accent[600],
+    backgroundColor: colors.primary[600],
     paddingVertical: 6,
     paddingHorizontal: spacing.md,
-    borderRadius: 8,
+    borderRadius: borderRadius.lg,
   },
   detailButtonNormal: {
     marginLeft: 'auto',
-    backgroundColor: colors.accent[600],
+    backgroundColor: colors.primary[600],
     paddingVertical: 8,
     paddingHorizontal: spacing.lg,
-    borderRadius: 8,
+    borderRadius: borderRadius.lg,
   },
   detailButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
     color: colors.white,
   },
 })

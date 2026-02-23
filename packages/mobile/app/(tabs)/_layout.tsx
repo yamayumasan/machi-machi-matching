@@ -1,7 +1,7 @@
 import { Redirect, Tabs } from 'expo-router'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAuthStore } from '@/stores/auth'
-import { colors } from '@/constants/theme'
+import { colors, fontSize, fontWeight } from '@/constants/theme'
 
 type IconName = 'map-marker-radius' | 'account-group' | 'account'
 
@@ -24,20 +24,23 @@ export default function TabLayout() {
     return <Redirect href={"/onboarding" as "/notifications"} />
   }
 
+  // デザインガイドライン v2 準拠のタブバー
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary[900],
-        tabBarInactiveTintColor: colors.primary[400],
+        tabBarActiveTintColor: colors.primary[600], // ガイドライン準拠: プライマリCTA
+        tabBarInactiveTintColor: colors.neutral[400], // ガイドライン準拠: プレースホルダー
         headerShown: false,
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: colors.primary[200],
+          borderTopColor: colors.neutral[200], // ガイドライン準拠: neutral系ボーダー
           backgroundColor: colors.white,
+          paddingTop: 4,
+          height: 56,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
+          fontSize: fontSize.xs - 1,
+          fontWeight: fontWeight.medium,
         },
       }}
     >
