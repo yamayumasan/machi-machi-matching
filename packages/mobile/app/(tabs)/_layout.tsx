@@ -1,5 +1,6 @@
 import { Redirect, Tabs } from 'expo-router'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuthStore } from '@/stores/auth'
 import { colors, fontSize, fontWeight } from '@/constants/theme'
 
