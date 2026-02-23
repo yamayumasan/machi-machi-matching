@@ -5,13 +5,14 @@ import {
   Animated,
   ViewStyle,
   Dimensions,
+  DimensionValue,
 } from 'react-native'
 import { colors, borderRadius, spacing } from '@/constants/theme'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 interface SkeletonProps {
-  width?: number | string
+  width?: DimensionValue
   height?: number
   borderRadius?: number
   style?: ViewStyle
@@ -86,7 +87,7 @@ export function SkeletonCircle({ size = 40, style }: SkeletonCircleProps) {
 interface SkeletonTextProps {
   lines?: number
   lineHeight?: number
-  lastLineWidth?: number | string
+  lastLineWidth?: DimensionValue
   style?: ViewStyle
 }
 
