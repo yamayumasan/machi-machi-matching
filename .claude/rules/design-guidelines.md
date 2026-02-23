@@ -1,57 +1,86 @@
-# デザインガイドライン - マチマチマッチング
+# デザインガイドライン v2 - マチマチマッチング
 
 ## コンセプト
-- **フォレスト＆クリーム**: 自然を感じる深みのある緑と温かみのあるクリーム
-- **ナチュラル＆トラスト**: 信頼感があり落ち着いた印象
-- **クリーン**: 余白を活かした開放的なデザイン
-- **アクセント**: ウォームベージュで適度な温かみ
+- **モダン＆ミニマル**: Linear / Notion風のクリーンで洗練されたデザイン
+- **信頼感＆親しみやすさ**: インディゴ（信頼）× コーラル（温かみ）の組み合わせ
+- **余白重視**: ゆとりのあるレイアウト、呼吸感のあるデザイン
+- **微細なディテール**: 繊細なシャドウ、滑らかなトランジション
 
 ---
 
 ## カラーパレット
 
-### プライマリ（フォレストグリーン系）
-| Token | Hex | 用途 |
-|-------|-----|------|
-| primary-50 | #F0F5F1 | セクション背景 |
-| primary-100 | #D5E5D8 | カード背景、ホバー |
-| primary-200 | #A8C9AE | ボーダー、区切り線 |
-| primary-300 | #7BAD84 | disabled状態 |
-| primary-400 | #5A9465 | プレースホルダー |
-| primary-500 | #3D7A4A | セカンダリテキスト |
-| primary-600 | #2D6A4F | **プライマリCTA**、メインアクション |
-| primary-700 | #245A42 | ホバー時 |
-| primary-800 | #1B4332 | 強調テキスト |
-| primary-900 | #132D23 | 見出し |
+### プライマリ（インディゴ系）
+マッチングアプリに適した信頼感と落ち着きを演出
 
-### アクセント（ウォームベージュ系）
 | Token | Hex | 用途 |
 |-------|-----|------|
-| accent-50 | #FEF9F3 | 軽いハイライト |
-| accent-100 | #F9EED8 | バッジ背景 |
-| accent-500 | #DDA15E | アイコン、リンク |
-| accent-600 | #BC6C25 | セカンダリCTA |
-| accent-700 | #9A5A1F | ホバー時 |
+| primary-50 | #EEF2FF | セクション背景、軽いハイライト |
+| primary-100 | #E0E7FF | カード背景、ホバー |
+| primary-200 | #C7D2FE | ボーダー、区切り線 |
+| primary-300 | #A5B4FC | disabled状態 |
+| primary-400 | #818CF8 | アイコン（非アクティブ） |
+| primary-500 | #6366F1 | リンク、セカンダリアクション |
+| primary-600 | #4F46E5 | **プライマリCTA**、メインアクション |
+| primary-700 | #4338CA | ホバー・押下時 |
+| primary-800 | #3730A3 | 強調テキスト |
+| primary-900 | #312E81 | 見出し |
+| primary-950 | #1E1B4B | 最も濃い |
+
+### アクセント（コーラル系）
+温かみと活力を演出、CTAの補助やハイライトに
+
+| Token | Hex | 用途 |
+|-------|-----|------|
+| accent-50 | #FFF5F5 | 通知バッジ背景 |
+| accent-100 | #FFE4E4 | ハイライト |
+| accent-200 | #FECACA | 軽いアクセント |
+| accent-300 | #FDA4A4 | バッジ |
+| accent-400 | #F87171 | アイコンアクセント |
+| accent-500 | #EF4444 | 強調 |
+| accent-600 | #DC2626 | セカンダリCTA |
+| accent-700 | #B91C1C | ホバー時 |
+
+### ニュートラル（スレートグレー系）
+テキスト、ボーダー、背景に使用
+
+| Token | Hex | 用途 |
+|-------|-----|------|
+| neutral-50 | #F8FAFC | カード背景（薄） |
+| neutral-100 | #F1F5F9 | セクション背景 |
+| neutral-200 | #E2E8F0 | ボーダー、区切り線 |
+| neutral-300 | #CBD5E1 | disabled状態 |
+| neutral-400 | #94A3B8 | プレースホルダー |
+| neutral-500 | #64748B | サブテキスト |
+| neutral-600 | #475569 | 本文テキスト |
+| neutral-700 | #334155 | 強調テキスト |
+| neutral-800 | #1E293B | 見出し |
+| neutral-900 | #0F172A | 最も濃い |
 
 ### ステータスカラー
-| 状態 | 背景 | テキスト |
+| 状態 | 背景 | テキスト/アイコン |
 |------|-----|-----|
-| 成功 | #D5E5D8 (primary-100) | #2D6A4F (primary-600) |
-| 警告 | #FEF3C7 | #B45309 |
+| 成功 | #DCFCE7 | #16A34A |
+| 警告 | #FEF3C7 | #D97706 |
 | エラー | #FEE2E2 | #DC2626 |
+| 情報 | #DBEAFE | #2563EB |
 
 ---
 
 ## 背景
 
 ### メイン背景
-- `background: #FEFDFB` (ほぼ白のクリーム)
+- `background: #FFFFFF` (ピュアホワイト)
 
 ### カード/サーフェス背景
-- `background: #FAF8F5` (わずかにクリーム)
+- `background: #F8FAFC` (neutral-50)
 
 ### セクション背景
-- `background: #F0F5F1` (primary-50)
+- `background: #F1F5F9` (neutral-100)
+
+### オーバーレイ
+- `background: rgba(15, 23, 42, 0.6)` (neutral-900 @ 60%)
+- `backdrop-filter: blur(8px)`
 
 ---
 
@@ -63,11 +92,24 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont,
   'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
 ```
 
+### フォントサイズスケール
+| Token | サイズ | 行高 | 用途 |
+|-------|--------|------|------|
+| text-xs | 12px | 16px | キャプション、タグ |
+| text-sm | 14px | 20px | サブテキスト、ラベル |
+| text-base | 16px | 24px | 本文 |
+| text-lg | 18px | 28px | 強調本文 |
+| text-xl | 20px | 28px | 小見出し |
+| text-2xl | 24px | 32px | セクション見出し |
+| text-3xl | 30px | 36px | ページタイトル |
+| text-4xl | 36px | 40px | ヒーロー |
+
 ### テキストカラー
-- 見出し: `text-primary-900` (#132D23)
-- 本文: `text-primary-800` (#1B4332)
-- サブテキスト: `text-primary-500` (#3D7A4A)
-- プレースホルダー: `text-primary-400` (#5A9465)
+- 見出し: `text-neutral-800` (#1E293B)
+- 本文: `text-neutral-600` (#475569)
+- サブテキスト: `text-neutral-500` (#64748B)
+- プレースホルダー: `text-neutral-400` (#94A3B8)
+- リンク: `text-primary-600` (#4F46E5)
 
 ### iOSズーム防止
 入力フィールドは必ず `font-size: 16px` 以上を使用すること。
@@ -77,26 +119,51 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont,
 ## コンポーネント
 
 ### ボタン
-- **プライマリCTA**: `bg-primary-600` (#2D6A4F), `hover:bg-primary-700`, `text-white`, `rounded-lg`
-- **セカンダリ**: `bg-white`, `border: 1px solid primary-200`, `text-primary-700`, `hover:bg-primary-50`
-- **アクセント**: `bg-accent-600` (#BC6C25), `hover:bg-accent-700`, `text-white`
-- **ゴースト**: `bg-transparent`, `text-primary-600`, `hover:bg-primary-100`
+- **プライマリCTA**:
+  - `bg-primary-600` (#4F46E5)
+  - `hover:bg-primary-700`, `active:bg-primary-800`
+  - `text-white`, `rounded-xl` (12px)
+  - 高さ: 48px（タップしやすいサイズ）
+
+- **セカンダリ**:
+  - `bg-white`, `border: 1.5px solid neutral-200`
+  - `text-neutral-700`, `hover:bg-neutral-50`
+  - `rounded-xl`
+
+- **ゴースト**:
+  - `bg-transparent`
+  - `text-primary-600`, `hover:bg-primary-50`
+
+- **デストラクティブ**:
+  - `bg-accent-600` (#DC2626)
+  - `hover:bg-accent-700`, `text-white`
 
 ### カード
-- `background: #FAF8F5`
-- `border: 1px solid #A8C9AE` (primary-200)
-- `border-radius: 12px`
-- ホバー: `border-color: #7BAD84` (primary-300)
-
-### リスト区切り
-- `border-bottom: 1px solid #D5E5D8` (primary-100)
+- `background: #FFFFFF`
+- `border: 1px solid #E2E8F0` (neutral-200)
+- `border-radius: 16px`
+- `shadow: 0 1px 3px rgb(0 0 0 / 0.05)`
+- ホバー: `shadow: 0 4px 12px rgb(0 0 0 / 0.08)`
 
 ### 入力フィールド
-- `background: #FEFDFB`
-- `border: 1px solid #A8C9AE` (primary-200)
-- `border-radius: 8px`
+- `background: #FFFFFF`
+- `border: 1.5px solid #E2E8F0` (neutral-200)
+- `border-radius: 12px`
+- `padding: 14px 16px`
 - `font-size: 16px` (iOS対応)
-- フォーカス時: `border-color: #2D6A4F` (primary-600), `ring: primary-500/20`
+- フォーカス時:
+  - `border-color: #4F46E5` (primary-600)
+  - `ring: 4px primary-100`
+
+### タグ/バッジ
+- デフォルト: `bg-neutral-100`, `text-neutral-600`, `rounded-full`
+- プライマリ: `bg-primary-50`, `text-primary-600`
+- アクセント: `bg-accent-50`, `text-accent-600`
+
+### アバター
+- サイズ: 32px / 40px / 48px / 64px
+- `border-radius: 50%`
+- ボーダー: `2px solid white` + シャドウ
 
 ---
 
@@ -104,15 +171,15 @@ font-family: 'Inter', -apple-system, BlinkMacSystemFont,
 
 ### オーバーレイ
 ```css
-background: rgba(19, 45, 35, 0.5);
-backdrop-filter: blur(4px);
+background: rgba(15, 23, 42, 0.6);
+backdrop-filter: blur(8px);
 ```
 
 ### モーダル本体
 ```css
-background: #FEFDFB;
-box-shadow: 0 8px 32px -8px rgb(0 0 0 / 0.15);
-border-radius: 16px;
+background: #FFFFFF;
+box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+border-radius: 20px;
 ```
 
 ---
@@ -120,49 +187,84 @@ border-radius: 16px;
 ## チャット
 
 ### 自分のメッセージ
-- `background: #2D6A4F` (primary-600)
+- `background: #4F46E5` (primary-600)
 - `color: white`
-- `border-radius: 16px 16px 4px 16px`
+- `border-radius: 20px 20px 4px 20px`
 
 ### 相手のメッセージ
-- `background: #D5E5D8` (primary-100)
-- `color: #1B4332` (primary-800)
-- `border-radius: 16px 16px 16px 4px`
+- `background: #F1F5F9` (neutral-100)
+- `color: #475569` (neutral-600)
+- `border-radius: 20px 20px 20px 4px`
 
 ---
 
 ## マップマーカー
-- **募集**: オレンジ系 `#FF6B35` (視認性のため維持)
-- **誘われ待ち**: プライマリ緑 `#2D6A4F`
+- **募集**: コーラル `#EF4444` (視認性重視)
+- **やりたいこと**: インディゴ `#4F46E5` (プライマリ)
+- **選択中**: ホワイト背景 + プライマリボーダー
 
 ---
 
-## シャドウ（控えめに使用）
+## シャドウ
 | Token | 値 | 用途 |
 |-------|-----|------|
-| shadow-subtle | 0 1px 2px rgb(0 0 0 / 0.04) | 微細な立体感 |
-| shadow-soft | 0 2px 8px rgb(0 0 0 / 0.06) | ドロップダウン |
-| shadow-card | 0 4px 16px rgb(0 0 0 / 0.08) | フローティングカード |
-| shadow-elevated | 0 8px 32px rgb(0 0 0 / 0.12) | モーダル |
+| shadow-xs | 0 1px 2px rgb(0 0 0 / 0.05) | 微細な立体感 |
+| shadow-sm | 0 1px 3px rgb(0 0 0 / 0.08) | カード |
+| shadow-md | 0 4px 12px rgb(0 0 0 / 0.1) | ホバー時 |
+| shadow-lg | 0 8px 24px rgb(0 0 0 / 0.12) | ドロップダウン |
+| shadow-xl | 0 16px 48px rgb(0 0 0 / 0.15) | モーダル |
 
 ---
 
 ## border-radius
 | Token | 値 | 用途 |
 |-------|-----|------|
-| rounded | 6px | 小さいボタン |
-| rounded-md | 8px | 入力フィールド |
-| rounded-lg | 12px | カード、大きいボタン |
-| rounded-xl | 16px | モーダル |
-| rounded-full | 9999px | アバター、FAB |
+| rounded-sm | 6px | 小さいバッジ |
+| rounded | 8px | タグ |
+| rounded-md | 10px | 小さいボタン |
+| rounded-lg | 12px | 入力フィールド、ボタン |
+| rounded-xl | 16px | カード |
+| rounded-2xl | 20px | モーダル、大きいカード |
+| rounded-full | 9999px | アバター、FAB、ピル型ボタン |
+
+---
+
+## スペーシング
+| Token | 値 | 用途 |
+|-------|-----|------|
+| space-1 | 4px | アイコン間隔 |
+| space-2 | 8px | 要素内余白（小） |
+| space-3 | 12px | 要素内余白（中） |
+| space-4 | 16px | 要素内余白（大）、カード内パディング |
+| space-5 | 20px | セクション間 |
+| space-6 | 24px | カード間 |
+| space-8 | 32px | ブロック間 |
+| space-10 | 40px | セクション間（大） |
+| space-12 | 48px | ページ余白 |
+
+---
+
+## アニメーション
+
+### トランジション
+- デフォルト: `200ms ease-out`
+- ボタンホバー: `150ms ease-in-out`
+- モーダル表示: `300ms ease-out`
+- カードホバー: `200ms ease-out`
+
+### マイクロインタラクション
+- ボタン押下: `scale(0.98)` + `150ms`
+- カードホバー: `translateY(-2px)` + シャドウ増加
+- アイコンホバー: `scale(1.1)`
 
 ---
 
 ## 原則
 
-1. **自然な緑を基調に**: プライマリカラーはフォレストグリーン
-2. **温かみのある背景**: 純白ではなくクリーム系で柔らかく
-3. **緑でアクション**: CTAボタンはprimary-600（深緑）
-4. **軽いボーダー**: シャドウよりボーダーで区切りを表現
-5. **余白を大切に**: パディングは十分に確保
-6. **コントラスト確保**: WCAG 4.5:1以上を維持
+1. **Less is More**: 要素を最小限に、余白を最大限に
+2. **インディゴで信頼感**: CTAはprimary-600で統一
+3. **コーラルは控えめに**: アクセントとして使用、メインにしない
+4. **グレーで構造化**: ボーダーと背景はニュートラル系
+5. **シャドウは繊細に**: 重いシャドウは避け、軽い立体感を演出
+6. **コントラスト確保**: WCAG AA 4.5:1以上を維持
+7. **一貫性**: 同じコンポーネントは同じスタイルで
