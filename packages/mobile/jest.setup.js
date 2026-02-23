@@ -1,3 +1,6 @@
+// Define React Native globals
+global.__DEV__ = true
+
 // Mock expo modules
 jest.mock('expo-constants', () => ({
   expoConfig: {

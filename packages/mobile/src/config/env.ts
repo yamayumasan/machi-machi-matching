@@ -36,7 +36,7 @@ export const config = {
       latitude: 38.2682,
       longitude: 140.8694,
       isOnboarded: true,
-      interests: [],
+      interests: [] as { id: string; name: string; icon: string }[],
     },
   },
 } as const
