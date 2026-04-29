@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.machimachi.matching",
-      "buildNumber": "22",
+      "buildNumber": "23",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "近くの募集やユーザーを表示するために位置情報を使用します",
@@ -84,9 +84,7 @@
         "projectId": "ea2cefcf-9ae6-4f7d-84f5-1c299afeb996"
       }
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "0.1.0",
     "updates": {
       "url": "https://u.expo.dev/ea2cefcf-9ae6-4f7d-84f5-1c299afeb996"
     }
