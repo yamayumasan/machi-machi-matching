@@ -2,7 +2,7 @@
 
 ## Meta
 - **project**: machi-machi-matching
-- **status**: in-progress
+- **status**: review
 - **created**: 2026-04-29
 - **priority**: high
 
