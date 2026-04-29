@@ -12,7 +12,7 @@
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "eas-build-post-install": "cd ../shared && pnpm install && pnpm build"
+    "eas-build-post-install": "cd ../shared && pnpm install --no-frozen-lockfile && pnpm build"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
