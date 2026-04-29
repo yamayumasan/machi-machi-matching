@@ -14,6 +14,7 @@ import * as AppleAuthentication from 'expo-apple-authentication'
 import { useAuthStore } from '@/stores/auth'
 import { Button, Input } from '@/components'
 import { colors, spacing, fontSize, fontWeight } from '@/constants/theme'
+import { envHealth, isDev } from '@/config/env'
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
@@ -96,6 +97,18 @@ export default function LoginScreen() {
           <Text style={styles.titleAccent}>マッチング</Text>
           <Text style={styles.subtitle}>街で、待ちで、マッチング。</Text>
         </View>
+
+        {!envHealth.ok && !isDev && (
+          <View style={styles.envBanner} accessibilityRole="alert">
+            <Text style={styles.envBannerTitle}>サービスを準備中です</Text>
+            <Text style={styles.envBannerText}>
+              アプリの設定情報を取得できませんでした。お手数ですが、しばらくしてから再度お試しください。
+            </Text>
+            <Text style={styles.envBannerCode}>
+              missing: {envHealth.missing.join(', ')}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.form}>
           <Input
@@ -269,5 +282,29 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
     marginTop: spacing.xs,
+  },
+  envBanner: {
+    backgroundColor: '#FFF4E5',
+    borderColor: '#F59E0B',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  envBannerTitle: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: '#92400E',
+    marginBottom: spacing.xs,
+  },
+  envBannerText: {
+    fontSize: fontSize.sm,
+    color: '#92400E',
+  },
+  envBannerCode: {
+    fontSize: 11,
+    color: '#92400E',
+    marginTop: spacing.xs,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 })
