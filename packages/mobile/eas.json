@@ -30,7 +30,10 @@
       "android": {
         "buildType": "apk"
       },
-      "channel": "preview"
+      "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://machiapi-production.up.railway.app/api"
+      }
     },
     "production": {
       "extends": "base",
@@ -41,7 +44,10 @@
       "android": {
         "buildType": "app-bundle"
       },
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://machiapi-production.up.railway.app/api"
+      }
     }
   },
   "submit": {

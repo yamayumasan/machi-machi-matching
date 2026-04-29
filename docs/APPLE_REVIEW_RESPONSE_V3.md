@@ -77,6 +77,9 @@ eas secret:list
 
 ### 2. eas.json への env ブロック追加（コード修正・適用済み）
 
+このプロジェクトは monorepo で **`eas` CLI が `packages/mobile/eas.json` を参照する**（cwd 優先）。
+ルート直下の `eas.json` ではなく、必ず `packages/mobile/eas.json` を編集する。
+
 `build.preview` および `build.production` に `env` セクションを追加:
 
 ```json
@@ -86,8 +89,8 @@ eas secret:list
 ```
 
 `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` は
-EAS Secrets に登録された同名キーが **EAS Build 実行時に自動的に環境変数として exposes** され、
-`expo export` 時にバンドルへ焼き込まれる。
+EAS Secrets（`eas secret:create --scope project`）に登録された同名キーが
+**EAS Build 実行時に自動的に環境変数として exposes** され、`expo export` 時にバンドルへ焼き込まれる。
 
 ### 3. ランタイム env 健全性チェック（コード修正・適用済み）
 
@@ -144,16 +147,21 @@ EAS Secrets に登録された同名キーが **EAS Build 実行時に自動的�
 # 1. EAS Secrets を作成（上記コマンド参照）
 eas secret:create ...
 
-# 2. preview ビルドで TestFlight 想定の検証
+# 2. preview ビルドの credentials を設定（初回のみ・対話式）
+#    "preview" profile は distribution: internal のため Apple Distribution Cert が必要。
+#    eas-cli v16+ は非対話モードでは新規 cert を生成しないため、初回はインタラクティブ実行が必要。
 cd packages/mobile
+eas credentials   # → iOS → preview channel → set up Distribution Certificate
+
+# 3. preview ビルドで TestFlight 想定の検証
 eas build -p ios --profile preview
 
-# 3. 起動後ログ確認（Xcode Console / TestFlight クラッシュログ）
+# 4. 起動後ログ確認（Xcode Console / TestFlight クラッシュログ）
 #    [ENV] FATAL が出ていないこと
 
-# 4. iPad シミュレータでログイン全導線を確認
+# 5. iPad シミュレータでログイン全導線を確認
 
-# 5. 問題なければ production ビルドへ
+# 6. 問題なければ production ビルドへ
 eas build -p ios --profile production
 eas submit -p ios --latest
 ```

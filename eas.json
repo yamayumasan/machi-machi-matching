@@ -24,9 +24,6 @@
       "channel": "preview",
       "ios": {
         "resourceClass": "m-medium"
-      },
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://machiapi-production.up.railway.app/api"
       }
     },
     "production": {
@@ -34,9 +31,6 @@
       "channel": "production",
       "ios": {
         "resourceClass": "m-medium"
-      },
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://machiapi-production.up.railway.app/api"
       }
     }
   },
