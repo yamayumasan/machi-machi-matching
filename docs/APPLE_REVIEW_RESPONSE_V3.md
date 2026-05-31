@@ -113,22 +113,78 @@ EAS Secrets（`eas secret:create --scope project`）に登録された同名キ�
 
 ---
 
-## 審査ノート（App Store Connect 用・追記）
+## 審査ノート（App Store Connect 用・最終版）
+
+> ASC > App Review Information > Notes 欄にそのままコピペしてください。
+> `<EMAIL>` / `<PASSWORD>` は前回審査で提供したテストアカウントに置き換えてください。
+> Build 31 (v0.1.0) を選択して再提出します。
 
 ```
-【V3 修正内容】
-- 本番ビルドで Supabase 認証用の環境変数が JS バンドルに焼き込まれていなかった問題を修正
-- EAS Build に Secret として環境変数を登録し、ビルド時に注入
-- 起動時の env 健全性チェックを追加（不足時はログイン画面に警告を表示）
+=== English ===
+Thank you for your previous feedback.
+
+[Previous rejection]
+Guideline 2.1 - "Your app displayed a network error when we tried to log in."
+Reviewed on iPad Air 11-inch (M3), iPadOS 26.2.1.
+
+[Root cause]
+Our production build did not bundle the Supabase auth environment
+variables, so the login request was sent to an invalid URL and surfaced
+as a generic "network error". This had nothing to do with the network
+or the test account.
+
+[Fix in Build 31]
+1. Registered EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY
+   as EAS Build secrets so they are injected into the JS bundle at
+   build time.
+2. Added a runtime env health check. If any required key is missing,
+   a warning banner appears on the login screen. Build 31 must NOT
+   display this banner.
+3. Verified login works on iPad Air 11-inch (M3) via TestFlight before
+   submission.
+
+[Test account]
+Email: <EMAIL>
+Password: <PASSWORD>
+
+[How to reproduce login]
+1. Launch the app.
+2. On the login screen, enter the test account email and password.
+3. Tap the "ログイン" (Login) button.
+4. You should be navigated into the main tab screen.
+
+"Sign in with Apple" and Google login are also available on the same
+screen and have been verified.
+
+=== 日本語 ===
+前回のフィードバックありがとうございました。
+
+【前回の指摘】
+Guideline 2.1 - iPad Air 11-inch (M3) でログイン時にネットワークエラーが表示された。
+
+【根本原因】
+本番ビルドに Supabase 認証用の環境変数が焼き込まれておらず、
+不正な URL に対するリクエストが「ネットワークエラー」として現出して
+いました。通信状況やテストアカウントの問題ではありません。
+
+【Build 31 での修正】
+1. EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY を
+   EAS Build Secret として登録し、ビルド時に JS バンドルへ注入。
+2. 起動時の env 健全性チェックを追加。必須キーが欠損していれば
+   ログイン画面に警告バナーを表示します（Build 31 では非表示）。
+3. iPad Air 11-inch (M3) 実機 / TestFlight でログイン成功を確認済み。
 
 【テストアカウント】
-（前回提供のものを継続使用）
+Email: <EMAIL>
+Password: <PASSWORD>
 
 【ログイン手順】
-1. アプリ起動
-2. ログイン画面でメールアドレス・パスワードを入力
+1. アプリを起動
+2. ログイン画面でテストアカウントのメールアドレス・パスワードを入力
 3. 「ログイン」ボタンをタップ
-（または Sign in with Apple / Google ログインも利用可能）
+4. タブ画面に遷移すれば成功です
+
+Sign in with Apple / Google ログインも同一画面で利用可能、いずれも検証済みです。
 ```
 
 ---
