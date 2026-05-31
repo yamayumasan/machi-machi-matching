@@ -56,10 +56,21 @@ export interface EnvHealth {
   missing: readonly string[]
 }
 
+// 値のプレビュー（先頭数文字 + 長さ）を生成する。診断用途のみ。
+// anon key は本来クライアントに配布される公開鍵なので、prefixを露出しても問題ない。
+const preview = (v: string, n = 8): string =>
+  v.length === 0 ? '(empty)' : `${JSON.stringify(v.slice(0, n))}…(len=${v.length})`
+
 export const getEnvHealth = (): EnvHealth => {
   const missing: string[] = []
-  if (!supabaseUrlFromEnv) missing.push('EXPO_PUBLIC_SUPABASE_URL')
-  if (!supabaseAnonKeyFromEnv) missing.push('EXPO_PUBLIC_SUPABASE_ANON_KEY')
+  // URL: 非空かつ https://*.supabase.co 形式
+  if (!supabaseUrlFromEnv || !supabaseUrlFromEnv.startsWith('https://')) {
+    missing.push(`EXPO_PUBLIC_SUPABASE_URL got=${preview(supabaseUrlFromEnv, 24)}`)
+  }
+  // ANON KEY: 非空かつ JWT 形式（"eyJ" で始まる）
+  if (!supabaseAnonKeyFromEnv || !supabaseAnonKeyFromEnv.startsWith('eyJ')) {
+    missing.push(`EXPO_PUBLIC_SUPABASE_ANON_KEY got=${preview(supabaseAnonKeyFromEnv)}`)
+  }
   return { ok: missing.length === 0, missing }
 }
 
