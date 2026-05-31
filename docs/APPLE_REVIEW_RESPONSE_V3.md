@@ -117,7 +117,7 @@ EAS Secrets（`eas secret:create --scope project`）に登録された同名キ�
 
 > ASC > App Review Information > Notes 欄にそのままコピペしてください。
 > `<EMAIL>` / `<PASSWORD>` は前回審査で提供したテストアカウントに置き換えてください。
-> Build 31 (v0.1.0) を選択して再提出します。
+> Build 33 (v0.1.0) を選択して再提出します。
 
 ```
 === English ===
@@ -133,15 +133,14 @@ variables, so the login request was sent to an invalid URL and surfaced
 as a generic "network error". This had nothing to do with the network
 or the test account.
 
-[Fix in Build 31]
+[Fix in Build 33]
 1. Registered EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY
-   as EAS Build secrets so they are injected into the JS bundle at
-   build time.
-2. Added a runtime env health check. If any required key is missing,
-   a warning banner appears on the login screen. Build 31 must NOT
-   display this banner.
-3. Verified login works on iPad Air 11-inch (M3) via TestFlight before
-   submission.
+   as EAS Build environment variables so they are injected into the JS
+   bundle at build time.
+2. Added a runtime env health check. If any required key is missing or
+   malformed, a warning banner appears on the login screen. Build 33
+   must NOT display this banner.
+3. Verified login works on iPad via TestFlight before submission.
 
 [Test account]
 Email: <EMAIL>
@@ -167,12 +166,12 @@ Guideline 2.1 - iPad Air 11-inch (M3) でログイン時にネットワークエ
 不正な URL に対するリクエストが「ネットワークエラー」として現出して
 いました。通信状況やテストアカウントの問題ではありません。
 
-【Build 31 での修正】
+【Build 33 での修正】
 1. EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY を
-   EAS Build Secret として登録し、ビルド時に JS バンドルへ注入。
-2. 起動時の env 健全性チェックを追加。必須キーが欠損していれば
-   ログイン画面に警告バナーを表示します（Build 31 では非表示）。
-3. iPad Air 11-inch (M3) 実機 / TestFlight でログイン成功を確認済み。
+   EAS Build の環境変数として登録し、ビルド時に JS バンドルへ注入。
+2. 起動時の env 健全性チェックを追加。必須キーが欠損または不正な
+   場合はログイン画面に警告バナーを表示します（Build 33 では非表示）。
+3. iPad / TestFlight でログイン成功を確認済み。
 
 【テストアカウント】
 Email: <EMAIL>
