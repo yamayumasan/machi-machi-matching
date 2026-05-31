@@ -2,7 +2,7 @@
 
 > **作成日**: 2026-04-29
 > **前回対応**: [APPLE_REVIEW_RESPONSE_V2.md](./APPLE_REVIEW_RESPONSE_V2.md)
-> **対応ストーリー**: [.claude/tasks/active/STORY-001.md](../.claude/tasks/active/STORY-001.md)
+> **対応ストーリー**: [.claude/tasks/reviews/STORY-001.md](../.claude/tasks/reviews/STORY-001.md)
 
 ## 審査状況サマリー
 

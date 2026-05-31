@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.machimachi.matching",
-      "buildNumber": "23",
+      "buildNumber": "30",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "近くの募集やユーザーを表示するために位置情報を使用します",

@@ -29,3 +29,16 @@
 - **影響範囲**: `packages/mobile/src/config/env.ts`, `eas.json`, EAS Secrets 設定
 - **関連story**: STORY-001
 
+### 2026-05-24: 無料枠バックエンド（Supabase / Railway）の自動休止で審査が再却下しうる
+
+- **問題**: env 修正が正しくても、一定期間アクセスが無いと Supabase プロジェクトと Railway サービスが休止し、ログインが失敗する。審査担当者には再び "ネットワークエラー" として現出する
+- **原因**:
+  - **Supabase**（無料枠）: 約1週間アクセスが無いとプロジェクトが自動 pause → サブドメインが **NXDOMAIN** になり `supabase.auth.signInWithPassword()` の初段で失敗
+  - **Railway**: サブスク停止中はデプロイが落ち、エッジが `{"message":"Application not found"}`（HTTP 404）を返す。ログイン直後の `fetchUser() → getCurrentUser() → GET /api/auth/me`（[stores/auth.ts](../../packages/mobile/src/stores/auth.ts) signIn）で失敗
+- **対処**: 審査再提出の **直前に必ず両サービスの疎通を実測**する:
+  - Supabase: `curl -s -o /dev/null -w "%{http_code}" https://<project>.supabase.co/auth/v1/health` → **401**（apikey未付与）なら稼働。**000/NXDOMAIN なら休止**
+  - Railway: `curl -s https://machiapi-production.up.railway.app/api/auth/me` → Railwayエッジの `Application not found` が返るなら **デプロイ停止中**
+  - 審査は数日かかるため、審査期間中もアクセスを切らさない（cron 等で定期ヘルスチェックを推奨）
+- **影響範囲**: Supabase ダッシュボード, Railway ダッシュボード, 審査運用フロー全般
+- **関連story**: STORY-001
+
