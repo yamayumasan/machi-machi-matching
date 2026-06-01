@@ -12,6 +12,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, Stack } from 'expo-router'
+import { useHeaderHeight } from '@react-navigation/elements'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useGroupStore } from '@/stores/group'
 import { useAuthStore } from '@/stores/auth'
@@ -35,6 +36,7 @@ export default function GroupChatScreen() {
   const [messageText, setMessageText] = useState('')
   const [isSending, setIsSending] = useState(false)
   const flatListRef = useRef<FlatList>(null)
+  const headerHeight = useHeaderHeight()
 
   useEffect(() => {
     if (id) {
@@ -129,7 +131,7 @@ export default function GroupChatScreen() {
               </View>
             </View>
           )}
-          <View style={styles.messageContent}>
+          <View style={[styles.messageContent, isOwnMessage && styles.ownMessageContent]}>
             {!isOwnMessage && (
               <Text style={styles.senderName}>{item.sender.nickname}</Text>
             )}
@@ -191,8 +193,8 @@ export default function GroupChatScreen() {
       />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={90}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={headerHeight}
       >
         {/* メンバー表示 */}
         {group && (
@@ -354,6 +356,9 @@ const styles = StyleSheet.create({
   },
   messageContent: {
     maxWidth: '75%',
+  },
+  ownMessageContent: {
+    alignItems: 'flex-end',
   },
   senderName: {
     fontSize: 12,

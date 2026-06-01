@@ -36,8 +36,11 @@ import { AD_UNIT_IDS } from '@/constants/ads'
 const { height: SCREEN_HEIGHT } = Dimensions.get('window')
 
 // 3段階スナップポイント
+// PEEKはハンドル(~28) + FilterTabs(~52) + 余白を収める固定高
+// 中途半端なリストカードが見えないようにする
+const PEEK_HEIGHT = 96
 const SNAP_POINTS = {
-  PEEK: SCREEN_HEIGHT * 0.15,  // 15% - 最小、タブとハンドルのみ
+  PEEK: PEEK_HEIGHT,
   HALF: SCREEN_HEIGHT * 0.45,  // 45% - 中間、コンパクトカード
   FULL: SCREEN_HEIGHT * 0.85,  // 85% - 最大、通常カード
 }
@@ -47,6 +50,9 @@ const ITEM_HEIGHT_NORMAL = 120 // 通常カードの高さ
 
 // FULL状態の閾値（この高さ以上で通常カード表示）
 const FULL_THRESHOLD = SCREEN_HEIGHT * 0.6
+
+// PEEK状態の閾値（この高さ未満でQuickCategoryFilterを隠す）
+const PEEK_THRESHOLD = PEEK_HEIGHT + 40
 
 // FilterType から NearbyFilterType への変換
 const filterTypeToNearbyFilterType = (filterType: FilterType): NearbyFilterType => {
@@ -91,6 +97,8 @@ export default function HomeScreen() {
 
   // 現在のカードサイズモード（高さに応じて変化）
   const [isFullMode, setIsFullMode] = useState(false)
+  // PEEK状態判定（QuickCategoryFilterを隠すかどうか）
+  const [isPeekMode, setIsPeekMode] = useState(false)
 
   // FABの位置をリスト高さに連動
   const fabBottomAnim = Animated.add(listHeightAnim, spacing.md)
@@ -271,7 +279,11 @@ export default function HomeScreen() {
     if (shouldBeFullMode !== isFullMode) {
       setIsFullMode(shouldBeFullMode)
     }
-  }, [isFullMode])
+    const shouldBePeekMode = height < PEEK_THRESHOLD
+    if (shouldBePeekMode !== isPeekMode) {
+      setIsPeekMode(shouldBePeekMode)
+    }
+  }, [isFullMode, isPeekMode])
 
   // スナップアニメーションを実行
   const animateToSnapPoint = useCallback((targetHeight: number) => {
@@ -390,8 +402,8 @@ export default function HomeScreen() {
           onChange={handleFilterChange}
         />
 
-        {/* カテゴリクイックフィルター */}
-        {categories.length > 0 && (
+        {/* カテゴリクイックフィルター（PEEK時は非表示） */}
+        {!isPeekMode && categories.length > 0 && (
           <QuickCategoryFilter
             categories={categories}
             selectedCategoryId={selectedCategoryId}
@@ -551,6 +563,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderTopLeftRadius: borderRadius['2xl'],
     borderTopRightRadius: borderRadius['2xl'],
+    overflow: 'hidden',
     ...shadows.lg,
   },
   handleContainer: {
