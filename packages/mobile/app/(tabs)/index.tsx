@@ -282,16 +282,15 @@ export default function HomeScreen() {
   }, [findNearestSnapPoint])
 
   // 高さに応じてカードモードを更新
+  // NOTE: panResponderはuseRefで初回マウント時のクロージャに固定されるため、
+  //       isFullMode/isPeekModeを依存に入れるとstale closureで2回目以降の
+  //       遷移が無視される。functional setStateで現在値を取得する。
   const updateCardMode = useCallback((height: number) => {
     const shouldBeFullMode = height >= FULL_THRESHOLD
-    if (shouldBeFullMode !== isFullMode) {
-      setIsFullMode(shouldBeFullMode)
-    }
+    setIsFullMode((prev) => (prev !== shouldBeFullMode ? shouldBeFullMode : prev))
     const shouldBePeekMode = height < PEEK_THRESHOLD
-    if (shouldBePeekMode !== isPeekMode) {
-      setIsPeekMode(shouldBePeekMode)
-    }
-  }, [isFullMode, isPeekMode])
+    setIsPeekMode((prev) => (prev !== shouldBePeekMode ? shouldBePeekMode : prev))
+  }, [])
 
   // スナップアニメーションを実行
   const animateToSnapPoint = useCallback((targetHeight: number) => {
