@@ -36,9 +36,8 @@ import { AD_UNIT_IDS } from '@/constants/ads'
 const { height: SCREEN_HEIGHT } = Dimensions.get('window')
 
 // 3段階スナップポイント
-// PEEKはハンドル(~28) + FilterTabs(~52) + 余白を収める固定高
-// 中途半端なリストカードが見えないようにする
-const PEEK_HEIGHT = 96
+// PEEK時はハンドル + サマリーテキストのみのミニマル表示
+const PEEK_HEIGHT = 80
 const SNAP_POINTS = {
   PEEK: PEEK_HEIGHT,
   HALF: SCREEN_HEIGHT * 0.45,  // 45% - 中間、コンパクトカード
@@ -51,7 +50,7 @@ const ITEM_HEIGHT_NORMAL = 120 // 通常カードの高さ
 // FULL状態の閾値（この高さ以上で通常カード表示）
 const FULL_THRESHOLD = SCREEN_HEIGHT * 0.6
 
-// PEEK状態の閾値（この高さ未満でQuickCategoryFilterを隠す）
+// PEEK状態の閾値（この高さ未満でPEEK表示=サマリーのみ）
 const PEEK_THRESHOLD = PEEK_HEIGHT + 40
 
 // FilterType から NearbyFilterType への変換
@@ -158,6 +157,15 @@ export default function HomeScreen() {
     }
     return true
   })
+
+  // PEEK時に表示するサマリー文言
+  const summaryLabel = (() => {
+    const n = filteredItems.length
+    if (filterType === 'participating') return `参加中の募集 ${n}件`
+    if (filterType === 'recruitment') return `周辺に ${n}件 の募集`
+    if (filterType === 'wantToDo') return `周辺に ${n}件 のやりたいこと`
+    return `周辺に ${n}件`
+  })()
 
   // マップからアイテム選択時（マーカークリック）→ リストをスクロール
   const handleMapItemSelect = useCallback((item: NearbyItem | null) => {
@@ -396,65 +404,75 @@ export default function HomeScreen() {
           <View style={styles.handle} />
         </View>
 
-        {/* フィルタータブ */}
-        <FilterTabs
-          value={filterType}
-          onChange={handleFilterChange}
-        />
+        {isPeekMode ? (
+          /* PEEK時: サマリーのみのミニマル表示 */
+          <View {...panResponder.panHandlers} style={styles.peekSummary}>
+            <MaterialCommunityIcons name="map-marker-outline" size={18} color={colors.primary[600]} />
+            <Text style={styles.peekSummaryText}>{summaryLabel}</Text>
+          </View>
+        ) : (
+          <>
+            {/* フィルタータブ */}
+            <FilterTabs
+              value={filterType}
+              onChange={handleFilterChange}
+            />
 
-        {/* カテゴリクイックフィルター（PEEK時は非表示） */}
-        {!isPeekMode && categories.length > 0 && (
-          <QuickCategoryFilter
-            categories={categories}
-            selectedCategoryId={selectedCategoryId}
-            onSelectCategory={handleCategorySelect}
-          />
-        )}
-
-        {/* リスト */}
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          onScrollBeginDrag={handleScrollBeginDrag}
-          onScrollEndDrag={handleScrollEndDrag}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          bounces={true}
-        >
-          {isLoading && filteredItems.length === 0 ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator color={colors.primary[500]} />
-            </View>
-          ) : filteredItems.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>
-                {filterType === 'participating'
-                  ? '参加中の募集がありません'
-                  : 'この周辺には募集がありません'}
-              </Text>
-              <Text style={styles.emptySubText}>
-                マップを移動して探してみてください
-              </Text>
-            </View>
-          ) : (
-            filteredItems.slice(0, 30).map((item) => (
-              <NearbyItemCard
-                key={`${item.type}-${item.id}`}
-                item={item}
-                onPress={() => handleListItemPress(item)}
-                onLongPress={() => handleOpenDetail(item)}
-                onDetailPress={() => handleDetailPress(item)}
-                isSelected={selectedItem?.id === item.id && selectedItem?.type === item.type}
-                compact={!isFullMode}
-                showDistance
+            {/* カテゴリクイックフィルター */}
+            {categories.length > 0 && (
+              <QuickCategoryFilter
+                categories={categories}
+                selectedCategoryId={selectedCategoryId}
+                onSelectCategory={handleCategorySelect}
               />
-            ))
-          )}
-        </ScrollView>
+            )}
 
-        {/* バナー広告 */}
-        <AdBanner unitId={AD_UNIT_IDS.BANNER_MAP} />
+            {/* リスト */}
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              onScrollBeginDrag={handleScrollBeginDrag}
+              onScrollEndDrag={handleScrollEndDrag}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+              bounces={true}
+            >
+              {isLoading && filteredItems.length === 0 ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator color={colors.primary[500]} />
+                </View>
+              ) : filteredItems.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>
+                    {filterType === 'participating'
+                      ? '参加中の募集がありません'
+                      : 'この周辺には募集がありません'}
+                  </Text>
+                  <Text style={styles.emptySubText}>
+                    マップを移動して探してみてください
+                  </Text>
+                </View>
+              ) : (
+                filteredItems.slice(0, 30).map((item) => (
+                  <NearbyItemCard
+                    key={`${item.type}-${item.id}`}
+                    item={item}
+                    onPress={() => handleListItemPress(item)}
+                    onLongPress={() => handleOpenDetail(item)}
+                    onDetailPress={() => handleDetailPress(item)}
+                    isSelected={selectedItem?.id === item.id && selectedItem?.type === item.type}
+                    compact={!isFullMode}
+                    showDistance
+                  />
+                ))
+              )}
+            </ScrollView>
+
+            {/* バナー広告 */}
+            <AdBanner unitId={AD_UNIT_IDS.BANNER_MAP} />
+          </>
+        )}
       </Animated.View>
 
       {/* 拡張FAB - ラベル付きモダンデザイン */}
@@ -576,6 +594,19 @@ const styles = StyleSheet.create({
     height: 5,
     backgroundColor: colors.neutral[300],
     borderRadius: borderRadius.full,
+  },
+  peekSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xs,
+  },
+  peekSummaryText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+    color: colors.neutral[700],
   },
   listContent: {
     flex: 1,

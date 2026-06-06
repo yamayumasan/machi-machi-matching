@@ -42,8 +42,8 @@ export function connectSocket(): void {
     console.error('Socket connection error:', error.message)
   })
 
-  // 新しいメッセージを受信
-  socket.on('message:new', (message: Message) => {
+  // 新しいメッセージを受信（socket側の payload は groupId を含む）
+  socket.on('message:new', (message: Message & { groupId: string }) => {
     console.log('New message received:', message)
     const { currentGroup, addMessage } = useGroupStore.getState()
 

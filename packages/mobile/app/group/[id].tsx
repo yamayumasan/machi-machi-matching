@@ -15,7 +15,6 @@ import { useLocalSearchParams, Stack } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useGroupStore } from '@/stores/group'
-import { useAuthStore } from '@/stores/auth'
 import { Message } from '@/services/group'
 import { joinGroup, leaveGroup } from '@/services/socket'
 import { colors, spacing } from '@/constants/theme'
@@ -23,7 +22,6 @@ import { CategoryIcon } from '@/components/CategoryIcon'
 
 export default function GroupChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const { user } = useAuthStore()
   const {
     currentGroup: group,
     messages,
@@ -101,7 +99,7 @@ export default function GroupChatScreen() {
   }
 
   const renderMessage = ({ item, index }: { item: Message; index: number }) => {
-    const isOwnMessage = item.senderId === user?.id
+    const isOwnMessage = item.isOwn
     const showDateHeader =
       index === 0 ||
       new Date(item.createdAt).toDateString() !==

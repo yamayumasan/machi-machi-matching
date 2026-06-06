@@ -37,14 +37,13 @@ export interface GroupMember {
 
 export interface Message {
   id: string
-  groupId: string
-  senderId: string
   content: string
   createdAt: string
+  isOwn: boolean
   sender: {
     id: string
     nickname: string
-    avatar: string | null
+    avatarUrl: string | null
   }
 }
 
