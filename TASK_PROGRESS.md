@@ -38,17 +38,26 @@
 
 ### 最新イテレーション
 
-**日時**: 2026-02-23 (iteration 41)
+**日時**: 2026-06-06
 
 **実施内容**:
-- カラーパレット刷新: セージグリーン × テラコッタ ✅ 完了
-  - theme.ts: 新カラーパレット適用（セージグリーン/テラコッタ/クリーム）
-  - design-guidelines.md: v3に更新（Hinge風の大人っぽい雰囲気）
-  - 型チェック: API ✓, Mobile ✓
-- **全タスク完了**
+- **STORY-001（Apple審査再提出）**: ほぼ完了、最後は人間操作
+  - 原因: eas.json に env キーが無く Supabase URL/anonKey が JSバンドルに焼き込まれていなかった
+  - 修正: EAS Secrets 経由で env 注入、起動時のenv健全性チェック追加
+  - 状態: Build 37 が TestFlight processing 完了、ASCで再提出待ち
+  - 詳細: [docs/APPLE_REVIEW_RESPONSE_V3.md](docs/APPLE_REVIEW_RESPONSE_V3.md)
+- **STORY-003（チャット/ボトムシートUI改善）**: 全修正完了、Build 37 に同梱
+  - UI-1: ボトムシートPEEKをサマリー1行のみに簡素化（"周辺に N件"）
+  - UI-2: 自分のチャットを右寄せ（API実装の `isOwn` フラグ採用）
+  - UI-3: 入力欄のキーボード回避を `useHeaderHeight()` で動的化
+  - 追加: PanResponderのstale closureバグ修正（PEEK→拡大遷移）
+
+**次のアクション**:
+- App Store Connect で Build 37 を選択 → 審査ノート貼付 → 再提出（**人間操作**）
 
 **完了**:
-- カラーパレット刷新タスク完了
+- 環境変数バンドル問題の根本解決
+- チャット/ボトムシートUI3件 + 派生バグ修正
 
 ---
 
