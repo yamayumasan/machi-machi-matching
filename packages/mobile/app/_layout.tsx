@@ -1,9 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
-import { View, Alert, Platform } from 'react-native'
+import { View, Alert, Platform, AppState, AppStateStatus } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
-import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency'
+import {
+  requestTrackingPermissionsAsync,
+  getTrackingPermissionsAsync,
+} from 'expo-tracking-transparency'
 import Constants from 'expo-constants'
 import { useAuthStore } from '@/stores/auth'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
@@ -34,16 +37,9 @@ function RootLayoutNav() {
   useEffect(() => {
     async function prepare() {
       try {
-        // ATT許可リクエスト（iOS 14.5+）- Expo Go では動作しない場合がある
-        if (Platform.OS === 'ios' && !isExpoGo) {
-          try {
-            await requestTrackingPermissionsAsync()
-          } catch (e) {
-            console.log('[Layout] ATT request skipped in Expo Go')
-          }
-        }
-
         // AdMob SDK初期化 - Expo Go または開発モードではスキップ
+        // NOTE: ATTの結果がAdMobのトラッキング挙動に影響するため、
+        //       SDK初期化はATT prompt表示より前で構わない（AdMobは内部でATT結果を見る）
         if (!isExpoGo && !__DEV__) {
           try {
             const mobileAds = (await import('react-native-google-mobile-ads')).default
@@ -68,6 +64,50 @@ function RootLayoutNav() {
   useEffect(() => {
     if (isReady && !isLoading) {
       SplashScreen.hideAsync()
+    }
+  }, [isReady, isLoading])
+
+  // ATT許可リクエスト（iOS 14.5+）
+  // Apple仕様: アプリ状態がactiveでないとダイアログは表示されない。
+  // splash中(=inactive)に呼ぶとiOSが即denyして返すため、splash後・active時に実行する。
+  useEffect(() => {
+    if (Platform.OS !== 'ios' || isExpoGo) return
+    if (!isReady || isLoading) return
+
+    let cancelled = false
+
+    const requestATT = async () => {
+      try {
+        // 既に判定済みなら何もしない（notDetermined 以外）
+        const { status } = await getTrackingPermissionsAsync()
+        if (cancelled || status !== 'undetermined') return
+
+        // 現在 active なら即実行、そうでなければ active になるまで待つ
+        if (AppState.currentState === 'active') {
+          await requestTrackingPermissionsAsync()
+          return
+        }
+
+        const sub = AppState.addEventListener('change', async (next: AppStateStatus) => {
+          if (next === 'active') {
+            sub.remove()
+            if (!cancelled) {
+              try {
+                await requestTrackingPermissionsAsync()
+              } catch (e) {
+                console.log('[Layout] ATT request failed:', e)
+              }
+            }
+          }
+        })
+      } catch (e) {
+        console.log('[Layout] ATT request skipped:', e)
+      }
+    }
+
+    requestATT()
+    return () => {
+      cancelled = true
     }
   }, [isReady, isLoading])
 
