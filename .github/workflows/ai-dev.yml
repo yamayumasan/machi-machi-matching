@@ -1,0 +1,84 @@
+name: AI Dev (Issue → PR)
+
+# Issue に「ai-dev」ラベルが付いた瞬間に、Planner→Generator→Evaluator の
+# ハーネスで自動実装し、PR を作成するパイプライン。
+# マージは必ず人間が行う（自動マージはしない）。
+on:
+  issues:
+    types: [labeled]
+
+# 同一 Issue に対する多重起動を直列化（ラベル付け外しの連打対策）
+concurrency:
+  group: ai-dev-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write # ブランチ作成・コミット
+  pull-requests: write # PR 作成
+  issues: write # 進捗コメント
+  id-token: write
+
+jobs:
+  ai-dev:
+    # 安全装置:
+    #  - ラベルが ai-dev のときだけ
+    #  - Issue 作成者が OWNER / COLLABORATOR / MEMBER のときだけ（外部からの悪用防止）
+    if: >
+      github.event.label.name == 'ai-dev' &&
+      contains(fromJSON('["OWNER","COLLABORATOR","MEMBER"]'), github.event.issue.author_association)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # 暴走・レート消費の上限
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # ブランチ操作のため全履歴を取得
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Run AI Dev harness
+        uses: anthropics/claude-code-action@v1
+        with:
+          # Max サブスク枠で動かす OAuth トークン（API 従量課金なし）
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            あなたは Issue 駆動の自動開発オーケストレーターです。
+            対象 Issue:
+              - リポジトリ: ${{ github.repository }}
+              - 番号: #${{ github.event.issue.number }}
+              - タイトル: ${{ github.event.issue.title }}
+              - 本文:
+            ---
+            ${{ github.event.issue.body }}
+            ---
+
+            CLAUDE.md の「AI Dev ハーネス」セクションの手順に厳密に従い、
+            Planner → Generator → Evaluator の順でサブエージェントを使って実装してください。
+            完了したら次を実行します:
+              1. ブランチ `ai-dev/issue-${{ github.event.issue.number }}` を作成
+              2. 変更をコミット（Conventional Commits 準拠）
+              3. PR を作成（タイトル例: "feat: <要約> (#${{ github.event.issue.number }})"）
+              4. PR 本文に "Closes #${{ github.event.issue.number }}" と、実装サマリ・
+                 テスト観点・残課題を記載
+
+            重要:
+              - main へ直接コミットしない。必ずブランチ＋PR。
+              - マージはしない（人間が最終判断する）。
+              - 計画外のファイルには触れない。スコープを Issue の範囲に限定する。
+          claude_args: |
+            --max-turns 40
+            --model claude-sonnet-4-6
+            --allowedTools "Task,Read,Write,Edit,Glob,Grep,Bash"

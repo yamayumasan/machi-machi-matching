@@ -38,13 +38,21 @@
 
 ### 最新イテレーション
 
-**日時**: 2026-06-06
+**日時**: 2026-06-12
 
 **実施内容**:
-- **STORY-001（Apple審査再提出）**: ほぼ完了、最後は人間操作
+- **Apple審査 第4回却下対応（Guideline 2.1 - Information Needed）**: 対応完了、再提出可能
+  - 指摘（2026-06-07）: デモアカウント gedozu@appmail.uk でサインインできない
+  - 原因: Supabase Auth / DB の双方にデモアカウントが存在しなかった
+    （`Invalid login credentials` = Auth 層で不在。env 問題は V3 で解消済み）
+  - 対応: Supabase Dashboard の「Add user (Auto Confirm)」でアカウント作成（人間操作）
+    → ログイン成功・オンボ完了・デモデータ投入・TestFlight Build 37 で検証済み
+  - 補助: [prisma/recover-demo-account.ts](prisma/recover-demo-account.ts) を追加
+    （CLI で Auth + User 行を復旧するスクリプト。今回は Dashboard で対応したため未使用）
+  - 詳細・ASC返信文: [docs/APPLE_REVIEW_RESPONSE_V4.md](docs/APPLE_REVIEW_RESPONSE_V4.md)
+- **STORY-001（Apple審査再提出・第3回対応）**: 完了
   - 原因: eas.json に env キーが無く Supabase URL/anonKey が JSバンドルに焼き込まれていなかった
   - 修正: EAS Secrets 経由で env 注入、起動時のenv健全性チェック追加
-  - 状態: Build 37 が TestFlight processing 完了、ASCで再提出待ち
   - 詳細: [docs/APPLE_REVIEW_RESPONSE_V3.md](docs/APPLE_REVIEW_RESPONSE_V3.md)
 - **STORY-003（チャット/ボトムシートUI改善）**: 全修正完了、Build 37 に同梱
   - UI-1: ボトムシートPEEKをサマリー1行のみに簡素化（"周辺に N件"）
@@ -53,7 +61,7 @@
   - 追加: PanResponderのstale closureバグ修正（PEEK→拡大遷移）
 
 **次のアクション**:
-- App Store Connect で Build 37 を選択 → 審査ノート貼付 → 再提出（**人間操作**）
+- App Store Connect の却下メッセージに V4 の返信文を貼って返信・再審査依頼（**人間操作**、ビルド差し替え不要）
 
 **完了**:
 - 環境変数バンドル問題の根本解決
