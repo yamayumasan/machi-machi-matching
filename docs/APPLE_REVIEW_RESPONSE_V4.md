@@ -53,7 +53,7 @@ Prisma `User` テーブルにデータを入れるだけでは解決しない点
 ### 2. 実行手順（**要人間操作・本番環境変数が必要**）
 
 ```bash
-cd /Users/yuma/repos/machi-machi-matching
+cd /Users/yuma/repos/products/machi-machi-matching
 
 # 1) デモアカウントを Supabase Auth + DB に作成（確認済み）
 SUPABASE_URL="https://<project>.supabase.co" \
